@@ -316,6 +316,25 @@ function _helpStyles() {
   if (document.getElementById('help-widget-styles')) return;
   const st = document.createElement('style'); st.id = 'help-widget-styles';
   st.textContent = `
+    /* ── GLOBAL MOBILE RESPONSIVENESS (applies on every page) ── */
+    html, body { overflow-x: hidden; max-width: 100%; }
+    img, table, pre, .bracket, .scoring-grid { max-width: 100%; }
+    @media (max-width: 640px) {
+      nav { flex-wrap: wrap !important; row-gap: 6px; padding-left: 12px !important; padding-right: 12px !important; }
+      .nav-logo { flex: 0 0 auto !important; font-size: 16px !important; }
+      .nav-links, .nav-tabs { font-size: 12px !important; gap: 8px !important; flex-wrap: wrap; }
+      #nav-auth { flex: 1 1 100% !important; justify-content: flex-end !important; flex-wrap: wrap; gap: 6px !important; }
+      #nav-auth > * { font-size: 12px !important; }
+      .navhelp-btn { padding: 5px 9px !important; font-size: 11px !important; }
+      .deadline-pill, .nav-right .deadline-pill { font-size: 10px !important; }
+      /* stop wide grids/brackets from forcing sideways scroll */
+      .stats-row, .summary-grid, .hero-banner { flex-wrap: wrap; }
+      .bracket { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+    @media (max-width: 420px) {
+      .nav-logo { font-size: 15px !important; }
+      .navhelp-btn { padding: 4px 7px !important; }
+    }
     .help-fab{position:fixed;left:16px;bottom:16px;z-index:250;display:flex;gap:8px}
     .navhelp-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text,#eee);border-radius:6px;padding:6px 11px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
     .navhelp-btn:hover{background:rgba(255,255,255,.12)}
@@ -499,7 +518,7 @@ function wireAvatarDrag(){
   let drag=false, sx=0, sy=0, ox=0, oy=0;
   const down=(e)=>{ if(!_avCrop) return; drag=true; box.style.cursor='grabbing';
     const pt=e.touches?e.touches[0]:e; sx=pt.clientX; sy=pt.clientY; ox=_avCrop.tx; oy=_avCrop.ty; e.preventDefault(); };
-  const move=(e)=>{ if(!drag||!_avCrop) return; const pt=e.touches?e.touches[0]:e;
+  const move=(e)=>{ if(!drag||!_avCrop) return; if(e.cancelable) e.preventDefault(); const pt=e.touches?e.touches[0]:e;
     _avCrop.tx=ox+(pt.clientX-sx); _avCrop.ty=oy+(pt.clientY-sy); _avApply(); };
   const up=()=>{ drag=false; box.style.cursor='grab'; };
   box.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
