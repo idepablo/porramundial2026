@@ -216,7 +216,8 @@ async function initNav() {
     const avatar = profile?.avatar_url
       ? `<img src="${profile.avatar_url}" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.2);vertical-align:middle;flex-shrink:0">`
       : '';
-    navRight.innerHTML = help + `
+    const inicio = `<a href="porra-home.html" class="navhelp-btn" style="text-decoration:none">Inicio</a>`;
+    navRight.innerHTML = inicio + help + `
       <button onclick="openSettingsModal()" title="Ajustes" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:3px 12px 3px ${avatar?'4px':'12px'};cursor:pointer;font-family:'DM Sans',sans-serif">
         ${avatar}<span style="font-size:13px;color:var(--text)">${name}</span></button>
       ${profile?.is_admin ? `<a href="porra-admin.html" style="font-size:12px;background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);color:#f87171;border-radius:6px;padding:5px 10px;text-decoration:none">Acceder como admin</a>` : ''}
@@ -322,7 +323,11 @@ function _helpStyles() {
     @media (max-width: 640px) {
       nav { flex-wrap: wrap !important; height: auto !important; min-height: 56px; row-gap: 6px; padding-top: 6px !important; padding-bottom: 6px !important; padding-left: 12px !important; padding-right: 12px !important; }
       .nav-logo { flex: 0 0 auto !important; font-size: 16px !important; }
+      .nav-links { display: flex !important; }
       .nav-links, .nav-tabs { font-size: 12px !important; gap: 8px !important; flex-wrap: wrap; }
+      /* leaderboard table scrolls sideways inside its own box */
+      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .lb-table { min-width: 540px; }
       #nav-auth { flex: 1 1 100% !important; justify-content: flex-end !important; flex-wrap: wrap; gap: 6px !important; }
       #nav-auth > * { font-size: 12px !important; }
       .navhelp-btn { padding: 5px 9px !important; font-size: 11px !important; }
