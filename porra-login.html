@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión — Porra Mundial 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#07070f; --bg2:#0e0e1c; --text:#eeeef8; --muted:rgba(238,238,248,0.45);
+  --border:rgba(255,255,255,0.08); --red:#C8102E; --gold:#FFD700; --green:#006847;
+  --success:#22c55e; --error:#ef4444;
+}
+body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+.bg-glow { position:fixed; pointer-events:none; z-index:0; border-radius:50%; filter:blur(120px); }
+.bg-glow-1 { width:500px; height:500px; background:var(--red); opacity:0.07; top:-150px; left:-100px; }
+.bg-glow-2 { width:400px; height:400px; background:var(--green); opacity:0.07; top:50px; right:-120px; }
+.card { position:relative; z-index:1; background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:36px; width:100%; max-width:400px; }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; background:linear-gradient(90deg,var(--red),var(--gold),var(--green)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-decoration:none; display:block; text-align:center; margin-bottom:24px; }
+h1 { font-family:'Bebas Neue',sans-serif; font-size:32px; margin-bottom:6px; }
+.sub { font-size:13px; color:var(--muted); margin-bottom:28px; }
+.field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+input { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:11px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; transition:border-color 0.2s; }
+input:focus { outline:none; border-color:rgba(255,215,0,0.4); }
+input::placeholder { color:rgba(238,238,248,0.2); }
+.btn { width:100%; background:var(--gold); color:var(--bg); border:none; border-radius:8px; padding:13px; font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:8px; transition:opacity 0.15s; }
+.btn:hover { opacity:0.88; }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
+.error-msg { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--error); margin-top:12px; display:none; }
+.error-msg.show { display:block; }
+.links { margin-top:20px; text-align:center; font-size:13px; color:var(--muted); }
+.links a { color:var(--gold); text-decoration:none; }
+.links a:hover { text-decoration:underline; }
+.forgot { text-align:right; font-size:12px; margin-top:4px; }
+.forgot a { color:var(--muted); text-decoration:none; font-size:12px; }
+.forgot a:hover { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<div class="card">
+  <a class="logo" href="porra-mundial-2026.html">Porra Mundial 2026</a>
+  <h1>Bienvenido de nuevo</h1>
+  <p class="sub">Inicia sesión para ver tus predicciones y la clasificación.</p>
+
+  <div class="field">
+    <label>Correo electrónico</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+  </div>
+  <div class="field">
+    <label>Contraseña</label>
+    <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') signIn()">
+    <div class="forgot"><a href="#" onclick="forgotPassword()">¿Olvidaste tu contraseña?</a></div>
+  </div>
+
+  <button class="btn" id="signin-btn" onclick="signIn()">Iniciar sesión</button>
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="links">
+    ¿No tienes cuenta? <a href="porra-register.html">Regístrate aquí</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+// v2 — supabase loaded first
+// If already logged in, redirect
+(async () => {
+  // Password recovery: Supabase redirects back here with a recovery token.
+  if (window.location.hash.includes('type=recovery')) { showResetForm(); return; }
+  const user = await getCurrentUser();
+  if (user) window.location.href = 'porra-home.html';
+})();
+
+function showResetForm(){
+  const card = document.querySelector('.card');
+  card.innerHTML = `
+    <a class="logo" href="porra-mundial-2026.html">Porra Mundial 2026</a>
+    <h1>Nueva contraseña</h1>
+    <p class="sub">Introduce tu nueva contraseña para acceder a tu cuenta.</p>
+    <div class="field"><label>Nueva contraseña</label>
+      <input type="password" id="new-pwd" placeholder="Mínimo 8 caracteres" autocomplete="new-password"
+        onkeydown="if(event.key===\'Enter\') submitNewPassword()"></div>
+    <button class="btn" id="reset-btn" onclick="submitNewPassword()">Guardar contraseña</button>
+    <div class="error-msg" id="error-msg"></div>`;
+}
+async function submitNewPassword(){
+  const pw = document.getElementById('new-pwd').value;
+  if (!pw || pw.length < 8) { showErr('La contraseña debe tener al menos 8 caracteres.'); return; }
+  const btn = document.getElementById('reset-btn'); btn.textContent = 'Guardando…'; btn.disabled = true;
+  const { error } = await getSB().auth.updateUser({ password: pw });
+  if (error) { showErr(error.message); btn.textContent = 'Guardar contraseña'; btn.disabled = false; return; }
+  showErr('✓ Contraseña actualizada. Redirigiendo…', true);
+  setTimeout(() => { window.location.href = 'porra-home.html'; }, 1500);
+}
+
+async function signIn() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('signin-btn');
+  const errEl    = document.getElementById('error-msg');
+
+  if (!email || !password) { showErr('Introduce tu correo y tu contraseña.'); return; }
+
+  btn.textContent = 'Iniciando sesión…';
+  btn.disabled    = true;
+  errEl.classList.remove('show');
+
+  try {
+    const { error } = await getSB().auth.signInWithPassword({ email, password });
+    if (error) throw error;
+
+    // Redirect based on what page they came from
+    const next = new URLSearchParams(window.location.search).get('next') || 'porra-home.html';
+    window.location.href = next;
+  } catch(err) {
+    btn.textContent = 'Iniciar sesión';
+    btn.disabled    = false;
+    let msg = err.message || 'No se pudo iniciar sesión.';
+    if (msg.includes('Invalid login')) msg = 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
+    showErr(msg);
+  }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showErr('Introduce primero tu correo y luego pulsa "¿Olvidaste tu contraseña?".'); return; }
+  const { error } = await getSB().auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/porra-login.html'
+  });
+  if (error) { showErr(error.message); return; }
+  showErr('✓ ¡Correo de recuperación enviado! Revisa tu bandeja de entrada.', true);
+}
+
+function showErr(msg, success = false) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.background = success ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+  el.style.borderColor = success ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+  el.style.color = success ? 'var(--success)' : 'var(--error)';
+  el.classList.add('show');
+}
+</script>
+</body>
+</html>
