@@ -327,13 +327,44 @@ function _helpStyles() {
       #nav-auth > * { font-size: 12px !important; }
       .navhelp-btn { padding: 5px 9px !important; font-size: 11px !important; }
       .deadline-pill, .nav-right .deadline-pill { font-size: 10px !important; }
-      /* stop wide grids/brackets from forcing sideways scroll */
       .stats-row, .summary-grid, .hero-banner { flex-wrap: wrap; }
       .bracket { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      /* page padding + big headings scale down */
+      .page, .wrap, .content, .container { padding-left: 14px !important; padding-right: 14px !important; }
+      .page-title { font-size: 28px !important; }
+      .wizard-title { font-size: 20px !important; }
+
+      /* PICKS — score-entry row fits the phone (date | team | score | : | score | team) */
+      .match-input-row { grid-template-columns: 42px 1fr 32px 10px 32px 1fr !important; gap: 5px !important; padding: 9px 8px !important; }
+      .match-input-row > :nth-child(7) { display: none !important; }
+      .mi-date { font-size: 9px !important; line-height: 1.2; }
+      .group-layout { grid-template-columns: 1fr !important; }
+      .ko-matches-grid { grid-template-columns: 1fr !important; }
+      .group-nav { gap: 5px !important; }
+
+      /* MIS PREDICCIONES — read-only prediction row compacted */
+      .match-row { grid-template-columns: 46px 1fr 30px 12px 30px 1fr 34px !important; gap: 4px !important; font-size: 11px !important; padding: 8px !important; }
+      .match-row > :nth-child(8) { display: none !important; }
+      .hero-stats { flex-wrap: wrap; gap: 10px !important; }
+
+      /* LEADERBOARD — expand detail + podium reflow */
+      .detail-inner { grid-template-columns: repeat(4, 1fr) !important; }
+      .ts-card .ts-n { font-size: 22px !important; }
+
+      /* HOME — hero/action cards already auto-fit; tighten gaps */
+      .hero, .actions { gap: 10px !important; }
+
+      /* RESULTADOS — group table cells smaller */
+      .group-row { grid-template-columns: 1fr !important; }
+      .partidos-table td, .partidos-table th { padding: 6px 5px !important; font-size: 11px !important; }
     }
     @media (max-width: 420px) {
       .nav-logo { font-size: 15px !important; }
       .navhelp-btn { padding: 4px 7px !important; }
+      .match-input-row { grid-template-columns: 38px 1fr 28px 8px 28px 1fr !important; gap: 4px !important; }
+      .score-inp { width: 28px !important; height: 30px !important; }
+      .page-title { font-size: 24px !important; }
     }
     .help-fab{position:fixed;left:16px;bottom:16px;z-index:250;display:flex;gap:8px}
     .navhelp-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text,#eee);border-radius:6px;padding:6px 11px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
