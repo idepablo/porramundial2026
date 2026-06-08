@@ -73,6 +73,27 @@ nav {
 .jornada { display: inline-block; background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 6px; font-size: 10px; color: var(--muted); }
 .team-cell { display: flex; align-items: center; gap: 6px; }
 .team-cell.right { justify-content: flex-end; flex-direction: row-reverse; }
+
+/* ── MOBILE: reflow each group match into a centered card (no sideways scroll) ── */
+@media (max-width: 640px) {
+  .partidos-table thead { display: none; }
+  .partidos-table, .partidos-table tbody { display: block; width: 100%; }
+  .partidos-table tr {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 4px 6px; padding: 12px 4px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .partidos-table td { padding: 1px 2px !important; border: none; }
+  .partidos-table .date-cell { order: 1; flex: 1 1 100%; text-align: center; font-size: 10px; }
+  .partidos-table td:nth-child(2) { display: none; }            /* jornada chip */
+  .partidos-table td:nth-child(3) { order: 2; flex: 0 1 38%; }  /* home team */
+  .partidos-table td:nth-child(4) { order: 3; }                 /* home score */
+  .partidos-table td:nth-child(5) { order: 4; }                 /* : */
+  .partidos-table td:nth-child(6) { order: 5; }                 /* away score */
+  .partidos-table td:nth-child(7) { order: 6; flex: 0 1 38%; }  /* away team */
+  .partidos-table td:nth-child(8) { order: 7; flex: 1 1 100%; text-align: center; font-size: 10px; color: var(--muted); }
+  .partidos-table .team-cell { justify-content: center; gap: 5px; }
+  .partidos-table .team-name-cell { font-size: 12px; }
+}
 .flag { font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; font-size: 14px; line-height: 1; display: inline-block; flex-shrink: 0; }
 .team-name-cell { font-size: 12px; font-weight: 500; }
 .score-cell { text-align: center; width: 60px; }
