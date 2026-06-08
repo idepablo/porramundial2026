@@ -216,8 +216,7 @@ async function initNav() {
     const avatar = profile?.avatar_url
       ? `<img src="${profile.avatar_url}" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.2);vertical-align:middle;flex-shrink:0">`
       : '';
-    const inicio = `<a href="porra-home.html" class="navhelp-btn" style="text-decoration:none">Inicio</a>`;
-    navRight.innerHTML = inicio + help + `
+    navRight.innerHTML = help + `
       <button onclick="openSettingsModal()" title="Ajustes" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:3px 12px 3px ${avatar?'4px':'12px'};cursor:pointer;font-family:'DM Sans',sans-serif">
         ${avatar}<span style="font-size:13px;color:var(--text)">${name}</span></button>
       ${profile?.is_admin ? `<a href="porra-admin.html" style="font-size:12px;background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);color:#f87171;border-radius:6px;padding:5px 10px;text-decoration:none">Acceder como admin</a>` : ''}
@@ -225,6 +224,27 @@ async function initNav() {
   } else {
     navRight.innerHTML = help + `<a href="porra-login.html" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:8px 16px">Login</a>`;
   }
+
+  // ── Secondary nav bar (back / tabs) on every user page EXCEPT the home hub ──
+  try {
+    const cur = (location.pathname.split('/').pop() || '').toLowerCase();
+    const SKIP = ['porra-home.html','porra-mundial-2026.html','porra-login.html','porra-register.html','index.html',''];
+    if (user && !SKIP.includes(cur) && !document.getElementById('subnav')) {
+      const navEl = document.querySelector('nav');
+      if (navEl) {
+        const tabs = [
+          ['porra-home.html','\u2190 Inicio'],
+          ['porra-mypredictions.html','Predicciones'],
+          ['porra-groups-bracket-daily.html','Resultados'],
+          ['porra-leaderboard.html','Clasificación'],
+        ];
+        const bar = document.createElement('div');
+        bar.id = 'subnav';
+        bar.innerHTML = tabs.map(([href,label]) => `<a href="${href}" class="${cur===href?'active':''}">${label}</a>`).join('');
+        navEl.insertAdjacentElement('afterend', bar);
+      }
+    }
+  } catch(e){}
 }
 
 // ── LANGUAGE ─────────────────────────────────────────────────────────────────
@@ -317,17 +337,21 @@ function _helpStyles() {
   if (document.getElementById('help-widget-styles')) return;
   const st = document.createElement('style'); st.id = 'help-widget-styles';
   st.textContent = `
+    /* ── TOP TABS REMOVED (replaced by the sub-nav bar) ── */
+    .nav-links, .nav-tabs { display: none !important; }
+    /* ── SECONDARY NAV BAR ── */
+    #subnav { display: flex; gap: 4px; align-items: center; padding: 8px 24px; background: rgba(7,7,15,0.92); border-bottom: 1px solid var(--border,rgba(255,255,255,.08)); overflow-x: auto; -webkit-overflow-scrolling: touch; position: sticky; top: 56px; z-index: 90; }
+    #subnav a { color: var(--muted,#9a9aa8); text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; }
+    #subnav a.active { color: var(--text,#eee); background: rgba(255,255,255,.08); }
+    #subnav a:hover { color: var(--text,#eee); }
+    @media (max-width: 640px) { #subnav { padding: 6px 10px; position: static; } }
     /* ── GLOBAL MOBILE RESPONSIVENESS (applies on every page) ── */
     html, body { overflow-x: hidden; max-width: 100%; }
     img, table, pre, .bracket, .scoring-grid { max-width: 100%; }
     @media (max-width: 640px) {
       nav { flex-wrap: wrap !important; height: auto !important; min-height: 56px; row-gap: 6px; padding-top: 6px !important; padding-bottom: 6px !important; padding-left: 12px !important; padding-right: 12px !important; }
       .nav-logo { flex: 0 0 auto !important; font-size: 16px !important; }
-      .nav-links { display: flex !important; }
       .nav-links, .nav-tabs { font-size: 12px !important; gap: 8px !important; flex-wrap: wrap; }
-      /* leaderboard table scrolls sideways inside its own box */
-      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .lb-table { min-width: 540px; }
       #nav-auth { flex: 1 1 100% !important; justify-content: flex-end !important; flex-wrap: wrap; gap: 6px !important; }
       #nav-auth > * { font-size: 12px !important; }
       .navhelp-btn { padding: 5px 9px !important; font-size: 11px !important; }

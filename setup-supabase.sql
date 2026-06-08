@@ -22,12 +22,14 @@ create table if not exists public.users (
   is_admin      boolean default false,
   blocked       boolean default false,
   avatar_url    text,
+  seen_payment_confirm boolean default false,
   created_at    timestamptz default now()
 );
 -- add-if-missing (for older projects)
 do $$ begin
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='users' and column_name='blocked')     then alter table public.users add column blocked boolean default false; end if;
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='users' and column_name='avatar_url')  then alter table public.users add column avatar_url text; end if;
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='users' and column_name='seen_payment_confirm') then alter table public.users add column seen_payment_confirm boolean default false; end if;
 end $$;
 alter table public.users disable row level security;
 

@@ -281,7 +281,8 @@ nav {
     <div class="hero-name" id="hero-name">Cargando...</div>
     <div class="hero-alias" id="hero-alias"></div>
   </div>
-  <div style="margin-left:auto;display:flex;gap:8px">
+  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+    <a href="porra-predict.html" id="edit-picks-btn" style="background:var(--gold,#e8b84b);color:#13131f;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px">✏️ Editar</a>
     <button onclick="exportPicksCSV()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Descargar Excel</button>
     <button onclick="window.print()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Descargar PDF</button>
   </div>
@@ -380,6 +381,7 @@ async function loadMyPredictions() {
   if (viewingOther) {
     // Hide personal-export actions and show a back link + banner
     document.querySelectorAll('button[onclick="exportPicksCSV()"], button[onclick="window.print()"]').forEach(b => b.style.display = "none");
+    const editBtn = document.getElementById("edit-picks-btn"); if (editBtn) editBtn.style.display = "none";
     const banner = document.createElement("div");
     banner.style.cssText = "max-width:1000px;margin:0 auto 4px;padding:10px 16px;background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.3);border-radius:10px;font-size:13px;color:var(--text)";
     banner.innerHTML = `Viendo las predicciones de <strong>${(profile?.alias || profile?.first_name || "otro jugador")}</strong> · <a href="porra-leaderboard.html" style="color:var(--gold)">← Volver a la clasificación</a>`;
