@@ -320,7 +320,7 @@ function _helpStyles() {
     html, body { overflow-x: hidden; max-width: 100%; }
     img, table, pre, .bracket, .scoring-grid { max-width: 100%; }
     @media (max-width: 640px) {
-      nav { flex-wrap: wrap !important; row-gap: 6px; padding-left: 12px !important; padding-right: 12px !important; }
+      nav { flex-wrap: wrap !important; height: auto !important; min-height: 56px; row-gap: 6px; padding-top: 6px !important; padding-bottom: 6px !important; padding-left: 12px !important; padding-right: 12px !important; }
       .nav-logo { flex: 0 0 auto !important; font-size: 16px !important; }
       .nav-links, .nav-tabs { font-size: 12px !important; gap: 8px !important; flex-wrap: wrap; }
       #nav-auth { flex: 1 1 100% !important; justify-content: flex-end !important; flex-wrap: wrap; gap: 6px !important; }
@@ -561,7 +561,7 @@ async function openSettingsModal(){
     <div class="help-field"><label>Nombre (no editable)</label><input type="text" value="${(p.first_name||'').replace(/"/g,'&quot;')}" disabled></div>
     <div class="help-field"><label>Apellidos (no editable)</label><input type="text" value="${(p.last_name||'').replace(/"/g,'&quot;')}" disabled></div>
     <div class="help-field"><label>Alias (mote)</label><input type="text" id="set-alias" value="${(p.alias||'').replace(/"/g,'&quot;')}"></div>
-    <div class="help-field"><label>Teléfono</label><input type="text" id="set-phone" value="${(p.phone||'').replace(/"/g,'&quot;')}"></div>
+    <div class="help-field"><label>Teléfono</label><input type="tel" inputmode="tel" id="set-phone" value="${(p.phone||'').replace(/"/g,'&quot;')}"></div>
     <div class="help-field"><label>Correo electrónico</label><input type="email" id="set-email" value="${(p.email||'').replace(/"/g,'&quot;')}"></div>
     <div class="help-field"><label>Contraseña actual (solo para cambiar el correo)</label><input type="password" id="set-pwd" placeholder="••••••••"></div>
     <div id="set-status" style="font-size:12px;min-height:16px;line-height:1.4"></div>

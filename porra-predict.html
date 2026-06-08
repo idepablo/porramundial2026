@@ -613,11 +613,11 @@ function renderGroupMatches() {
         <img src="https://flagcdn.com/w40/${hTeam.flag}.png" style="width:24px;height:16px;border-radius:2px;object-fit:cover;vertical-align:middle" onerror="this.style.display='none'">
         <span style="font-size:12px">${teamES(m.h)}</span>
       </div>
-      <input type="number" min="0" max="20" class="score-inp${gp[mi].h!==''?' filled':''}"
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="20" class="score-inp${gp[mi].h!==''?' filled':''}"
         id="inp-h-${mi}" value="${gp[mi].h}" placeholder=""
         onkeydown="grpKey(event,${mi},'h')" oninput="onScore(${mi},'h',this.value)">
       <div class="mi-sep">:</div>
-      <input type="number" min="0" max="20" class="score-inp${gp[mi].a!==''?' filled':''}"
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="20" class="score-inp${gp[mi].a!==''?' filled':''}"
         id="inp-a-${mi}" value="${gp[mi].a}" placeholder=""
         onkeydown="grpKey(event,${mi},'a')" oninput="onScore(${mi},'a',this.value)">
       <div class="mi-team right">
@@ -854,11 +854,11 @@ function buildBracket(){
         <div class="ko-match-body">
           ${teamChip(s.home,'h')}
           <div class="ko-scores">
-            <input type="number" min="0" max="20" class="score-inp${p.h!==''?' filled':''}" style="width:36px;height:36px"
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="20" class="score-inp${p.h!==''?' filled':''}" style="width:36px;height:36px"
               ${decided?'':'disabled'} value="${p.h}" id="ko-h-${round.key}-${i}"
               onkeydown="koKey(event,'${round.key}',${i})" oninput="onKoScore('${round.key}',${i},'h',this.value)">
             <span class="ko-sep">:</span>
-            <input type="number" min="0" max="20" class="score-inp${p.a!==''?' filled':''}" style="width:36px;height:36px"
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="20" class="score-inp${p.a!==''?' filled':''}" style="width:36px;height:36px"
               ${decided?'':'disabled'} value="${p.a}" id="ko-a-${round.key}-${i}"
               onkeydown="koKey(event,'${round.key}',${i})" oninput="onKoScore('${round.key}',${i},'a',this.value)">
           </div>

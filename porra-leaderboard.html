@@ -294,7 +294,7 @@ nav {
 <div class="tourney-stats">
   <div class="ts-card"><div class="ts-n" id="ts-matches">0</div><div class="ts-l">Partidos jugados</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-participants">0</div><div class="ts-l">Participantes</div></div>
-  <div class="ts-card"><div class="ts-n" id="ts-pool">$0</div><div class="ts-l">Bote</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-pool">0 €</div><div class="ts-l">Bote</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-exact">0</div><div class="ts-l">Exactos</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-pct">–</div><div class="ts-l">Acierto 1X2</div></div>
 </div>
@@ -584,11 +584,11 @@ async function loadClasificación() {
   // Update stats
   const totalParticipantes = JUGADORS.length;
   const totalExact = JUGADORS.reduce((s, p) => s + p.exact, 0);
-  const prizePool = totalParticipantes * 25;
+  const prizePool = totalParticipantes * 20;
 
   const el = (id) => document.getElementById(id);
   if (el('ts-participants')) el('ts-participants').textContent = totalParticipantes;
-  if (el('ts-pool')) el('ts-pool').textContent = '$' + prizePool.toLocaleString();
+  if (el('ts-pool')) el('ts-pool').textContent = prizePool.toLocaleString('es-ES') + ' €';
   if (el('ts-exact')) el('ts-exact').textContent = totalExact;
   if (el('lb-subtitle')) el('lb-subtitle').textContent = totalParticipantes + ' participantes · Se actualiza tras cada partido';
 
