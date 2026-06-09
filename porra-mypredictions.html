@@ -379,6 +379,18 @@ async function loadMyPredictions() {
   const targetId = viewId || user.id;
   const viewingOther = viewId && viewId !== user.id;
 
+  // Respect "bloquear visualización de picks": non-admins can't view others' predictions
+  if (viewingOther) {
+    try {
+      const hide = String(await getSetting('hide_picks')) === 'true';
+      const me = await getUserProfile(user.id);
+      if (hide && !me?.is_admin) {
+        document.body.innerHTML = '<div style="max-width:520px;margin:80px auto;padding:0 24px;text-align:center;font-family:\'DM Sans\',sans-serif;color:#eee"><h2 style="font-family:\'Bebas Neue\',sans-serif">Predicciones ocultas</h2><p style="color:#9aa">Las predicciones de los demás jugadores no están disponibles en este momento.</p><a href="porra-leaderboard.html" style="color:#e8b84b">← Volver a la clasificación</a></div>';
+        return;
+      }
+    } catch(e){}
+  }
+
   // Load profile of whoever we're viewing
   const { data: profile } = await sb.from("users").select("*").eq("id", targetId).single();
   if (profile) {
@@ -393,8 +405,14 @@ async function loadMyPredictions() {
     }
   }
   if (viewingOther) {
-    // Hide personal-export actions and show a back link + banner
-    const _e=document.getElementById("edit-picks-btn"); if(_e)_e.style.display="none"; const _d=document.getElementById("dl-wrap"); if(_d)_d.style.display="none";
+    // Hide personal-export actions; admins instead get an "Editar" button for this user
+    const _d=document.getElementById("dl-wrap"); if(_d)_d.style.display="none";
+    const _e=document.getElementById("edit-picks-btn");
+    let isAdmin=false; try{ const me=await getUserProfile(user.id); isAdmin=!!(me&&me.is_admin); }catch(e){}
+    if(_e){
+      if(isAdmin){ _e.href="porra-predict.html?user="+targetId; _e.textContent="✏️ Editar (admin)"; }
+      else { _e.style.display="none"; }
+    }
     const banner = document.createElement("div");
     banner.style.cssText = "max-width:1000px;margin:0 auto 4px;padding:10px 16px;background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.3);border-radius:10px;font-size:13px;color:var(--text)";
     banner.innerHTML = `Viendo las predicciones de <strong>${(profile?.alias || profile?.first_name || "otro jugador")}</strong> · <a href="porra-leaderboard.html" style="color:var(--gold)">← Volver a la clasificación</a>`;

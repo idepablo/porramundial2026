@@ -183,5 +183,7 @@ end $$;
 alter table users  add column if not exists seen_payment_confirm boolean default false;
 alter table scores add column if not exists prev_rank int;
 insert into settings (key, value) values
-  ('maintenance_mode','false'), ('real_bota',''), ('real_balon','')
+  ('maintenance_mode','false'), ('real_bota',''), ('real_balon',''),
+  ('currency','EUR'), ('hide_picks','false'), ('maint_banner','false'), ('maint_banner_time',''),
+  ('real_champion',''), ('real_runnerup','')
 on conflict (key) do nothing;

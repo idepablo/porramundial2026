@@ -14,7 +14,7 @@
 -- set from the admin panel. Champion/runner-up come from the real Final result.
 -- ============================================================================
 
-insert into settings (key, value) values ('real_bota',''), ('real_balon','')
+insert into settings (key, value) values ('real_bota',''), ('real_balon',''), ('real_champion',''), ('real_runnerup','')
 on conflict (key) do nothing;
 alter table scores add column if not exists prev_rank int;
 
@@ -24,7 +24,7 @@ declare
   u record;
   v_grp int; v_exact int; v_stand int;
   v_r32 int; v_r16 int; v_qf int; v_sf int; v_fin int; v_hon int; v_total int;
-  real_bota text; real_balon text; champ text; runnerup text;
+  real_bota text; real_balon text; champ text; runnerup text; champ_ovr text; runner_ovr text;
 begin
   select nullif(value,'') into real_bota  from settings where key='real_bota';
   select nullif(value,'') into real_balon from settings where key='real_balon';
@@ -32,6 +32,11 @@ begin
          case when real_home>real_away then away_team else home_team end
     into champ, runnerup
   from matches where phase='final' and real_home is not null order by id limit 1;
+  -- manual override from admin (Premios reales), if provided
+  select nullif(value,'') into champ_ovr  from settings where key='real_champion';
+  select nullif(value,'') into runner_ovr from settings where key='real_runnerup';
+  if champ_ovr  is not null then champ    := champ_ovr;  end if;
+  if runner_ovr is not null then runnerup := runner_ovr; end if;
 
   -- snapshot previous standing so the leaderboard can show movement
   update scores set prev_rank = rank;

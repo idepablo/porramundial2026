@@ -76,6 +76,26 @@ const GA_MEASUREMENT_ID = 'G-Y3E9CY1L6B';
   } catch(e){}
 })();
 
+// ── Scheduled maintenance BANNER (warns users before downtime) ──
+(async function showMaintBanner(){
+  try{
+    const page = (location.pathname.split('/').pop() || '').toLowerCase();
+    if (['mantenimiento.html','porra-admin.html'].includes(page)) return;
+    if (String(await getSetting('maint_banner')) !== 'true') return;
+    const t = await getSetting('maint_banner_time'); if(!t) return;
+    const [d,tm]=t.split('T'); const [Y,Mo,Da]=d.split('-').map(Number); const [H,Mi]=tm.split(':').map(Number);
+    const dt=new Date(Date.UTC(Y,Mo-1,Da,H+4,Mi)); // entered in US Eastern (EDT, Jun/Jul)
+    const us=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
+    const es=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
+    const bar=document.createElement('div');
+    bar.id='maint-banner';
+    bar.style.cssText='background:linear-gradient(90deg,#7c2d12,#9a3412);color:#fff;font-size:13px;line-height:1.4;padding:10px 16px;text-align:center;font-family:\'DM Sans\',sans-serif';
+    bar.innerHTML='⚠️ La página no estará operativa durante unos minutos a partir de las <strong>'+us+' (Costa Este EE.UU.) / '+es+' (España)</strong> por tareas de mantenimiento. Gracias.';
+    document.addEventListener('DOMContentLoaded',()=>document.body.insertBefore(bar, document.body.firstChild));
+    if(document.body) document.body.insertBefore(bar, document.body.firstChild);
+  }catch(e){}
+})();
+
 // ── PAYMENT UI: one renderer used by the landing modal AND the register page ──
 // Renders only the methods that are filled in. Buttons for link-based methods,
 // tap-to-copy rows for Zelle/Bizum. Pass the id of an empty container element.
@@ -232,7 +252,7 @@ async function initNav() {
   navRight.style.display = 'flex';
   navRight.style.alignItems = 'center';
   navRight.style.gap = '10px';
-  const help = `<button class="navhelp-btn" onclick="openFaqModal()">FAQ</button><button class="navhelp-btn" onclick="openContactModal()">Contacto</button>`;
+  const help = '';  // FAQ/Contacto live only in the centered footer now
   if (user) {
     const profile = await getUserProfile(user.id);
     const name = profile?.alias || profile?.first_name || 'Cuenta';
@@ -520,12 +540,7 @@ function injectHelpWidgets(){
 
   // On pages WITHOUT a top nav (login/register) show a small top-right launcher;
   // on the main pages the FAQ/Contacto buttons live inside the nav (see initNav).
-  if (!document.getElementById('nav-auth')) {
-    const fab = document.createElement('div');
-    fab.id = 'help-fab'; fab.className = 'help-fab';
-    fab.innerHTML = `<button onclick="openFaqModal()">FAQ</button><button onclick="openContactModal()">Contacto</button>`;
-    document.body.appendChild(fab);
-  }
+  // (FAQ/Contacto are shown only in the centered footer — no nav buttons, no corner fab)
 
   const faqHtml = FAQ_ITEMS.map((f,i) => `<div class="faq-acc"><button class="faq-qbtn" onclick="toggleFaq(${i})"><span>${f.q}</span><span class="faq-chev" id="faq-chev-${i}">+</span></button><div class="faq-a" id="faq-a-${i}" style="display:none">${f.a}</div></div>`).join('');
   const faq = document.createElement('div');
@@ -551,8 +566,12 @@ function injectHelpWidgets(){
   if (!document.querySelector('.site-foot')) {
     const foot = document.createElement('div');
     foot.className = 'site-foot';
+    foot.style.width = '100%';
     foot.innerHTML = `Porra Mundial 2026 · <a onclick="openFaqModal()">FAQ</a> · <a onclick="openContactModal()">Contacto</a>`;
-    document.body.appendChild(foot);
+    // On layouts with a main column (admin), drop it INSIDE that column so it sits
+    // centered at the bottom instead of floating as a stray flex item.
+    const host = document.querySelector('.main') || document.body;
+    host.appendChild(foot);
   }
 }
 

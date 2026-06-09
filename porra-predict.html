@@ -1132,8 +1132,9 @@ async function submitPredictions() {
   btn.textContent = 'Guardando…'; btn.disabled = true;
 
   const sb   = getSB();
-  const user = await getCurrentUser();
-  if (!user) { window.location.href = 'porra-login.html'; return; }
+  const authed = await getCurrentUser();
+  if (!authed) { window.location.href = 'porra-login.html'; return; }
+  const user = { id: EDIT_UID || authed.id };
 
   try {
     // 1. Save all group match predictions
@@ -1210,7 +1211,8 @@ async function submitPredictions() {
 
 // ── LOAD EXISTING PREDICTIONS FROM SUPABASE ────────────────────────────────
 async function loadExistingPredictions() {
-  const user = await getCurrentUser();
+  const uid = EDIT_UID || (await getCurrentUser()).id;
+  const user = { id: uid };
   if (!user) return;
 
   const sb = getSB();
@@ -1266,8 +1268,9 @@ async function autoSave() {
   const ind = document.getElementById('save-indicator');
   ind.textContent = 'Guardando…'; ind.classList.add('show');
 
-  const user = await getCurrentUser();
-  if (!user) { ind.textContent = '⚠ No has iniciado sesión'; return; }
+  const authed = await getCurrentUser();
+  if (!authed) { ind.textContent = '⚠ No has iniciado sesión'; return; }
+  const user = { id: EDIT_UID || authed.id };
 
   const sb   = getSB();
   const rows = [];
@@ -1411,9 +1414,30 @@ function maybeAutoOracle(){
   const user = await requireAuth('porra-login.html?next=porra-predict.html');
   if (!user) return;
 
-  // Check if predictions are locked
-  const locked = await getSetting('predictions_locked');
-  if (locked === 'true') {
+  // Admin editing on behalf of another user? (?user=<id>)
+  EDIT_UID = user.id;
+  let adminEditing = false;
+  try {
+    const target = new URLSearchParams(location.search).get('user');
+    if (target && target !== user.id) {
+      const me = await getUserProfile(user.id);
+      if (me && me.is_admin) {
+        EDIT_UID = target; adminEditing = true;
+        const tp = await getUserProfile(target);
+        const nm = tp ? (tp.alias || tp.first_name || 'jugador') : 'jugador';
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:rgba(232,184,75,.15);border-bottom:1px solid rgba(232,184,75,.35);color:var(--text);padding:10px 16px;text-align:center;font-size:13px';
+        banner.innerHTML = '✏️ Estás editando las predicciones de <strong>'+nm+'</strong> como administrador.';
+        document.body.insertBefore(banner, document.body.firstChild);
+      }
+    }
+  } catch(e){}
+
+  // Check if predictions are locked (admins editing on behalf bypass the lock)
+  const lockFlag = await getSetting('predictions_locked');
+  const LOCK_AT = new Date('2026-06-11T19:00:00Z'); // 15:00 ET / 21:00 España
+  const locked = !adminEditing && ((lockFlag === 'true') || (Date.now() >= LOCK_AT.getTime()));
+  if (locked) {
     document.querySelector('.wizard-header').innerHTML =
       '<div style="padding:20px;text-align:center;color:var(--warn);font-size:16px">⏰ Las predicciones están cerradas. ¡El torneo ya ha comenzado!</div>';
     return;
