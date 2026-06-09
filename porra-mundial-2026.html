@@ -698,6 +698,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
 <script>
+  // If already logged in, go straight to the user home instead of the landing
+  (async () => { try { const u = await getCurrentUser(); if (u) location.replace('porra-home.html'); } catch(e){} })();
+</script>
+<script>
 // ── FLAG IMAGE HELPER ─────────────────────────────────────────────────────
 function flagImg(code, size) {
   if (!code) return '';

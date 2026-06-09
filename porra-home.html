@@ -68,7 +68,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="porra-mundial-2026.html">Porra Mundial 2026</a>
+  <a class="nav-logo" href="porra-home.html">Porra Mundial 2026</a>
   <div class="nav-links">
     <a class="nav-tab active" href="porra-home.html">Inicio</a>
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
@@ -95,9 +95,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
       <div class="action-ico" id="pred-action-ico">📝</div>
       <div class="action-h" id="pred-action-h">Ver / editar mis predicciones</div>
       <div class="action-p" id="pred-action-p">Marcadores de grupos, eliminatorias y cuadro de honor. Editable hasta el cierre.</div>
-    </a>
-    <a class="action-card action-card-center" href="porra-groups-bracket-daily.html">
-      <div class="action-h" style="margin:0;font-size:18px">Resultados</div>
     </a>
     <a class="action-card action-card-center" href="porra-leaderboard.html">
       <div class="action-h" style="margin:0;font-size:18px">Ver clasificación completa</div>
@@ -232,39 +229,27 @@ async function loadHome() {
 
   await initNav();
 
-  // Predictions action — route to the view if they've already made picks, else the wizard
-  let hasPicks = false;
-  try {
-    const [{ count: gc }, { count: kc }] = await Promise.all([
-      sb.from('predictions').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      sb.from('ko_predictions').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    ]);
-    hasPicks = (gc || 0) > 0 || (kc || 0) > 0;
-  } catch (e) {}
+  // Lock-aware predictions action
+  const locked = Date.now() >= LOCK_AT.getTime();
   const action = document.getElementById('pred-action');
-  if (hasPicks) {
+  if (locked) {
     action.href = 'porra-mypredictions.html';
     document.getElementById('pred-action-ico').textContent = '📊';
-    document.getElementById('pred-action-h').textContent = 'Ver / editar mis predicciones';
-    document.getElementById('pred-action-p').textContent = 'Consulta tus marcadores, edítalos y descarga una copia (Excel o PDF).';
+    document.getElementById('pred-action-h').textContent = 'Ver mis predicciones';
+    document.getElementById('pred-action-p').textContent = 'Las predicciones están cerradas. Consulta tus marcadores y tus puntos partido a partido.';
   } else {
     action.href = 'porra-predict.html';
     document.getElementById('pred-action-ico').textContent = '📝';
-    document.getElementById('pred-action-h').textContent = 'Hacer mis predicciones';
+    document.getElementById('pred-action-h').textContent = 'Ver / editar mis predicciones';
     document.getElementById('pred-action-p').textContent = 'Marcadores de grupos, eliminatorias y cuadro de honor. Editable hasta el cierre.';
   }
 
-  // Payment banner — "Pago confirmado" shows once (until first view), then disappears.
+  // Payment banner
   const status = profile ? profile.payment_status : 'pending';
   const banner = document.getElementById('pay-banner');
   if (status === 'active') {
-    if (profile && profile.seen_payment_confirm) {
-      banner.style.display = 'none';
-    } else {
-      banner.className = 'pay-banner pay-active';
-      banner.innerHTML = '✓ Pago confirmado. ¡Estás dentro de la porra!';
-      try { await sb.from('users').update({ seen_payment_confirm: true }).eq('id', user.id); } catch (e) {}
-    }
+    banner.className = 'pay-banner pay-active';
+    banner.innerHTML = '✓ Pago confirmado. ¡Estás dentro de la porra!';
   } else {
     banner.className = 'pay-banner pay-pending';
     banner.innerHTML = '⏳ Tu pago está pendiente. Tu cuenta se bloqueará si no se confirma antes del cierre (11 jun · 21:00 hora de España · 15:00 hora del Este).';

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>En mantenimiento — Porra Mundial 2026</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#07070f; --bg2:#13131f; --text:#eee; --muted:#9a9aa8; --gold:#e8b84b; --red:#c8102e; --green:#1a8754; --border:rgba(255,255,255,.1); }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; overflow-x:hidden; }
+  .glow{ position:fixed; border-radius:50%; filter:blur(80px); z-index:0; }
+  .glow1{ width:420px; height:420px; background:var(--red); opacity:.08; top:-120px; left:-100px; }
+  .glow2{ width:360px; height:360px; background:var(--green); opacity:.08; bottom:-120px; right:-100px; }
+  .card{ position:relative; z-index:1; background:var(--bg2); border:1px solid var(--border); border-radius:18px; padding:44px 30px; max-width:440px; width:100%; }
+  .logo{ font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px;
+    background:linear-gradient(90deg,var(--red),var(--gold),var(--green)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:24px; }
+  .ico{ font-size:48px; margin-bottom:12px; }
+  h1{ font-family:'Bebas Neue',sans-serif; font-size:40px; line-height:1; margin:0 0 14px; letter-spacing:1px; }
+  p{ color:var(--muted); font-size:15px; line-height:1.7; margin:0 0 8px; }
+  .small{ font-size:13px; margin-top:18px; }
+</style>
+</head>
+<body>
+<div class="glow glow1"></div>
+<div class="glow glow2"></div>
+<div class="card">
+  <div class="logo">Porra Mundial 2026</div>
+  <div class="ico">🛠️</div>
+  <h1>En mantenimiento</h1>
+  <p>Estamos aplicando mejoras a la porra. Volvemos en unos minutos.</p>
+  <p>No te preocupes — tus predicciones y tus puntos están a salvo.</p>
+  <p class="small">Vuelve a cargar la página en un rato. ¡Gracias por tu paciencia! ⚽</p>
+</div>
+<script>
+  // Auto-retry: every 30s, check if maintenance is over and bounce home.
+  setTimeout(function(){ location.href = 'porra-home.html'; }, 30000);
+</script>
+</body>
+</html>
