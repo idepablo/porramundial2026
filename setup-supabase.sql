@@ -177,3 +177,11 @@ end $$;
 --   • Load match fixtures into public.matches (id, phase, teams, kickoff, …).
 --   • Mark an admin:  update public.users set is_admin = true where email = 'you@example.com';
 -- ============================================================================
+
+
+-- ── Late additions (idempotent; safe to re-run) ──
+alter table users  add column if not exists seen_payment_confirm boolean default false;
+alter table scores add column if not exists prev_rank int;
+insert into settings (key, value) values
+  ('maintenance_mode','false'), ('real_bota',''), ('real_balon','')
+on conflict (key) do nothing;

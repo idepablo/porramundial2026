@@ -80,7 +80,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 
 <div class="wrap">
   <div class="greet" id="greet">Hola</div>
-  <div class="greet-sub" id="greet-sub">Tu panel de la porra</div>
+  <div class="greet-sub" id="greet-sub">Panel principal</div>
 
   <div id="pay-banner"></div>
 
@@ -95,6 +95,11 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
       <div class="action-ico" id="pred-action-ico">📝</div>
       <div class="action-h" id="pred-action-h">Ver / editar mis predicciones</div>
       <div class="action-p" id="pred-action-p">Marcadores de grupos, eliminatorias y cuadro de honor. Editable hasta el cierre.</div>
+    </a>
+    <a class="action-card" href="porra-groups-bracket-daily.html">
+      <div class="action-ico">📊</div>
+      <div class="action-h">Resultados</div>
+      <div class="action-p">Grupos, eliminatorias y resultados día a día.</div>
     </a>
     <a class="action-card action-card-center" href="porra-leaderboard.html">
       <div class="action-h" style="margin:0;font-size:18px">Ver clasificación completa</div>
@@ -140,6 +145,23 @@ const WC_FACTS = [
   "Solo seis jugadores han disputado cinco Mundiales: Carbajal, Matthäus, Márquez, Guardado, Messi y Cristiano Ronaldo.",
   "Kylian Mbappé marcó un triplete en la final de 2022, algo que no ocurría en una final desde Geoff Hurst en 1966.",
   "Miroslav Klose superó a Ronaldo Nazário como máximo goleador histórico en el 7-1 de Alemania a Brasil en 2014.",
+  "El primer Mundial se jugó en Uruguay en 1930, y la anfitriona se proclamó campeona venciendo a Argentina.",
+  "El Mundial no se disputó en 1942 ni 1946 a causa de la Segunda Guerra Mundial.",
+  "Italia ganó su primer Mundial en 1934, como país anfitrión.",
+  "El 'Maracanazo' de 1950: Uruguay venció a Brasil en el Maracaná ante casi 200.000 espectadores.",
+  "En los cuartos de 1986, Maradona marcó a Inglaterra la 'Mano de Dios' y, minutos después, el 'Gol del Siglo'.",
+  "Camerún fue la primera selección africana en alcanzar los cuartos de final, en Italia 1990.",
+  "El Mundial de 2002, en Corea del Sur y Japón, fue el primero organizado por dos países y el primero en Asia.",
+  "Corea del Sur llegó a semifinales en 2002, el mejor resultado de una selección asiática.",
+  "Sudáfrica 2010 fue el primer Mundial celebrado en el continente africano.",
+  "Francia ganó su primer Mundial como anfitriona en 1998 y volvió a levantarlo en 2018.",
+  "El videoarbitraje (VAR) se estrenó en un Mundial en Rusia 2018.",
+  "Marruecos fue la primera selección africana en llegar a unas semifinales, en Qatar 2022.",
+  "Qatar 2022 fue el primer Mundial disputado en invierno y el primero en un país árabe.",
+  "Geoff Hurst (1966) y Kylian Mbappé (2022) son los únicos que han marcado un triplete en una final.",
+  "Cristiano Ronaldo es el primer jugador que ha marcado en cinco Mundiales distintos (2006-2022).",
+  "El Mundial 2026 contará con 104 partidos, el mayor número de la historia del torneo.",
+  "El Mundial 2026 se repartirá en 16 sedes de Estados Unidos, México y Canadá.",
 ];
 let factIdx = Math.floor(Math.random() * WC_FACTS.length);
 function showFact(){ document.getElementById('fact-text').innerHTML =
@@ -229,27 +251,40 @@ async function loadHome() {
 
   await initNav();
 
-  // Lock-aware predictions action
-  const locked = Date.now() >= LOCK_AT.getTime();
+  // Predictions action depends on whether the user already has picks
   const action = document.getElementById('pred-action');
-  if (locked) {
+  let hasPicks = false;
+  try {
+    const sb0 = getSB();
+    const [{ count: pc }, { count: kc }] = await Promise.all([
+      sb0.from('predictions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+      sb0.from('ko_predictions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    ]);
+    hasPicks = (pc || 0) > 0 || (kc || 0) > 0;
+  } catch(e){}
+  if (hasPicks) {
     action.href = 'porra-mypredictions.html';
     document.getElementById('pred-action-ico').textContent = '📊';
-    document.getElementById('pred-action-h').textContent = 'Ver mis predicciones';
-    document.getElementById('pred-action-p').textContent = 'Las predicciones están cerradas. Consulta tus marcadores y tus puntos partido a partido.';
+    document.getElementById('pred-action-h').textContent = 'Ver / editar mis predicciones';
+    document.getElementById('pred-action-p').textContent = 'Consulta y edita tus marcadores de grupos, eliminatorias y cuadro de honor.';
   } else {
     action.href = 'porra-predict.html';
     document.getElementById('pred-action-ico').textContent = '📝';
-    document.getElementById('pred-action-h').textContent = 'Ver / editar mis predicciones';
-    document.getElementById('pred-action-p').textContent = 'Marcadores de grupos, eliminatorias y cuadro de honor. Editable hasta el cierre.';
+    document.getElementById('pred-action-h').textContent = 'Hacer mis predicciones';
+    document.getElementById('pred-action-p').textContent = 'Rellena tus marcadores de grupos, eliminatorias y cuadro de honor antes del cierre.';
   }
 
-  // Payment banner
+  // Payment banner — "confirmado" shows once, then never again
   const status = profile ? profile.payment_status : 'pending';
   const banner = document.getElementById('pay-banner');
   if (status === 'active') {
-    banner.className = 'pay-banner pay-active';
-    banner.innerHTML = '✓ Pago confirmado. ¡Estás dentro de la porra!';
+    if (profile && profile.seen_payment_confirm) {
+      banner.style.display = 'none';
+    } else {
+      banner.className = 'pay-banner pay-active';
+      banner.innerHTML = '✓ Pago confirmado. ¡Estás dentro de la porra!';
+      try { await getSB().from('users').update({ seen_payment_confirm: true }).eq('id', user.id); } catch(e){}
+    }
   } else {
     banner.className = 'pay-banner pay-pending';
     banner.innerHTML = '⏳ Tu pago está pendiente. Tu cuenta se bloqueará si no se confirma antes del cierre (11 jun · 21:00 hora de España · 15:00 hora del Este).';

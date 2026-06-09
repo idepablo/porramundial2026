@@ -115,11 +115,14 @@ nav {
 .pts-cell { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--gold); }
 .qualify-indicator { width: 3px; height: 32px; border-radius: 0; flex-shrink: 0; }
 .standing-row { border-left: 3px solid transparent; }
-.standing-row.q1 { border-left-color: var(--gold); }
-.standing-row.q2 { border-left-color: rgba(255,215,0,0.35); }
-.standing-row.q3 { border-left-color: var(--maybe); }
-.standing-row.out { border-left-color: transparent; }
+.standing-row.q1 { border-left-color: #eab308; background: rgba(234,179,8,0.07); }
+.standing-row.q2 { border-left-color: #22c55e; background: rgba(34,197,94,0.07); }
+.standing-row.q3 { border-left-color: #f59e0b; background: rgba(245,158,11,0.07); }
+.standing-row.out { border-left-color: #6b7280; }
 .standing-row.out td { opacity: 0.5; }
+.group-legend { display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color:var(--muted); margin:4px 0 12px; }
+.group-legend span { display:inline-flex; align-items:center; gap:5px; }
+.group-legend i { width:10px; height:10px; border-radius:2px; display:inline-block; }
 .qualify-check { color: var(--qualify); font-size: 13px; }
 .qualify-maybe { color: var(--maybe); font-size: 13px; }
 .qualify-no { color: var(--danger); font-size: 13px; }
@@ -307,6 +310,12 @@ nav {
   </div>
 </div>
 
+<div class="group-legend" style="padding:0 24px;">
+  <span><i style="background:#eab308"></i> 1º (clasifica)</span>
+  <span><i style="background:#22c55e"></i> 2º (clasifica)</span>
+  <span><i style="background:#f59e0b"></i> 3º (repesca)</span>
+  <span><i style="background:#6b7280"></i> Eliminado</span>
+</div>
 <div style="padding:0 24px 32px;" id="grupos-container"></div>
 
 </div>
@@ -541,7 +550,7 @@ function buildGroups() {
     block.className = `group-block g-${group.id}`;
     block.innerHTML = `
       <div class="group-label">
-        <div class="group-letter">Grp ${group.id}</div>
+        <div class="group-letter">Grupo ${group.id}</div>
       </div>
       <div class="group-row">
         <div>
@@ -556,7 +565,7 @@ function buildGroups() {
             <tbody>
               ${group.matches.map(m => `
                 <tr>
-                  <td class="date-cell">${m.date}<br><span style="font-size:10px;opacity:.85">${m.esTime} ES · ${m.etTime} ET</span></td>
+                  <td class="date-cell" style="line-height:1.5">${m.timeLabel}</td>
                   <td><span class="jornada">${m.jornada}</span></td>
                   <td>
                     <div class="team-cell">
@@ -866,9 +875,12 @@ async function loadFromSupabase() {
     }
     // Add match
     const kickoff = new Date(m.kickoff);
-    const dateStr = kickoff.toLocaleDateString('es-ES', { month:'short', day:'numeric', timeZone:'Europe/Madrid' });
+    const esDate = kickoff.toLocaleDateString('es-ES', { month:'short', day:'numeric', timeZone:'Europe/Madrid' });
+    const usDate = kickoff.toLocaleDateString('es-ES', { month:'short', day:'numeric', timeZone:'America/New_York' });
+    const dateStr = esDate;
     const esTime = kickoff.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/Madrid' });
     const etTime = kickoff.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/New_York' });
+    const timeLabel = `${usDate} · ${etTime} (Costa Este EE.UU.)<br>${esDate!==usDate ? esDate+' · ' : ''}${esTime} (España)`;
     const jIdx    = groupMap[g].matches.filter(x => x.jornada).length;
     const jornada = jIdx < 2 ? 'J1' : jIdx < 4 ? 'J2' : 'J3';
     groupMap[g].matches.push({
@@ -876,6 +888,7 @@ async function loadFromSupabase() {
       date:      dateStr,
       esTime,
       etTime,
+      timeLabel,
       home:      teamES(m.home_team),
       away:      teamES(m.away_team),
       homeGoals: m.real_home ?? null,
@@ -957,6 +970,17 @@ const KO_SCHEDULE = {
 };
 
 // ── BRACKET FROM DB (official FIFA skeleton + times; overlays real teams) ──
+// KO time label: US (Costa Este EE.UU.) first, España second
+function koTimeLabel(sl){
+  const M={Jan:'ene',Feb:'feb',Mar:'mar',Apr:'abr',May:'may',Jun:'jun',Jul:'jul',Aug:'ago',Sep:'sep',Oct:'oct',Nov:'nov',Dec:'dic'};
+  const en=(sl.et||'').replace(' ET','').split(' · ');
+  const enp=(en[0]||'').trim().split(/\s+/);
+  const usDate=(enp[1]||'')+' '+(M[enp[0]]||(enp[0]||'').toLowerCase());
+  const etTime=en[1]||'';
+  const es=(sl.es||'').split(' · ');
+  const esDate=es[0]||''; const esTime=es[1]||'';
+  return `${usDate} · ${etTime} (Costa Este EE.UU.)<br>${esDate&&esDate!==usDate ? esDate+' · ' : ''}${esTime} (España)`;
+}
 function buildBracketFromDB(koMatches) {
   const container = document.getElementById('bracket-container');
   if (!container) return;
@@ -1003,7 +1027,7 @@ function buildBracketFromDB(koMatches) {
           <div class="bracket-team-left">${m&&m.away_flag?flagImg(m.away_flag,'lg'):''}<span style="font-size:12px;font-weight:500">${awayLabel}</span></div>
           <span class="bracket-score ${hasA?'':'pending'}">${hasA?m.real_away:'–'}</span>
         </div>
-        <div style="padding:4px 10px;font-size:9.5px;color:var(--muted);border-top:1px solid var(--border);line-height:1.45">${sl.es} (España)<br>${sl.et}</div>`;
+        <div style="padding:4px 10px;font-size:9.5px;color:var(--muted);border-top:1px solid var(--border);line-height:1.45">${koTimeLabel(sl)}</div>`;
       wrap.appendChild(card);
     });
     col.appendChild(wrap);

@@ -697,6 +697,38 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             </div>
           </div>
 
+          <div class="field" style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Premios reales (al final del torneo)</label>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Empieza a escribir el nombre del jugador y selecciónalo de la lista. Otorga +10 puntos a quien lo acertó.</div>
+            <div style="position:relative">
+              <input type="text" id="bota-input" placeholder="🥇 Bota de Oro (máximo goleador)" autocomplete="off"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
+              <div id="bota-list" class="ac-list"></div>
+            </div>
+            <div style="position:relative;margin-top:8px">
+              <input type="text" id="balon-input" placeholder="⚽ Balón de Oro (mejor jugador)" autocomplete="off"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
+              <div id="balon-list" class="ac-list"></div>
+            </div>
+            <button onclick="saveHonours()" style="margin-top:8px;align-self:flex-start;background:rgba(232,184,75,0.15);border:1px solid rgba(232,184,75,0.35);color:var(--gold);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar premios</button>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(26,135,84,0.08);border:1px solid rgba(26,135,84,0.25);border-radius:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600">🔄 Recalcular puntuaciones</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Vuelve a calcular los puntos de todos tras introducir resultados o premios.</div>
+            </div>
+            <button id="recalc-btn" onclick="recalcScores()" style="background:var(--success,#1a8754);border:none;color:#fff;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Recalcular ahora</button>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600">🛠️ Modo mantenimiento</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Muestra la página "En mantenimiento" a todos menos a los administradores.</div>
+            </div>
+            <button id="maint-toggle" data-on="0" onclick="toggleMaintenance()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Activar</button>
+          </div>
+
           <button style="background:var(--gold);color:var(--bg);border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="this.textContent='Guardado ✓';setTimeout(()=>this.textContent='Guardar ajustes',1500)">Guardar ajustes</button>
         </div>
       </div>
@@ -706,6 +738,14 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 </div><!-- /main -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  .ac-list{position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--bg2,#13131f);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;display:none}
+  .ac-list.open{display:block}
+  .ac-item{padding:9px 14px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+  .ac-item:hover,.ac-item.active{background:rgba(255,255,255,.07)}
+  .ac-item .ac-country{color:var(--muted);font-size:11px}
+</style>
+<script src="squads-wc2026.js"></script>
 <script src="supabase.js"></script>
 <script>
 // ── DATA — loaded dynamically from Supabase ───────────────────────────────
@@ -969,7 +1009,7 @@ async function saveMatch(i) {
     if (error) throw error;
 
     // Trigger score recalculation for this match
-    await sb.rpc('recalculate_match_scores', { p_match_id: match.id }).catch(() => {});
+    await sb.rpc('recalculate_all_scores').catch((e)=>{ console.warn('recalc failed', e); });
 
     // Update local state
     TODAY_MATCHES[i].homeGoals = parseInt(h);
@@ -1505,6 +1545,70 @@ function flagImg(code, size) {
   const w = widths[size] || 40;
   return '<img src="https://flagcdn.com/w'+w+'/'+c+'.png" class="'+cls+'" alt="'+c+'" onerror="this.style.display=\'none\'">';
 }
+
+// ── Premios (Bota/Balón) autocomplete ──
+const ALL_PLAYERS = (window.WC2026_SQUADS||[]).flatMap(t => (t.players||[]).map(p => ({name:p, country:t.name})));
+function setupAutocomplete(inputId, listId){
+  const inp=document.getElementById(inputId), list=document.getElementById(listId);
+  if(!inp||!list) return;
+  inp.addEventListener('input', ()=>{
+    const q=inp.value.trim().toLowerCase();
+    if(q.length<2){ list.classList.remove('open'); list.innerHTML=''; return; }
+    const matches=ALL_PLAYERS.filter(p=>p.name.toLowerCase().includes(q)).slice(0,12);
+    list.innerHTML=matches.map(p=>`<div class="ac-item" data-name="${p.name.replace(/"/g,'&quot;')}"><span>${p.name}</span><span class="ac-country">${p.country}</span></div>`).join('');
+    list.classList.toggle('open', matches.length>0);
+    list.querySelectorAll('.ac-item').forEach(it=>it.onclick=()=>{ inp.value=it.dataset.name; list.classList.remove('open'); });
+  });
+  document.addEventListener('click', e=>{ if(!inp.contains(e.target)&&!list.contains(e.target)) list.classList.remove('open'); });
+}
+async function loadHonours(){
+  try{
+    const b=await getSetting('real_bota'), a=await getSetting('real_balon');
+    if(b) document.getElementById('bota-input').value=b;
+    if(a) document.getElementById('balon-input').value=a;
+  }catch(e){}
+}
+async function saveHonours(){
+  const bota=document.getElementById('bota-input').value.trim();
+  const balon=document.getElementById('balon-input').value.trim();
+  try{
+    await getSB().from('settings').upsert([{key:'real_bota',value:bota},{key:'real_balon',value:balon}]);
+    alert('Premios guardados. Pulsa "Recalcular ahora" para aplicar los puntos.');
+  }catch(e){ alert('Error: '+(e.message||e)); }
+}
+async function recalcScores(){
+  const btn=document.getElementById('recalc-btn'); if(!btn) return;
+  btn.disabled=true; const t=btn.textContent; btn.textContent='Recalculando…';
+  try{
+    const { error }=await getSB().rpc('recalculate_all_scores');
+    if(error) throw error;
+    btn.textContent='¡Listo! ✓'; setTimeout(()=>{btn.textContent=t;btn.disabled=false;},1800);
+  }catch(e){ alert('No se pudo recalcular: '+(e.message||e)+'\n\n¿Has ejecutado scoring-engine.sql en Supabase?'); btn.textContent=t; btn.disabled=false; }
+}
+// ── Maintenance toggle ──
+async function initMaintenance(){
+  try{ const v=await getSetting('maintenance_mode'); setMaintBtn(String(v)==='true'); }catch(e){ setMaintBtn(false); }
+}
+function setMaintBtn(on){
+  const b=document.getElementById('maint-toggle'); if(!b) return;
+  b.textContent = on ? 'Activado — Desactivar' : 'Activar';
+  b.dataset.on = on ? '1':'0';
+  b.style.background = on ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)';
+  b.style.borderColor = on ? 'rgba(239,68,68,0.4)' : 'var(--border)';
+  b.style.color = on ? '#f87171' : 'var(--text)';
+}
+async function toggleMaintenance(){
+  const b=document.getElementById('maint-toggle'); if(!b) return; const on=b.dataset.on==='1'; const next=!on;
+  b.disabled=true;
+  try{ await getSB().from('settings').upsert({key:'maintenance_mode',value: next?'true':'false'}); setMaintBtn(next); }
+  catch(e){ alert('Error: '+(e.message||e)); }
+  b.disabled=false;
+}
+setupAutocomplete('bota-input','bota-list');
+setupAutocomplete('balon-input','balon-list');
+loadHonours();
+initMaintenance();
+
 </script>
 </body>
 </html>

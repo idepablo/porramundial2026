@@ -53,6 +53,29 @@ const PAYMENT = {
 const ADMIN_EMAIL = 'jftrigueros@gmail.com';
 const CONTACT_FORM_ENDPOINT = '';   // ⏳ paste Formspree endpoint here for silent emails
 
+// ── Google Analytics ──
+const GA_MEASUREMENT_ID = 'G-Y3E9CY1L6B';
+(function loadGA(){
+  if (!GA_MEASUREMENT_ID || window.__gaLoaded) return; window.__gaLoaded = true;
+  const g = document.createElement('script'); g.async = true;
+  g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+  document.head.appendChild(g);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ dataLayer.push(arguments); };
+  gtag('js', new Date()); gtag('config', GA_MEASUREMENT_ID);
+})();
+
+// ── Maintenance mode: redirect normal users to the maintenance page ──
+(async function checkMaintenance(){
+  try {
+    const page = (location.pathname.split('/').pop() || '').toLowerCase();
+    const exempt = ['mantenimiento.html','porra-login.html','porra-admin.html','porra-mundial-2026.html','porra-register.html',''];
+    if (exempt.includes(page)) return;
+    const v = await getSetting('maintenance_mode');
+    if (String(v) === 'true') location.replace('mantenimiento.html');
+  } catch(e){}
+})();
+
 // ── PAYMENT UI: one renderer used by the landing modal AND the register page ──
 // Renders only the methods that are filled in. Buttons for link-based methods,
 // tap-to-copy rows for Zelle/Bizum. Pass the id of an empty container element.
@@ -166,8 +189,8 @@ function getSB() {
 
 // ── AUTH HELPERS ─────────────────────────────────────────────────────────────
 async function getCurrentUser() {
-  const { data: { user } } = await getSB().auth.getUser();
-  return user;
+  const { data: { session } } = await getSB().auth.getSession();
+  return session?.user || null;
 }
 
 async function getUserProfile(userId) {
@@ -190,7 +213,7 @@ async function requireAdmin() {
 }
 
 async function signOut() {
-  await getSB().auth.signOut();
+  try { await getSB().auth.signOut({ scope: 'local' }); } catch(e){}
   window.location.href = 'porra-mundial-2026.html';
 }
 
@@ -221,9 +244,31 @@ async function initNav() {
         ${avatar}<span style="font-size:13px;color:var(--text)">${name}</span></button>
       ${profile?.is_admin ? `<a href="porra-admin.html" style="font-size:12px;background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);color:#f87171;border-radius:6px;padding:5px 10px;text-decoration:none">Acceder como admin</a>` : ''}
       <button onclick="signOut()" style="font-size:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar sesión</button>`;
+    _injectSubnav();
   } else {
     navRight.innerHTML = help + `<a href="porra-login.html" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:8px 16px">Login</a>`;
   }
+}
+
+// ── Sub-nav bar (Inicio · Predicciones · Resultados · Clasificación) ──
+function _injectSubnav() {
+  const page = (location.pathname.split('/').pop() || '').toLowerCase();
+  const skip = ['porra-home.html','porra-mundial-2026.html','porra-login.html','porra-register.html','mantenimiento.html',''];
+  if (skip.includes(page)) return;
+  if (document.getElementById('subnav')) return;
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const links = [
+    ['porra-home.html','← Inicio'],
+    ['porra-mypredictions.html','Predicciones'],
+    ['porra-groups-bracket-daily.html','Resultados'],
+    ['porra-leaderboard.html','Clasificación'],
+  ];
+  const bar = document.createElement('div');
+  bar.id = 'subnav';
+  bar.innerHTML = links.map(([href,label]) =>
+    `<a href="${href}"${href===page?' class="active"':''}>${label}</a>`).join('');
+  nav.insertAdjacentElement('afterend', bar);
 }
 
 // ── LANGUAGE ─────────────────────────────────────────────────────────────────
@@ -316,6 +361,15 @@ function _helpStyles() {
   if (document.getElementById('help-widget-styles')) return;
   const st = document.createElement('style'); st.id = 'help-widget-styles';
   st.textContent = `
+    /* ── Old top tabs replaced by the sub-nav bar ── */
+    .nav-links, .nav-tabs { display: none !important; }
+    #subnav { display:flex; gap:4px; padding:8px 24px; background:rgba(7,7,15,.92); border-bottom:1px solid var(--border,#222); overflow-x:auto; position:sticky; top:56px; z-index:90; }
+    #subnav a { color:var(--muted,#9aa); text-decoration:none; font-size:13px; font-weight:600; padding:6px 12px; border-radius:16px; white-space:nowrap; }
+    #subnav a:hover { background:rgba(255,255,255,.06); color:var(--text,#eee); }
+    #subnav a.active { background:rgba(255,255,255,.10); color:var(--gold,#e8b84b); }
+    @media (max-width:640px){ #subnav{ padding:6px 10px; position:static; } }
+    .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; display:block; }
+    .lb-table{ min-width:600px; }
     /* ── GLOBAL MOBILE RESPONSIVENESS (applies on every page) ── */
     html, body { overflow-x: hidden; max-width: 100%; }
     img, table, pre, .bracket, .scoring-grid { max-width: 100%; }

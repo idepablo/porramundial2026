@@ -292,11 +292,12 @@ nav {
 
 <!-- TOURNAMENT STATS -->
 <div class="tourney-stats">
+  <div class="ts-card"><div class="ts-n" id="ts-myrank">#–</div><div class="ts-l">Tu posición</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-matches">0</div><div class="ts-l">Partidos jugados</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-participants">0</div><div class="ts-l">Participantes</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-pool">0 €</div><div class="ts-l">Bote</div></div>
-  <div class="ts-card"><div class="ts-n" id="ts-exact">0</div><div class="ts-l">Exactos</div></div>
-  <div class="ts-card"><div class="ts-n" id="ts-pct">–</div><div class="ts-l">Acierto 1X2</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-move">—</div><div class="ts-l">Movimiento</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-mypts">–</div><div class="ts-l">Tus puntos</div></div>
 </div>
 
 <!-- PODIUM TOP 3 -->
@@ -305,22 +306,6 @@ nav {
   <div class="podium-stage" id="podium-stage"></div>
 </div>
 
-<!-- MY POSITION BANNER -->
-<div class="my-pos-banner">
-  <div class="my-pos-inner">
-    <div class="my-pos-label">Tu posición</div>
-    <div class="my-pos-rank" id="my-pos-rank">#–</div>
-    <div>
-      <div class="my-pos-name" id="my-pos-name">Inicia sesión para ver tu posición</div>
-      <div class="my-pos-gap" id="my-pos-gap"></div>
-    </div>
-    <div style="margin-left:auto;text-align:right">
-      <div class="my-pos-pts" id="my-pos-pts">– pts</div>
-      <div class="my-pos-sub" id="my-pos-sub"></div>
-    </div>
-    <a href="porra-mypredictions.html" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:var(--gold);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Mis Predicciones →</a>
-  </div>
-</div>
 
 <!-- TABLE -->
 <div class="table-section">
@@ -336,7 +321,7 @@ nav {
       <tr>
         <th style="width:40px">#</th>
         <th>Jugador</th>
-        <th style="width:50px;text-align:center">Move</th>
+        <th style="width:50px;text-align:center">Mov.</th>
         <th class="right" style="width:80px">Hoy</th>
         <th class="right sorted" style="width:90px">Puntos</th>
         <th style="width:60px;text-align:center">Exactos</th>
@@ -375,11 +360,11 @@ function buildPodium() {
       ? `<span class="move-up">▲${p.move} today</span>`
       : p.move < 0
         ? `<span class="move-dn">▼${Math.abs(p.move)} today</span>`
-        : `<span class="move-eq">— no change</span>`;
+        : `<span class="move-eq">— sin cambios</span>`;
 
     return `<div class="podium-card ${pClass[i]}" style="cursor:pointer" onclick="location.href='porra-mypredictions.html?user=${p.id}'">
       <span class="podium-crown">${crowns[i]}</span>
-      <div class="podium-avatar">${ini}</div>
+      <div class="podium-avatar" style="overflow:hidden">${p.avatar ? `<img src="${p.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : ini}</div>
       <div class="podium-name">${dn}</div>
       <div class="podium-country">
         <span class="flag" style="font-size:14px">${p.country}</span>
@@ -387,7 +372,7 @@ function buildPodium() {
       </div>
       <div class="podium-pts">${p.total}</div>
       <div class="podium-pts-label">puntos</div>
-      <div class="podium-today">+${p.today} pts today · ${mv}</div>
+      <div class="podium-today">+${p.today} pts hoy · ${mv}</div>
       <div class="podium-plinth">${ranks[i]}</div>
     </div>`;
   }).join('');
@@ -430,7 +415,7 @@ function buildTable() {
     const isLantern = bottom3.has(p.id);
     const rankClass = rank===1?'r1':rank===2?'r2':rank===3?'r3':isLantern?'rl':'rm';
     const rowClass = p.isMe ? 'me' : isLantern ? 'red-lantern' : '';
-    const lanternNote = isLantern ? ` 🏮` : '';
+    const lanternNote = '';
     const meNote = p.isMe ? ' ← tú' : '';
 
     // Phase breakdown
@@ -484,7 +469,7 @@ function buildTable() {
         <td><div class="rank-cell ${rankClass}">${rank}</div></td>
         <td>
           <div class="player-cell">
-            <div class="player-avatar">${initials(p)}</div>
+            <div class="player-avatar" style="overflow:hidden">${p.avatar ? `<img src="${p.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : initials(p)}</div>
             <div>
               <div class="player-name">${displayName(p)}${meNote}${lanternNote}</div>
               <div class="player-alias"><span class="flag" style="font-size:12px">${p.country}</span>${p.alias ? ' · ' + p.first + ' ' + p.last : ''}</div>
@@ -542,9 +527,9 @@ async function loadClasificación() {
   const { data, error } = await sb
     .from('users')
     .select(`
-      id, first_name, last_name, alias, country, payment_status,
+      id, first_name, last_name, alias, country, avatar_url, payment_status,
       scores (total, group_match_pts, standings_pts, r32_pts, r16_pts,
-              qf_pts, sf_pts, final_pts, honours_pts, exact_scores, rank)
+              qf_pts, sf_pts, final_pts, honours_pts, exact_scores, rank, prev_rank)
     `)
     .order('created_at', { ascending: true });   // show every player
 
@@ -560,10 +545,11 @@ async function loadClasificación() {
       last:    u.last_name || '',
       alias:   u.alias || '',
       country: u.country || '',
+      avatar:  u.avatar_url || '',
       total:   s.total || 0,
       today:   0,
       exact:   s.exact_scores || 0,
-      move:    0,
+      move:    (s.rank && s.prev_rank) ? (s.prev_rank - s.rank) : 0,
       isMe:    u.id === currentUserId,
       phases: {
         groups:    s.group_match_pts || 0,
@@ -628,27 +614,16 @@ let currentUserId = null;
 
 function updateMyBanner() {
   const me = JUGADORS.find(p => p.isMe);
-  const rankEl   = document.getElementById('my-pos-rank');
-  const nameEl   = document.getElementById('my-pos-name');
-  const gapEl    = document.getElementById('my-pos-gap');
-  const ptsEl    = document.getElementById('my-pos-pts');
-  const subEl    = document.getElementById('my-pos-sub');
-
-  if (!me) {
-    if (nameEl) nameEl.textContent = 'Inicia sesión para ver tu posición';
-    if (rankEl) rankEl.textContent = '–';
-    return;
+  const rk=document.getElementById('ts-myrank'), mv=document.getElementById('ts-move'), pt=document.getElementById('ts-mypts');
+  if(!me){ if(rk)rk.textContent='#–'; if(mv)mv.textContent='—'; if(pt)pt.textContent='–'; return; }
+  const myRank = JUGADORS.indexOf(me)+1;
+  if(rk) rk.textContent='#'+myRank;
+  if(pt) pt.textContent=me.total;
+  if(mv){
+    if(me.move>0) mv.innerHTML='<span style="color:#34d399">▲'+me.move+'</span>';
+    else if(me.move<0) mv.innerHTML='<span style="color:#f87171">▼'+Math.abs(me.move)+'</span>';
+    else mv.textContent='—';
   }
-
-  const myRank = JUGADORS.indexOf(me) + 1;
-  const leader = JUGADORS[0];
-  const gap    = leader && leader.id !== me.id ? leader.total - me.total : 0;
-
-  if (rankEl) rankEl.textContent = '#' + myRank;
-  if (nameEl) nameEl.textContent = me.alias || (me.first + ' ' + me.last);
-  if (ptsEl)  ptsEl.textContent  = me.total + ' pts';
-  if (gapEl)  gapEl.textContent  = gap === 0 ? '¡Líder del grupo! 🔥' : gap + ' pts del 1er lugar';
-  if (subEl)  subEl.textContent  = me.exact + ' exactos';
 }
 
 // Subscribe to real-time score updates
