@@ -53,49 +53,6 @@ const PAYMENT = {
 const ADMIN_EMAIL = 'jftrigueros@gmail.com';
 const CONTACT_FORM_ENDPOINT = '';   // ⏳ paste Formspree endpoint here for silent emails
 
-// ── Google Analytics ──
-const GA_MEASUREMENT_ID = 'G-Y3E9CY1L6B';
-(function loadGA(){
-  if (!GA_MEASUREMENT_ID || window.__gaLoaded) return; window.__gaLoaded = true;
-  const g = document.createElement('script'); g.async = true;
-  g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
-  document.head.appendChild(g);
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){ dataLayer.push(arguments); };
-  gtag('js', new Date()); gtag('config', GA_MEASUREMENT_ID);
-})();
-
-// ── Maintenance mode: redirect normal users to the maintenance page ──
-(async function checkMaintenance(){
-  try {
-    const page = (location.pathname.split('/').pop() || '').toLowerCase();
-    const exempt = ['mantenimiento.html','porra-login.html','porra-admin.html','porra-mundial-2026.html','porra-register.html',''];
-    if (exempt.includes(page)) return;
-    const v = await getSetting('maintenance_mode');
-    if (String(v) === 'true') location.replace('mantenimiento.html');
-  } catch(e){}
-})();
-
-// ── Scheduled maintenance BANNER (warns users before downtime) ──
-(async function showMaintBanner(){
-  try{
-    const page = (location.pathname.split('/').pop() || '').toLowerCase();
-    if (['mantenimiento.html','porra-admin.html'].includes(page)) return;
-    if (String(await getSetting('maint_banner')) !== 'true') return;
-    const t = await getSetting('maint_banner_time'); if(!t) return;
-    const [d,tm]=t.split('T'); const [Y,Mo,Da]=d.split('-').map(Number); const [H,Mi]=tm.split(':').map(Number);
-    const dt=new Date(Date.UTC(Y,Mo-1,Da,H+4,Mi)); // entered in US Eastern (EDT, Jun/Jul)
-    const us=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
-    const es=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
-    const bar=document.createElement('div');
-    bar.id='maint-banner';
-    bar.style.cssText='background:linear-gradient(90deg,#7c2d12,#9a3412);color:#fff;font-size:13px;line-height:1.4;padding:10px 16px;text-align:center;font-family:\'DM Sans\',sans-serif';
-    bar.innerHTML='⚠️ La página no estará operativa durante unos minutos a partir de las <strong>'+us+' (Costa Este EE.UU.) / '+es+' (España)</strong> por tareas de mantenimiento. Gracias.';
-    document.addEventListener('DOMContentLoaded',()=>document.body.insertBefore(bar, document.body.firstChild));
-    if(document.body) document.body.insertBefore(bar, document.body.firstChild);
-  }catch(e){}
-})();
-
 // ── PAYMENT UI: one renderer used by the landing modal AND the register page ──
 // Renders only the methods that are filled in. Buttons for link-based methods,
 // tap-to-copy rows for Zelle/Bizum. Pass the id of an empty container element.
@@ -209,8 +166,10 @@ function getSB() {
 
 // ── AUTH HELPERS ─────────────────────────────────────────────────────────────
 async function getCurrentUser() {
+  // Use the locally-stored session (instant) instead of auth.getUser() which makes
+  // a network round-trip on every page load — the main cause of slow first loads.
   const { data: { session } } = await getSB().auth.getSession();
-  return session?.user || null;
+  return session?.user ?? null;
 }
 
 async function getUserProfile(userId) {
@@ -233,7 +192,7 @@ async function requireAdmin() {
 }
 
 async function signOut() {
-  try { await getSB().auth.signOut({ scope: 'local' }); } catch(e){}
+  await getSB().auth.signOut();
   window.location.href = 'porra-mundial-2026.html';
 }
 
@@ -252,7 +211,7 @@ async function initNav() {
   navRight.style.display = 'flex';
   navRight.style.alignItems = 'center';
   navRight.style.gap = '10px';
-  const help = '';  // FAQ/Contacto live only in the centered footer now
+  const help = `<button class="navhelp-btn" onclick="openFaqModal()">FAQ</button><button class="navhelp-btn" onclick="openContactModal()">Contacto</button>`;
   if (user) {
     const profile = await getUserProfile(user.id);
     const name = profile?.alias || profile?.first_name || 'Cuenta';
@@ -264,31 +223,9 @@ async function initNav() {
         ${avatar}<span style="font-size:13px;color:var(--text)">${name}</span></button>
       ${profile?.is_admin ? `<a href="porra-admin.html" style="font-size:12px;background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);color:#f87171;border-radius:6px;padding:5px 10px;text-decoration:none">Acceder como admin</a>` : ''}
       <button onclick="signOut()" style="font-size:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar sesión</button>`;
-    _injectSubnav();
   } else {
     navRight.innerHTML = help + `<a href="porra-login.html" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:8px 16px">Login</a>`;
   }
-}
-
-// ── Sub-nav bar (Inicio · Predicciones · Resultados · Clasificación) ──
-function _injectSubnav() {
-  const page = (location.pathname.split('/').pop() || '').toLowerCase();
-  const skip = ['porra-home.html','porra-mundial-2026.html','porra-login.html','porra-register.html','mantenimiento.html',''];
-  if (skip.includes(page)) return;
-  if (document.getElementById('subnav')) return;
-  const nav = document.querySelector('nav');
-  if (!nav) return;
-  const links = [
-    ['porra-home.html','← Inicio'],
-    ['porra-mypredictions.html','Predicciones'],
-    ['porra-groups-bracket-daily.html','Resultados'],
-    ['porra-leaderboard.html','Clasificación'],
-  ];
-  const bar = document.createElement('div');
-  bar.id = 'subnav';
-  bar.innerHTML = links.map(([href,label]) =>
-    `<a href="${href}"${href===page?' class="active"':''}>${label}</a>`).join('');
-  nav.insertAdjacentElement('afterend', bar);
 }
 
 // ── LANGUAGE ─────────────────────────────────────────────────────────────────
@@ -381,15 +318,6 @@ function _helpStyles() {
   if (document.getElementById('help-widget-styles')) return;
   const st = document.createElement('style'); st.id = 'help-widget-styles';
   st.textContent = `
-    /* ── Old top tabs replaced by the sub-nav bar ── */
-    .nav-links, .nav-tabs { display: none !important; }
-    #subnav { display:flex; gap:4px; padding:8px 24px; background:rgba(7,7,15,.92); border-bottom:1px solid var(--border,#222); overflow-x:auto; position:sticky; top:56px; z-index:90; }
-    #subnav a { color:var(--muted,#9aa); text-decoration:none; font-size:13px; font-weight:600; padding:6px 12px; border-radius:16px; white-space:nowrap; }
-    #subnav a:hover { background:rgba(255,255,255,.06); color:var(--text,#eee); }
-    #subnav a.active { background:rgba(255,255,255,.10); color:var(--gold,#e8b84b); }
-    @media (max-width:640px){ #subnav{ padding:6px 10px; position:static; } }
-    .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; display:block; }
-    .lb-table{ min-width:600px; }
     /* ── GLOBAL MOBILE RESPONSIVENESS (applies on every page) ── */
     html, body { overflow-x: hidden; max-width: 100%; }
     img, table, pre, .bracket, .scoring-grid { max-width: 100%; }
@@ -540,7 +468,12 @@ function injectHelpWidgets(){
 
   // On pages WITHOUT a top nav (login/register) show a small top-right launcher;
   // on the main pages the FAQ/Contacto buttons live inside the nav (see initNav).
-  // (FAQ/Contacto are shown only in the centered footer — no nav buttons, no corner fab)
+  if (!document.getElementById('nav-auth')) {
+    const fab = document.createElement('div');
+    fab.id = 'help-fab'; fab.className = 'help-fab';
+    fab.innerHTML = `<button onclick="openFaqModal()">FAQ</button><button onclick="openContactModal()">Contacto</button>`;
+    document.body.appendChild(fab);
+  }
 
   const faqHtml = FAQ_ITEMS.map((f,i) => `<div class="faq-acc"><button class="faq-qbtn" onclick="toggleFaq(${i})"><span>${f.q}</span><span class="faq-chev" id="faq-chev-${i}">+</span></button><div class="faq-a" id="faq-a-${i}" style="display:none">${f.a}</div></div>`).join('');
   const faq = document.createElement('div');
@@ -566,12 +499,8 @@ function injectHelpWidgets(){
   if (!document.querySelector('.site-foot')) {
     const foot = document.createElement('div');
     foot.className = 'site-foot';
-    foot.style.width = '100%';
     foot.innerHTML = `Porra Mundial 2026 · <a onclick="openFaqModal()">FAQ</a> · <a onclick="openContactModal()">Contacto</a>`;
-    // On layouts with a main column (admin), drop it INSIDE that column so it sits
-    // centered at the bottom instead of floating as a stray flex item.
-    const host = document.querySelector('.main') || document.body;
-    host.appendChild(foot);
+    document.body.appendChild(foot);
   }
 }
 
@@ -717,3 +646,43 @@ async function saveSettings(userId, currentEmail){
     setTimeout(()=>{ const m=document.getElementById('settings-modal'); if(m && !emailMsg) m.classList.remove('open'); }, 1400);
   } catch(e){ done('Error inesperado.',false); }
 }
+
+// ── MAINTENANCE MODE + SCHEDULED BANNER ──────────────────────────────────────
+// Reads settings written by the admin (Ajustes). Redirects non-admins to the
+// maintenance page when maintenance_mode is on, and shows a scheduled banner.
+async function initSiteState(){
+  try {
+    const path = (location.pathname.split('/').pop() || '').toLowerCase();
+    const EXEMPT = ['mantenimiento.html','porra-login.html','porra-admin.html','porra-register.html','porra-mundial-2026.html','index.html',''];
+    const sb = getSB();
+    const { data } = await sb.from('settings').select('key,value').in('key',['maintenance_mode','maint_banner','maint_banner_time']);
+    const map = {}; (data||[]).forEach(r => map[r.key] = r.value);
+
+    if (map.maintenance_mode === 'true' && !EXEMPT.includes(path)) {
+      let isAdmin = false;
+      const u = await getCurrentUser();
+      if (u) { const p = await getUserProfile(u.id); isAdmin = !!(p && p.is_admin); }
+      if (!isAdmin) { location.href = 'mantenimiento.html'; return; }
+    }
+    if (map.maint_banner === 'true' && path !== 'mantenimiento.html' && path !== 'porra-admin.html') {
+      showMaintBanner(map.maint_banner_time);
+    }
+  } catch (e) { /* settings unavailable — fail open */ }
+}
+function showMaintBanner(timeStr){
+  if (document.getElementById('maint-banner')) return;
+  let msg = '🔧 Mantenimiento programado próximamente. Es posible que la web no esté disponible unos minutos.';
+  if (timeStr) { try {
+    const d = new Date(timeStr);
+    const es = d.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
+    const us = d.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
+    msg = '🔧 Mantenimiento programado: ' + us + ' (EE.UU.) · ' + es + ' (España). La web podría no estar disponible unos minutos.';
+  } catch(e){} }
+  const b = document.createElement('div');
+  b.id = 'maint-banner';
+  b.style.cssText = 'background:#e8b84b;color:#13131f;text-align:center;padding:10px 16px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;line-height:1.4';
+  b.textContent = msg;
+  document.body.insertBefore(b, document.body.firstChild);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteState);
+else initSiteState();

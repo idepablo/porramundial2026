@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Porra Mundial 2026</title>
@@ -365,6 +367,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .hd-row:last-child{border-bottom:none}
 .hd-rank{width:24px;font-weight:700;color:var(--muted)}
 .hd-pts{margin-left:auto;font-weight:700;color:var(--gold,#e8b84b)}
+@media (max-width: 820px){ #sbx-grid{ grid-template-columns:1fr !important; } }
+.sbx-score{width:42px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:14px;font-family:\'DM Sans\',sans-serif}
 </style>
 </head>
 <body>
@@ -387,6 +391,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     </div>
     <div class="nav-item" onclick="showPage('whatsapp', this)">
       <span class="icon">💬</span> WhatsApp
+    </div>
+    <div class="nav-item" onclick="showPage('sandbox', this)">
+      <span class="icon">🧪</span> Modo Pruebas
     </div>
     <div class="nav-item" onclick="showPage('clasif', this)">
       <span class="icon">🏅</span> Clasificación
@@ -548,6 +555,40 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <!-- ══════════════════════════════════ -->
     <!-- PAGE: ESTADÍSTICAS                -->
     <!-- ══════════════════════════════════ -->
+    <div class="page" id="page-sandbox">
+      <div style="background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px">
+        🧪 <strong>Modo Pruebas.</strong> Simula resultados para ver cómo quedarían los puntos y la clasificación con las predicciones <em>reales</em> de los jugadores. <strong>No se guarda nada</strong>: los datos reales no se tocan. Recarga la página para empezar de cero.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="copy-btn" onclick="sbxRandom()" style="padding:9px 14px">Rellenar aleatorio</button>
+        <button class="copy-btn" onclick="sbxReset()" style="padding:9px 14px">↺ Reiniciar</button>
+        <span id="sbx-status" style="margin-left:auto;color:var(--muted);font-size:12px;align-self:center"></span>
+      </div>
+      <datalist id="sbx-teamlist"></datalist>
+      <datalist id="sbx-playerlist"></datalist>
+      <div class="card" style="margin-bottom:16px"><div style="padding:12px 14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div style="font-weight:700;color:var(--gold);font-size:12px">Premios individuales</div>
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px">👟 Bota de Oro
+          <input list="sbx-playerlist" id="sbx-bota" class="sbx-score" style="width:160px;text-align:left" placeholder="Jugador…" oninput="sbxAward('bota',this.value)"></label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px">⚽ Balón de Oro
+          <input list="sbx-playerlist" id="sbx-balon" class="sbx-score" style="width:160px;text-align:left" placeholder="Jugador…" oninput="sbxAward('balon',this.value)"></label>
+      </div></div>
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px" id="sbx-grid">
+        <div>
+          <div class="section-title" style="margin-bottom:10px">Resultados simulados — Fase de grupos</div>
+          <div id="sbx-matches"></div>
+        </div>
+        <div>
+          <div class="section-title" style="margin-bottom:10px">Clasificación simulada</div>
+          <div style="color:var(--muted);font-size:11px;margin-bottom:6px">Toca un jugador para ver el desglose completo de sus puntos.</div>
+          <div class="card"><div id="sbx-board" style="padding:8px 14px"></div></div>
+        </div>
+      </div>
+      <div class="section-title" style="margin:22px 0 10px">Eliminatorias — bracket simulado</div>
+      <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Escribe los equipos de cada cruce y el resultado. Usa "Avanzar ganadores" para llevar a los ganadores a la siguiente ronda.</div>
+      <div id="sbx-ko"></div>
+    </div>
+
     <div class="page" id="page-clasif">
       <div style="display:flex;gap:6px;margin-bottom:16px">
         <button class="hd-tab active" id="cl-global-tab" onclick="clasifTab('global')">Global</button>
@@ -888,7 +929,7 @@ let currentFilter = 'all';
 let searchTerm = '';
 
 // ── PAGE SWITCHING ─────────────────────────────────────────────────────────
-const PAGE_TITLES = {results:'Partidos y Puntos', daily:'Resumen del Día', stats:'Estadísticas', whatsapp:'Mensajes WhatsApp', clasif:'Clasificación', users:'Participantes', overview:'Inicio', settings:'Ajustes'};
+const PAGE_TITLES = {results:'Partidos y Puntos', daily:'Resumen del Día', stats:'Estadísticas', whatsapp:'Mensajes WhatsApp', sandbox:'Modo Pruebas', clasif:'Clasificación', users:'Participantes', overview:'Inicio', settings:'Ajustes'};
 function toggleSidebar(){
   document.querySelector('.sidebar')?.classList.toggle('open');
   document.getElementById('sidebar-overlay')?.classList.toggle('open');
@@ -907,6 +948,7 @@ function showPage(id, navEl) {
   if (id === 'stats') renderStats();
   if (id === 'whatsapp') renderWhatsapp();
   if (id === 'clasif') renderClasif();
+  if (id === 'sandbox') renderSandbox();
 }
 
 // ── BUILD MATCHES ENTRY ────────────────────────────────────────────────────
@@ -1856,6 +1898,120 @@ function renderClasif(){
   else { lb=HD.users.map(u=>({name:u.name,avatar:u.avatar,pts:HD.scores[u.id]||0,sub:'pts'})).sort((a,b)=>b.pts-a.pts); }
   box.innerHTML = lb.length ? lb.map((r,i)=>`<div class="hd-row"><span class="hd-rank">${i+1}</span>${hdAvatar(r.avatar,r.name)}<span style="flex:1">${r.name}</span><span class="hd-pts">${r.pts} <span style="color:var(--muted);font-weight:400;font-size:11px">${r.sub}</span></span></div>`).join('') : '<div style="color:var(--muted);padding:14px">Sin datos.</div>';
 }
+
+
+// ════════════════ MODO PRUEBAS (sandbox — no DB writes) ════════════════
+let SBX={}, SBX_KO={r32:[],r16:[],qf:[],sf:[],final:[]}, SBX_AWARDS={bota:'',balon:''};
+let SBX_PREDS=null, SBX_KOPREDS=null, SBX_HON=null;
+const SBX_ROUNDS=[['r32',16],['r16',8],['qf',4],['sf',2],['final',1]];
+const SBX_RNAME={r32:'Dieciseisavos (R32)',r16:'Octavos',qf:'Cuartos',sf:'Semifinales',final:'Final'};
+const SBX_QUAL={r32:4,r16:6,qf:8,sf:10,final:12}, SBX_VALS={r32:[2,3,4],r16:[3,4,5],qf:[4,5,6],sf:[5,6,7],final:[10,15,20]};
+const sbxSgn=x=>x>0?1:x<0?-1:0;
+function sbxMP(ph,pa,rh,ra,v){ if([ph,pa,rh,ra].some(x=>x==null))return 0; return (sbxSgn(ph-pa)===sbxSgn(rh-ra)?v[0]:0)+((ph-pa)===(rh-ra)?v[1]:0)+(ph===rh&&pa===ra?v[2]:0); }
+function sbxTable(gm,res){ const st={}; const add=(t,gf,ga)=>{const x=st[t]||(st[t]={pts:0,gd:0,gf:0});x.gf+=gf;x.gd+=(gf-ga);x.pts+=(gf>ga?3:gf===ga?1:0);};
+  for(const m of gm){const r=res(m); if(!r)return null; add(m.home_team,r.h,r.a); add(m.away_team,r.a,r.h);}
+  return Object.entries(st).sort((A,B)=>{const a=A[1],b=B[1];return b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||(A[0]<B[0]?-1:1);}).map(e=>e[0]); }
+function sbxGroupMatches(){ return (HD.matches||[]).filter(m=>m.phase==='group'); }
+function sbxTeams(){ const s=new Set(); sbxGroupMatches().forEach(m=>{ if(m.home_team)s.add(m.home_team); if(m.away_team)s.add(m.away_team); }); return [...s].sort(); }
+function sbxPlayers(){ const out=[]; try{ const sq=window.WC2026_SQUADS; if(sq){ const arrs=Array.isArray(sq)?sq:Object.values(sq);
+  arrs.forEach(v=>{ const list=Array.isArray(v)?v:(v&&v.players)?v.players:[]; list.forEach(p=>{ const n=typeof p==='string'?p:(p&&(p.name||p.player)); if(n)out.push(n); }); }); } }catch(e){} return [...new Set(out)].sort(); }
+function sbxBuild(){ SBX_PREDS={}; SBX_KOPREDS={}; SBX_HON={};
+  HD.users.forEach(u=>{ SBX_PREDS[u.id]={}; SBX_KOPREDS[u.id]=[]; SBX_HON[u.id]={boot:'',ball:''}; });
+  (HD.preds||[]).forEach(p=>{ (SBX_PREDS[p.user_id]=SBX_PREDS[p.user_id]||{})[p.match_id]={h:p.predicted_home,a:p.predicted_away}; });
+  (HD.ko||[]).forEach(k=>{ (SBX_KOPREDS[k.user_id]=SBX_KOPREDS[k.user_id]||[]).push(k); });
+  (HD.hon||[]).forEach(h=>{ SBX_HON[h.user_id]={boot:h.boot_1||'',ball:h.ball_1||''}; });
+  SBX_ROUNDS.forEach(([r,n])=>{ if(!SBX_KO[r]||SBX_KO[r].length!==n) SBX_KO[r]=Array.from({length:n},()=>({a:'',b:'',ha:null,hb:null})); }); }
+function sbxComputeUser(uid){
+  const preds=SBX_PREDS[uid]||{}, koP=SBX_KOPREDS[uid]||[], hon=SBX_HON[uid]||{};
+  const d={grpWinner:0,grpDiff:0,grpExact:0,grpPts:0,stand:0,ko:{r32:{q:0,m:0},r16:{q:0,m:0},qf:{q:0,m:0},sf:{q:0,m:0},final:{q:0,m:0}},champ:0,runner:0,bota:0,balon:0,total:0};
+  const gm=sbxGroupMatches();
+  for(const m of gm){ const r=SBX[m.id],p=preds[m.id]; if(!r||!p)continue;
+    if(sbxSgn(p.h-p.a)===sbxSgn(r.h-r.a))d.grpWinner++; if((p.h-p.a)===(r.h-r.a))d.grpDiff++; if(p.h===r.h&&p.a===r.a)d.grpExact++;
+    d.grpPts+=sbxMP(p.h,p.a,r.h,r.a,[1,2,3]); }
+  [...new Set(gm.map(m=>m.group_letter))].forEach(g=>{ const grp=gm.filter(m=>m.group_letter===g); if(!grp.every(m=>SBX[m.id]))return;
+    const real=sbxTable(grp,m=>SBX[m.id]),pred=sbxTable(grp,m=>preds[m.id]||null); if(!real||!pred)return;
+    for(let i=0;i<real.length;i++) if(real[i]===pred[i]) d.stand+=5; });
+  const teamsIn=r=>{const s=new Set(); (SBX_KO[r]||[]).forEach(x=>{if(x.a)s.add(x.a);if(x.b)s.add(x.b);}); return s;};
+  const adv=pfx=>new Set(koP.filter(k=>String(k.slot_id).startsWith(pfx)).map(k=>k.advanced).filter(Boolean));
+  const predT=pfx=>{const s=new Set(); koP.filter(k=>String(k.slot_id).startsWith(pfx)).forEach(k=>{if(k.home_team)s.add(k.home_team);if(k.away_team)s.add(k.away_team);}); return s;};
+  const pr=predT('r32'); teamsIn('r32').forEach(t=>{if(pr.has(t))d.ko.r32.q+=SBX_QUAL.r32;});
+  const a32=adv('r32'); teamsIn('r16').forEach(t=>{if(a32.has(t))d.ko.r16.q+=SBX_QUAL.r16;});
+  const a16=adv('r16'); teamsIn('qf').forEach(t=>{if(a16.has(t))d.ko.qf.q+=SBX_QUAL.qf;});
+  const aqf=adv('qf'); teamsIn('sf').forEach(t=>{if(aqf.has(t))d.ko.sf.q+=SBX_QUAL.sf;});
+  const asf=adv('sf'); teamsIn('final').forEach(t=>{if(asf.has(t))d.ko.final.q+=SBX_QUAL.final;});
+  for(const r of ['r32','r16','qf','sf','final']){ (SBX_KO[r]||[]).forEach(mt=>{ if(!mt.a||!mt.b||mt.ha==null||mt.hb==null)return;
+    const kp=koP.find(k=>k.home_team===mt.a&&k.away_team===mt.b&&k.pred_home!=null); if(kp)d.ko[r].m+=sbxMP(kp.pred_home,kp.pred_away,mt.ha,mt.hb,SBX_VALS[r]); }); }
+  const fin=(SBX_KO.final||[])[0];
+  if(fin&&fin.a&&fin.b&&fin.ha!=null&&fin.hb!=null&&fin.ha!==fin.hb){ const champ=fin.ha>fin.hb?fin.a:fin.b, runner=fin.ha>fin.hb?fin.b:fin.a;
+    const fk=koP.find(k=>String(k.slot_id).startsWith('final'));
+    if(fk){ if(fk.advanced===champ)d.champ+=35; if((fk.home_team===runner&&fk.advanced!==fk.home_team)||(fk.away_team===runner&&fk.advanced!==fk.away_team))d.runner+=20; } }
+  if(SBX_AWARDS.bota&&hon.boot===SBX_AWARDS.bota)d.bota+=10;
+  if(SBX_AWARDS.balon&&hon.ball===SBX_AWARDS.balon)d.balon+=10;
+  const ko=d.ko; d.koTotal=ko.r32.q+ko.r32.m+ko.r16.q+ko.r16.m+ko.qf.q+ko.qf.m+ko.sf.q+ko.sf.m+ko.final.q+ko.final.m;
+  d.total=d.grpPts+d.stand+d.koTotal+d.champ+d.runner+d.bota+d.balon; return d; }
+function sbxRenderBoard(){ const box=document.getElementById('sbx-board'); if(!box)return;
+  const lb=HD.users.map(u=>({id:u.id,name:u.name,avatar:u.avatar,d:sbxComputeUser(u.id)})).sort((a,b)=>b.d.total-a.d.total);
+  const st=document.getElementById('sbx-status'); if(st)st.textContent=Object.keys(SBX).length+' / '+sbxGroupMatches().length+' partidos de grupo simulados';
+  box.innerHTML = lb.length ? lb.map((r,i)=>`<div class="hd-row" style="cursor:pointer" onclick="sbxDetail('${r.id}')" title="Ver desglose"><span class="hd-rank">${i+1}</span>${hdAvatar(r.avatar,r.name)}<span style="flex:1">${r.name} <span style="color:var(--muted);font-size:11px">▸</span></span><span class="hd-pts">${r.d.total}</span></div>`).join('') : '<div style="color:var(--muted);padding:14px">No hay jugadores.</div>'; }
+function sbxDetail(uid){ const u=HD.users.find(x=>x.id===uid); if(!u)return; const d=sbxComputeUser(uid);
+  const row=(l,v)=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--muted)">${l}</span><span style="font-weight:600">${v}</span></div>`;
+  const ko=d.ko;
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px" onclick="this.remove()">
+    <div style="background:var(--bg2,#1a1a2e);border:1px solid var(--border);border-radius:14px;max-width:440px;width:100%;max-height:85vh;overflow:auto;padding:20px" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">${hdAvatar(u.avatar,u.name)}<div style="font-weight:700;font-size:16px;flex:1">${u.name}</div><div style="font-size:22px;font-weight:800;color:var(--gold)">${d.total}</div></div>
+      <div style="font-size:13px">
+        <div style="color:var(--gold);font-weight:700;margin:8px 0 2px">Fase de grupos</div>
+        ${row('Ganador/empate acertado',d.grpWinner)}${row('Diferencia de goles',d.grpDiff)}${row('Resultado exacto',d.grpExact)}${row('Puntos de partidos',d.grpPts)}${row('Posiciones de grupo',d.stand)}
+        <div style="color:var(--gold);font-weight:700;margin:10px 0 2px">Eliminatorias</div>
+        ${row('R32 — clasif. / marcador',ko.r32.q+' / '+ko.r32.m)}${row('Octavos — clasif. / marcador',ko.r16.q+' / '+ko.r16.m)}${row('Cuartos — clasif. / marcador',ko.qf.q+' / '+ko.qf.m)}${row('Semis — clasif. / marcador',ko.sf.q+' / '+ko.sf.m)}${row('Final — clasif. / marcador',ko.final.q+' / '+ko.final.m)}
+        <div style="color:var(--gold);font-weight:700;margin:10px 0 2px">Premios</div>
+        ${row('Campeón',d.champ)}${row('Subcampeón',d.runner)}${row('👟 Bota de Oro',d.bota)}${row('⚽ Balón de Oro',d.balon)}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:800"><span>TOTAL</span><span style="color:var(--gold)">${d.total}</span></div>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="margin-top:14px;width:100%;background:var(--gold);color:#13131f;border:none;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar</button>
+    </div></div>`;
+  const wrap=document.createElement('div'); wrap.innerHTML=html; document.body.appendChild(wrap.firstElementChild); }
+function sbxSet(id,side,val){ const v=val===''?null:parseInt(val,10); const cur=SBX[id]||{h:null,a:null}; cur[side]=isNaN(v)?null:v;
+  if(cur.h==null&&cur.a==null)delete SBX[id]; else SBX[id]=cur; sbxRenderBoard(); }
+function sbxKoTeam(r,i,side,val){ SBX_KO[r][i][side]=val.trim(); sbxRenderBoard(); }
+function sbxKoScore(r,i,side,val){ const v=val===''?null:parseInt(val,10); SBX_KO[r][i][side]=isNaN(v)?null:v; sbxRenderBoard(); }
+function sbxAdvance(r){ const idx=SBX_ROUNDS.findIndex(x=>x[0]===r); if(idx<0||idx>=SBX_ROUNDS.length-1)return;
+  const next=SBX_ROUNDS[idx+1][0]; const winners=(SBX_KO[r]||[]).map(m=>(m.a&&m.b&&m.ha!=null&&m.hb!=null&&m.ha!==m.hb)?(m.ha>m.hb?m.a:m.b):'');
+  SBX_KO[next]=SBX_KO[next].map((m,i)=>({a:winners[i*2]||'',b:winners[i*2+1]||'',ha:null,hb:null})); sbxRenderKO(); sbxRenderBoard(); }
+function sbxAward(t,val){ SBX_AWARDS[t]=val.trim(); sbxRenderBoard(); }
+function sbxRenderKO(){ const box=document.getElementById('sbx-ko'); if(!box)return;
+  box.innerHTML = SBX_ROUNDS.map(([r,n])=>{ const rows=(SBX_KO[r]||[]).map((m,i)=>`<div class="hd-row">
+      <input list="sbx-teamlist" class="sbx-score" style="width:90px;text-align:left" value="${m.a||''}" oninput="sbxKoTeam('${r}',${i},'a',this.value)" placeholder="Equipo">
+      <input class="sbx-score" type="number" min="0" value="${m.ha??''}" oninput="sbxKoScore('${r}',${i},'ha',this.value)"><span style="color:var(--muted)">-</span>
+      <input class="sbx-score" type="number" min="0" value="${m.hb??''}" oninput="sbxKoScore('${r}',${i},'hb',this.value)">
+      <input list="sbx-teamlist" class="sbx-score" style="width:90px;text-align:left" value="${m.b||''}" oninput="sbxKoTeam('${r}',${i},'b',this.value)" placeholder="Equipo"></div>`).join('');
+    const advBtn = r!=='final' ? `<button class="copy-btn" style="font-size:11px;padding:3px 8px" onclick="sbxAdvance('${r}')">Avanzar ganadores →</button>` : '';
+    return `<div class="card" style="margin-bottom:12px"><div style="padding:8px 14px"><div style="display:flex;align-items:center;margin-bottom:4px"><div style="font-weight:700;color:var(--gold);font-size:12px;flex:1">${SBX_RNAME[r]}</div>${advBtn}</div>${rows}</div></div>`; }).join(''); }
+function sbxRenderGroups(){ const box=document.getElementById('sbx-matches'); if(!box)return; const gm=sbxGroupMatches();
+  if(!gm.length){ box.innerHTML='<div style="color:var(--muted)">No hay partidos de grupos cargados.</div>'; return; }
+  const groups=[...new Set(gm.map(m=>m.group_letter))].sort();
+  box.innerHTML=groups.map(g=>{ const rows=gm.filter(m=>m.group_letter===g).map(m=>{ const r=SBX[m.id]||{};
+    return `<div class="hd-row"><span style="flex:1;font-size:13px">${m.home_team||'?'}</span>
+      <input class="sbx-score" type="number" min="0" value="${r.h??''}" oninput="sbxSet('${m.id}','h',this.value)">
+      <span style="color:var(--muted);margin:0 2px">-</span>
+      <input class="sbx-score" type="number" min="0" value="${r.a??''}" oninput="sbxSet('${m.id}','a',this.value)">
+      <span style="flex:1;font-size:13px;text-align:right">${m.away_team||'?'}</span></div>`; }).join('');
+    return `<div class="card" style="margin-bottom:12px"><div style="padding:8px 14px"><div style="font-weight:700;color:var(--gold);font-size:12px;margin-bottom:4px">Grupo ${g}</div>${rows}</div></div>`; }).join(''); }
+function sbxRenderAwards(){ const bo=document.getElementById('sbx-bota'), ba=document.getElementById('sbx-balon'); if(bo)bo.value=SBX_AWARDS.bota; if(ba)ba.value=SBX_AWARDS.balon;
+  const dl=document.getElementById('sbx-playerlist'); if(dl&&!dl.dataset.filled){ dl.innerHTML=sbxPlayers().map(p=>`<option value="${p.replace(/"/g,'')}">`).join(''); dl.dataset.filled='1'; }
+  const tl=document.getElementById('sbx-teamlist'); if(tl&&!tl.dataset.filled){ tl.innerHTML=sbxTeams().map(t=>`<option value="${t}">`).join(''); tl.dataset.filled='1'; } }
+function sbxRandom(){ sbxGroupMatches().forEach(m=>{ SBX[m.id]={h:Math.floor(Math.random()*4),a:Math.floor(Math.random()*4)}; });
+  const teams=sbxTeams();
+  if(SBX_KO.r32.length){ const pool=[...teams].sort(()=>Math.random()-0.5);
+    SBX_KO.r32=SBX_KO.r32.map((_,i)=>{ let ha=Math.floor(Math.random()*4),hb=Math.floor(Math.random()*4); if(ha===hb)hb++; return {a:pool[i*2]||'',b:pool[i*2+1]||'',ha,hb}; });
+    ['r16','qf','sf','final'].forEach(r=>{ SBX_KO[r]=SBX_KO[r].map(()=>({a:'',b:'',ha:null,hb:null})); }); sbxAdvanceAll(); }
+  const players=sbxPlayers(); if(players.length){ SBX_AWARDS.bota=players[Math.floor(Math.random()*players.length)]; SBX_AWARDS.balon=players[Math.floor(Math.random()*players.length)]; }
+  sbxRenderGroups(); sbxRenderKO(); sbxRenderAwards(); sbxRenderBoard(); }
+function sbxAdvanceAll(){ ['r32','r16','qf','sf'].forEach(r=>{ const idx=SBX_ROUNDS.findIndex(x=>x[0]===r); const next=SBX_ROUNDS[idx+1][0];
+  const w=(SBX_KO[r]||[]).map(m=>(m.a&&m.b&&m.ha!=null&&m.hb!=null&&m.ha!==m.hb)?(m.ha>m.hb?m.a:m.b):'');
+  SBX_KO[next]=SBX_KO[next].map((m,i)=>{ let ha=Math.floor(Math.random()*4),hb=Math.floor(Math.random()*4); if(ha===hb)hb++; return {a:w[i*2]||'',b:w[i*2+1]||'',ha,hb}; }); }); }
+function sbxReset(){ SBX={}; SBX_KO={r32:[],r16:[],qf:[],sf:[],final:[]}; SBX_AWARDS={bota:'',balon:''}; sbxBuild(); sbxRenderGroups(); sbxRenderKO(); sbxRenderAwards(); sbxRenderBoard(); }
+function renderSandbox(){ sbxBuild(); sbxRenderGroups(); sbxRenderKO(); sbxRenderAwards(); sbxRenderBoard(); }
 
 </script>
 </body>
