@@ -177,7 +177,16 @@ api-sports-widget {
     cfg.setAttribute('data-key', key);
     // load the widget library now that the key is in place
     const sc=document.createElement('script'); sc.type='module'; sc.crossOrigin='anonymous';
-    sc.src='https://widgets.api-sports.io/3.1.0/widgets.js'; document.head.appendChild(sc);
+    sc.src='https://widgets.api-sports.io/3.1.0/widgets.js';
+    // El widget lee la clave al inicializarse; como la inyectamos en caliente,
+    // hay que forzar una reinicialización para que la recoja (método oficial de API-Sports).
+    const reinit = () => {
+      try{ document.dispatchEvent(new Event('DOMContentLoaded',{bubbles:true,cancelable:true})); }catch(e){}
+    };
+    sc.addEventListener('load', () => { setTimeout(reinit, 300); setTimeout(reinit, 1200); });
+    document.head.appendChild(sc);
+    // Red de seguridad por si 'load' ya había disparado o tarda:
+    [800, 2000, 3500].forEach(ms => setTimeout(reinit, ms));
   }catch(e){ console.error('live init', e); }
 })();
 </script>
