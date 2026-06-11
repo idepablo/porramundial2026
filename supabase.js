@@ -716,5 +716,21 @@ function showMaintBanner(timeStr){
   b.textContent = msg;
   document.body.insertBefore(b, document.body.firstChild);
 }
+// FEATURE FLAG: mientras la Quiniela esté desactivada, ocultamos todos sus
+// enlaces (pestañas de navegación y tarjetas del inicio) en todo el sitio.
+// Para reactivarla, pon QUINIELA_DISABLED = false.
+const QUINIELA_DISABLED = true;
+function hideQuinielaLinks(){
+  if(!QUINIELA_DISABLED) return;
+  try{
+    document.querySelectorAll('a[href*="porra-quiniela"]').forEach(a=>{
+      const card = a.closest('.action-card');
+      (card || a).style.display = 'none';
+    });
+  }catch(e){}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hideQuinielaLinks); else hideQuinielaLinks();
+[400, 1200].forEach(ms => setTimeout(hideQuinielaLinks, ms)); // por si algún enlace se inyecta tarde
+
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteState);
 else initSiteState();

@@ -119,6 +119,16 @@ function countBy(arr, keyFn){
 
 async function load(){
   const el=document.getElementById('content');
+  // ── FUNCIÓN DESACTIVADA TEMPORALMENTE ──────────────────────────────────────
+  // La Quiniela está bloqueada para TODOS (sin excepción) hasta nuevo aviso.
+  // Para reactivarla, borra este bloque (hasta el "return") y se restaura sola.
+  el.innerHTML = '<div class="card" style="text-align:center;padding:44px 24px">'
+    +'<div style="font-size:42px;margin-bottom:10px">🔒</div>'
+    +'<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;letter-spacing:.5px;margin:0 0 8px">La Quiniela no está disponible</h2>'
+    +'<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0">Esta sección está temporalmente desactivada. ¡Vuelve pronto!</p>'
+    +'</div>';
+  return;
+  // eslint-disable-next-line no-unreachable
   try{
     // wait for shared helper
     let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,80)); tries++; }
