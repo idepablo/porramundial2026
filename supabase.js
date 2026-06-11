@@ -468,7 +468,10 @@ function injectHelpWidgets(){
 
   // On pages WITHOUT a top nav (login/register) show a small top-right launcher;
   // on the main pages the FAQ/Contacto buttons live inside the nav (see initNav).
-  if (!document.getElementById('nav-auth')) {
+  // The admin panel has its own sidebar/footer, so skip both fab and footer there.
+  const _hwPath = (location.pathname.split('/').pop() || '').toLowerCase();
+  const _onAdmin = _hwPath === 'porra-admin.html';
+  if (!document.getElementById('nav-auth') && !_onAdmin) {
     const fab = document.createElement('div');
     fab.id = 'help-fab'; fab.className = 'help-fab';
     fab.innerHTML = `<button onclick="openFaqModal()">FAQ</button><button onclick="openContactModal()">Contacto</button>`;
@@ -496,7 +499,7 @@ function injectHelpWidgets(){
     <div style="margin-top:14px;font-size:12px;color:#9a9aa8;line-height:1.5;text-align:center">También puedes enviarnos tu consulta por nuestro <a id="contact-wa" href="#" target="_blank" rel="noopener" style="color:var(--gold,#e8b84b)">canal de WhatsApp del grupo</a>.</div></div>`;
   document.body.appendChild(contact);
 
-  if (!document.querySelector('.site-foot')) {
+  if (!document.querySelector('.site-foot') && !_onAdmin) {
     const foot = document.createElement('div');
     foot.className = 'site-foot';
     foot.innerHTML = `Porra Mundial 2026 · <a onclick="openFaqModal()">FAQ</a> · <a onclick="openContactModal()">Contacto</a>`;

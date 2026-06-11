@@ -481,7 +481,6 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         <div class="card-header">
           <div>
             <div class="card-title" id="matches-card-title">Partidos de hoy</div>
-            <div class="card-sub">Activa el Bonus ×2 o ×3 para duplicar o triplicar los puntos de ese partido.</div>
           </div>
           <button class="save-all-btn" onclick="saveAll()">Guardar todos los resultados</button>
         </div>
@@ -516,16 +515,16 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       <div class="card" style="margin-bottom:20px;overflow:visible">
         <div class="card-header"><div class="card-title">Cuadro de Honor (al final del torneo)</div></div>
         <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
-          <div style="font-size:12px;color:var(--muted)">Bota y Balón de Oro: escribe el nombre y selecciónalo (+10 puntos a quien lo acertó). Campeón y subcampeón se calculan solos con el resultado de la final; usa «Editar» para corregirlos.</div>
+          <div style="font-size:12px;color:var(--muted)">Los cuatro campos se desbloquean automáticamente el día de la final; antes, pulsa «Editar» para modificarlos. Bota y Balón de Oro: escribe el nombre y selecciónalo (+10 puntos a quien lo acertó). Campeón y subcampeón se calculan solos con el resultado de la final.</div>
           <div style="display:flex;gap:14px;flex-wrap:wrap">
             <div style="position:relative;flex:1;min-width:220px">
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Bota de Oro</label>
-              <input type="text" id="bota-input" placeholder="Máximo goleador" autocomplete="off" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Bota de Oro <span id="bota-edit-btn" style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleEdit('bota-input','bota-edit-btn')">Editar</span></label>
+              <input type="text" id="bota-input" disabled placeholder="Máximo goleador" autocomplete="off" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
               <div id="bota-list" class="ac-list"></div>
             </div>
             <div style="position:relative;flex:1;min-width:220px">
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Balón de Oro</label>
-              <input type="text" id="balon-input" placeholder="Mejor jugador" autocomplete="off" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Balón de Oro <span id="balon-edit-btn" style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleEdit('balon-input','balon-edit-btn')">Editar</span></label>
+              <input type="text" id="balon-input" disabled placeholder="Mejor jugador" autocomplete="off" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
               <div id="balon-list" class="ac-list"></div>
             </div>
           </div>
@@ -1757,15 +1756,31 @@ async function toggleMaintenance(){
   b.disabled=false;
 }
 // ── PREMIOS REALES (Partidos y Puntos) ──
-function toggleChampEdit(which){
-  const el=document.getElementById(which==='champ'?'champ-input':'runnerup-input');
-  const btn=document.getElementById(which+'-edit-btn');
+// Generic lock/unlock toggle for any honour field.
+function toggleEdit(inputId, btnId){
+  const el=document.getElementById(inputId);
+  const btn=document.getElementById(btnId);
   if(el){
     el.disabled=!el.disabled;
     if(!el.disabled){ el.focus(); el.style.borderColor='rgba(232,184,75,0.5)'; }
     else { el.style.borderColor='var(--border)'; }
   }
   if(btn) btn.textContent = (el && !el.disabled) ? 'Bloquear' : 'Editar';
+}
+function toggleChampEdit(which){
+  toggleEdit(which==='champ'?'champ-input':'runnerup-input', which+'-edit-btn');
+}
+// Día de la final del Mundial 2026 (Costa Este). Antes de esta fecha los cuatro
+// campos del Cuadro de Honor están bloqueados; el admin puede desbloquearlos con «Editar».
+const TOURNEY_FINAL_DAY = new Date('2026-07-19T00:00:00-04:00');
+function lockHonoursForToday(){
+  const isFinalDay = Date.now() >= TOURNEY_FINAL_DAY.getTime();
+  [['bota-input','bota-edit-btn'],['balon-input','balon-edit-btn'],
+   ['champ-input','champ-edit-btn'],['runnerup-input','runnerup-edit-btn']].forEach(([inId,btId])=>{
+    const el=document.getElementById(inId); const btn=document.getElementById(btId);
+    if(el){ el.disabled = !isFinalDay; el.style.borderColor = isFinalDay ? 'rgba(232,184,75,0.5)' : 'var(--border)'; }
+    if(btn) btn.textContent = isFinalDay ? 'Bloquear' : 'Editar';
+  });
 }
 async function loadPremios(){
   try{
@@ -1783,6 +1798,7 @@ async function loadPremios(){
     }
     const ci=document.getElementById('champ-input'); if(ci) ci.value=champ;
     const ri=document.getElementById('runnerup-input'); if(ri) ri.value=runner;
+    lockHonoursForToday();
   }catch(e){}
 }
 async function savePremios(btn){

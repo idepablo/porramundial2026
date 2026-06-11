@@ -62,7 +62,13 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .lb-foot { padding: 14px 18px; text-align: center; }
 .lb-foot a { color: var(--gold); text-decoration: none; font-size: 13px; font-weight: 600; }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
-@media(max-width:560px){ .greet { font-size: 28px; } .nav-links { display:none; } }
+@media(max-width:560px){
+  .greet { font-size: 28px; }
+  nav { flex-wrap: wrap; height: auto; row-gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+  .nav-links { display: flex; order: 3; width: 100%; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-tab { white-space: nowrap; flex: 0 0 auto; }
+}
 
 .nav-logo { flex: 1; }
 #nav-auth { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }

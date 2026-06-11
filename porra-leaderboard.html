@@ -169,6 +169,11 @@ nav {
 
 /* ── MAIN TABLE ── */
 .lb-table { width: 100%; border-collapse: collapse; }
+.lb-table-scroll { width: 100%; }
+@media(max-width:560px){
+  .lb-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .lb-table { min-width: 520px; }
+}
 .lb-table thead th {
   padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
@@ -321,6 +326,7 @@ nav {
     <button class="sort-btn" id="sort-exact" onclick="sortBy('exact',this)">Exactos ↕</button>
   </div>
 
+  <div class="lb-table-scroll">
   <table class="lb-table">
     <thead>
       <tr>
@@ -335,6 +341,7 @@ nav {
     </thead>
     <tbody id="lb-tbody"></tbody>
   </table>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
