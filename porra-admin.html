@@ -1317,9 +1317,9 @@ async function loadUsers() {
   // Who has submitted picks (group or knockout)?
   let predCount = 0;
   try {
-    const [{ data: gp }, { data: kp }] = await Promise.all([
-      getSB().from('predictions').select('user_id'),
-      getSB().from('ko_predictions').select('user_id'),
+    const [gp, kp] = await Promise.all([
+      fetchAll('predictions','user_id'),
+      fetchAll('ko_predictions','user_id'),
     ]);
     const withPicks = new Set([...(gp||[]).map(r=>r.user_id), ...(kp||[]).map(r=>r.user_id)]);
     USERS_DATA.forEach(u => { if (withPicks.has(u.id)) u.hasPicks = true; });
@@ -2083,13 +2083,13 @@ async function loadHomeDashboard(profile){
       sb.from('users').select('id,first_name,alias,avatar_url'),
       sb.from('scores').select('user_id,total,group_match_pts,standings_pts,r32_pts,r16_pts,qf_pts,sf_pts,final_pts,honours_pts,exact_scores'),
       sb.from('matches').select('id,phase,group_letter,home_team,away_team,real_home,real_away,kickoff,bonus'),
-      sb.from('predictions').select('user_id,match_id,predicted_home,predicted_away'),
-      sb.from('ko_predictions').select('user_id,slot_id,advanced,home_team,away_team,pred_home,pred_away'),
+      fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
+      fetchAll('ko_predictions','user_id,slot_id,advanced,home_team,away_team,pred_home,pred_away'),
       sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
     ]);
     HD.users=(u.data||[]).map(x=>({id:x.id,name:x.alias||x.first_name||'—',avatar:x.avatar_url||''}));
     HD.scores={}; HD.scoreRows={}; (sc.data||[]).forEach(x=>{ HD.scores[x.user_id]=x.total||0; HD.scoreRows[x.user_id]=x; });
-    HD.matches=m.data||[]; HD.preds=p.data||[]; HD.ko=ko.data||[]; HD.hon=ho.data||[];
+    HD.matches=m.data||[]; HD.preds=p||[]; HD.ko=ko||[]; HD.hon=ho.data||[];
     HD.todayK=new Date().toLocaleDateString('en-CA',{timeZone:HD_TZ});
   }catch(e){ console.warn('dashboard load',e); }
 
@@ -2569,20 +2569,20 @@ async function dlLoad(){
   const sb=getSB();
   const [u,p,k,h,m,sc]=await Promise.all([
     sb.from('users').select('id,first_name,last_name,alias,email,country,phone,payment_status,blocked'),
-    sb.from('predictions').select('user_id,match_id,predicted_home,predicted_away'),
-    sb.from('ko_predictions').select('user_id,slot_id,home_team,away_team,pred_home,pred_away,advanced'),
+    fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
+    fetchAll('ko_predictions','user_id,slot_id,home_team,away_team,pred_home,pred_away,advanced'),
     sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
     sb.from('matches').select('id,phase,group_letter,home_team,away_team,kickoff'),
     sb.from('scores').select('*'),
   ]);
   const matchById={}; (m.data||[]).forEach(x=>matchById[x.id]=x);
   const predsByUser={},koByUser={},honByUser={},scoreByUser={};
-  (p.data||[]).forEach(x=>{(predsByUser[x.user_id]=predsByUser[x.user_id]||[]).push(x);});
-  (k.data||[]).forEach(x=>{(koByUser[x.user_id]=koByUser[x.user_id]||[]).push(x);});
+  (p||[]).forEach(x=>{(predsByUser[x.user_id]=predsByUser[x.user_id]||[]).push(x);});
+  (k||[]).forEach(x=>{(koByUser[x.user_id]=koByUser[x.user_id]||[]).push(x);});
   (h.data||[]).forEach(x=>{honByUser[x.user_id]=x;});
   (sc.data||[]).forEach(x=>{scoreByUser[x.user_id]=x;});
   DL_CACHE={users:(u.data||[]).slice().sort((a,b)=>dlName(a).localeCompare(dlName(b))),
-    preds:p.data||[],ko:k.data||[],hon:h.data||[],matches:m.data||[],
+    preds:p||[],ko:k||[],hon:h.data||[],matches:m.data||[],
     matchById,predsByUser,koByUser,honByUser,scoreByUser};
   return DL_CACHE;
 }

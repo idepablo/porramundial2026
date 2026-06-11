@@ -210,6 +210,24 @@ async function getSetting(key) {
   return data?.value ?? null;
 }
 
+// Trae TODAS las filas de una tabla en páginas de 1000 (Supabase devuelve como
+// máximo 1000 por petición; sin esto, tablas grandes como "predictions" se cortan).
+async function fetchAll(table, columns, pageSize) {
+  pageSize = pageSize || 1000;
+  const sb = getSB();
+  let all = [], from = 0;
+  for (;;) {
+    const { data, error } = await sb.from(table).select(columns).range(from, from + pageSize - 1);
+    if (error || !data || !data.length) break;
+    all = all.concat(data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+    if (from > 200000) break; // tope de seguridad
+  }
+  return all;
+}
+if (typeof window !== 'undefined') window.fetchAll = fetchAll;
+
 // ── NAV: inject login/logout state (Spanish) ─────────────────────────────────
 async function initNav() {
   if (typeof _helpStyles === 'function') _helpStyles();

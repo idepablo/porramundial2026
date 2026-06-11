@@ -127,15 +127,46 @@ api-sports-widget {
   try{
     // wait for the shared Supabase helper to be ready
     let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,100)); tries++; }
+    const sb = (typeof getSB==='function') ? getSB() : null;
     let key='';
-    if(typeof getSB==='function'){
-      try{ const { data } = await getSB().from('settings').select('value').eq('key','apifootball_key').maybeSingle(); key=(data&&data.value)||''; }catch(e){ console.warn('live key fetch', e); }
+    if(sb){
+      try{ const { data } = await sb.from('settings').select('value').eq('key','apifootball_key').maybeSingle(); key=(data&&data.value)||''; }catch(e){ console.warn('live key fetch', e); }
     }
     const cfg=document.querySelector('api-sports-widget[data-type="config"]');
     if(!key || !cfg){
       const n=document.getElementById('live-notice'); if(n) n.style.display='block';
       return;
     }
+
+    // No mostrar los partidos del día hasta que empiece el primero (kickoff <= ahora).
+    let anyStarted=true, nextKick=null;
+    if(sb){ try{
+      const { data: ms } = await sb.from('matches').select('kickoff');
+      const now=Date.now();
+      const times=(ms||[]).map(m=>new Date(m.kickoff).getTime()).filter(t=>!isNaN(t));
+      anyStarted = times.some(t=>t<=now);
+      const future=times.filter(t=>t>now).sort((a,b)=>a-b);
+      nextKick = future.length ? future[0] : null;
+    }catch(e){ console.warn('live gate', e); } }
+
+    if(!anyStarted){
+      const lw=document.querySelector('api-sports-widget[data-type="league"]');
+      const card=lw ? lw.closest('.card') : null;
+      const fmtET = nextKick ? new Date(nextKick).toLocaleString('es-ES',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'}) : null;
+      const fmtES = nextKick ? new Date(nextKick).toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}) : null;
+      if(card){
+        card.innerHTML = '<div class="card-b" style="padding:30px 20px;text-align:center">'
+          +'<div style="font-size:34px;margin-bottom:8px">⏳</div>'
+          +'<div style="font-weight:700;margin-bottom:6px">Aún no hay partidos en directo</div>'
+          +'<div style="color:var(--muted);font-size:13px;line-height:1.6">Los marcadores aparecerán aquí en cuanto empiece el primer partido'
+          + (fmtET ? '.<br>Primer partido: '+fmtET+' (Costa Este) · '+fmtES+' (España).' : '.')
+          +'</div></div>';
+      }
+      // Recargar solo cuando empiece el primer partido (si es dentro de las próximas 24 h).
+      if(nextKick){ const ms=nextKick-Date.now()+5000; if(ms>0 && ms<24*3600000) setTimeout(()=>location.reload(), ms); }
+      // Seguimos cargando los widgets para que la Clasificación sí se muestre.
+    }
+
     cfg.setAttribute('data-key', key);
     // load the widget library now that the key is in place
     const sc=document.createElement('script'); sc.type='module'; sc.crossOrigin='anonymous';

@@ -258,10 +258,10 @@ async function loadDailyRecap(){
   const box = document.getElementById('recap-box'); if(!box) return;
   try{
     const sb = getSB();
-    const [{ data: matches }, { data: users }, { data: allPreds }] = await Promise.all([
+    const [{ data: matches }, { data: users }, allPreds] = await Promise.all([
       sb.from('matches').select('id, kickoff, real_home, real_away'),
       sb.from('users').select('id, first_name, alias, blocked'),
-      sb.from('predictions').select('user_id, match_id, predicted_home, predicted_away'),
+      fetchAll('predictions', 'user_id, match_id, predicted_home, predicted_away'),
     ]);
     const today=new Date(); const y=today.getFullYear(), mo=today.getMonth(), d=today.getDate();
     const isToday=(ts)=>{ const k=new Date(ts); return k.getFullYear()===y && k.getMonth()===mo && k.getDate()===d; };
