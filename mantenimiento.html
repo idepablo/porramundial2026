@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>En mantenimiento — Porra Mundial 2026</title>
+<link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -34,9 +39,43 @@
   <p>No te preocupes — tus predicciones y tus puntos están a salvo.</p>
   <p class="small">Vuelve a cargar la página en un rato. ¡Gracias por tu paciencia! ⚽</p>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // Auto-retry: every 30s, check if maintenance is over and bounce home.
-  setTimeout(function(){ location.href = 'porra-home.html'; }, 30000);
+(function(){
+  var SUPABASE_URL = 'https://hpxqhhgpfadnsikqjnst.supabase.co';
+  var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhweHFoaGdwZmFkbnNpa3FqbnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjA5NTIsImV4cCI6MjA5MTU5Njk1Mn0.7Ptisf8E9QXxoTWrQLSOjXPlzYTTqu2d3uwzjGVeeOI';
+  var sb = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+  var leaving = false;
+
+  async function release(){
+    if (leaving) return;
+    leaving = true;
+    // Logged-in users go to the dashboard; everyone else to the landing/login.
+    var dest = 'porra-mundial-2026.html';
+    try { if (sb){ var s = await sb.auth.getSession(); if (s && s.data && s.data.session) dest = 'porra-home.html'; } } catch(e){}
+    location.replace(dest); // replace() so this page can't be reached with the back button
+  }
+
+  async function checkMaintenance(){
+    if (leaving) return;
+    if (!sb){ return; } // client not ready; the fallback timer below still covers us
+    try {
+      var r = await sb.from('settings').select('value').eq('key','maintenance_mode').maybeSingle();
+      var on = r && r.data && r.data.value === 'true';
+      if (!on) release();           // maintenance is OFF → let them back in immediately
+    } catch(e){ /* network hiccup — try again on the next tick */ }
+  }
+
+  // Check now, then every 7s, and again whenever the tab/phone comes back into focus.
+  checkMaintenance();
+  setInterval(checkMaintenance, 7000);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) checkMaintenance(); });
+
+  // Safety net: if the Supabase library failed to load entirely, still try to
+  // leave after 30s so nobody is permanently trapped.
+  setTimeout(function(){ if (!sb && !leaving){ leaving = true; location.replace('porra-mundial-2026.html'); } }, 30000);
+})();
 </script>
 </body>
 </html>
