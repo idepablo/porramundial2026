@@ -143,13 +143,15 @@ api-sports-widget {
       return;
     }
 
-    // No mostrar los partidos del día hasta que empiece el primero (kickoff <= ahora).
+    // Mostramos los partidos a partir de 1 hora antes del primer encuentro
+    // (así se pueden ver alineaciones, previa, etc.). Antes de eso, mensaje de espera.
+    const LEAD_MS = 60*60*1000; // 1 hora
     let anyStarted=true, nextKick=null;
     if(sb){ try{
       const { data: ms } = await sb.from('matches').select('kickoff');
       const now=Date.now();
       const times=(ms||[]).map(m=>new Date(m.kickoff).getTime()).filter(t=>!isNaN(t));
-      anyStarted = times.some(t=>t<=now);
+      anyStarted = times.some(t => t - LEAD_MS <= now); // ¿algún partido empieza dentro de 1h o ya empezó?
       const future=times.filter(t=>t>now).sort((a,b)=>a-b);
       nextKick = future.length ? future[0] : null;
     }catch(e){ console.warn('live gate', e); } }
@@ -162,13 +164,13 @@ api-sports-widget {
       if(card){
         card.innerHTML = '<div class="card-b" style="padding:30px 20px;text-align:center">'
           +'<div style="font-size:34px;margin-bottom:8px">⏳</div>'
-          +'<div style="font-weight:700;margin-bottom:6px">Aún no hay partidos en directo</div>'
-          +'<div style="color:var(--muted);font-size:13px;line-height:1.6">Los marcadores aparecerán aquí en cuanto empiece el primer partido'
+          +'<div style="font-weight:700;margin-bottom:6px">Los partidos aparecerán pronto</div>'
+          +'<div style="color:var(--muted);font-size:13px;line-height:1.6">La previa, alineaciones y marcadores se mostrarán aquí desde 1 hora antes del primer partido'
           + (fmtET ? '.<br>Primer partido: '+fmtET+' (Costa Este) · '+fmtES+' (España).' : '.')
           +'</div></div>';
       }
-      // Recargar solo cuando empiece el primer partido (si es dentro de las próximas 24 h).
-      if(nextKick){ const ms=nextKick-Date.now()+5000; if(ms>0 && ms<24*3600000) setTimeout(()=>location.reload(), ms); }
+      // Recargar automáticamente cuando falte 1 hora para el primer partido (si es dentro de 24 h).
+      if(nextKick){ const ms=(nextKick-LEAD_MS)-Date.now()+5000; if(ms>0 && ms<24*3600000) setTimeout(()=>location.reload(), ms); }
       // Seguimos cargando los widgets para que la Clasificación sí se muestre.
     }
 
