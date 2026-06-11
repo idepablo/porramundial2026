@@ -75,7 +75,7 @@ nav {
 .jornada { display: inline-block; background: rgba(255,255,255,0.08); border-radius: 4px; padding: 1px 6px; font-size: 10px; color: var(--muted); }
 .team-cell { display: flex; align-items: center; gap: 6px; }
 .team-cell.right { justify-content: flex-end; flex-direction: row-reverse; }
-.flag { font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; font-size: 14px; line-height: 1; display: inline-block; flex-shrink: 0; }
+.flag { font-family: 'DM Sans',"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; font-size: 14px; line-height: 1; display: inline-block; flex-shrink: 0; }
 .team-name-cell { font-size: 12px; font-weight: 500; }
 .score-cell { text-align: center; width: 60px; }
 .score-box {
@@ -284,6 +284,7 @@ nav {
     <a class="nav-tab active" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
@@ -636,38 +637,27 @@ function buildGroups() {
 function tbd(label) { return {name: label, flag:'⚽', tbd:true}; }
 
 // Once admin enters group results, replace tbd() entries with real teams.
-// For now all R32 slots show the group source label.
+// R32 emparejamientos = bracket oficial FIFA 2026 (mismo orden que la página de
+// predicciones). Los 8 mejores terceros se asignan a su hueco según de qué grupos
+// salgan (se concreta al acabar la fase de grupos). Fechas/sedes orientativas.
 const BRACKET_DATA = {
   r32: [
-    // Pair 1: 1A vs 2B
-    {home:tbd('1º Grupo A'), away:tbd('2º Grupo B'), homeScore:null, awayScore:null, date:'Jun 29', venue:'SoFi, LA'},
-    // Pair 2: 1C vs 2D
-    {home:tbd('1º Grupo C'), away:tbd('2º Grupo D'), homeScore:null, awayScore:null, date:'Jun 29', venue:'MetLife, NY'},
-    // Pair 3: 1E vs 2F
-    {home:tbd('1º Grupo E'), away:tbd('2º Grupo F'), homeScore:null, awayScore:null, date:'Jun 30', venue:'AT&T, Dallas'},
-    // Pair 4: 1G vs 2H
-    {home:tbd('1º Grupo G'), away:tbd('2º Grupo H'), homeScore:null, awayScore:null, date:'Jun 30', venue:'Mercedes-Benz, Atlanta'},
-    // Pair 5: 1I vs 2J
-    {home:tbd('1º Grupo I'), away:tbd('2º Grupo J'), homeScore:null, awayScore:null, date:'Jul 1', venue:'Arrowhead, KC'},
-    // Pair 6: 1K vs 2L
-    {home:tbd('1º Grupo K'), away:tbd('2º Grupo L'), homeScore:null, awayScore:null, date:'Jul 1', venue:'NRG, Houston'},
-    // Pair 7: 1B vs 2A
-    {home:tbd('1º Grupo B'), away:tbd('2º Grupo A'), homeScore:null, awayScore:null, date:'Jul 2', venue:'BC Place, Vancouver'},
-    // Pair 8: 1D vs 2C
-    {home:tbd('1º Grupo D'), away:tbd('2º Grupo C'), homeScore:null, awayScore:null, date:'Jul 2', venue:'Lumen Field, Seattle'},
-    // Pair 9: 1F vs 2E
-    {home:tbd('1º Grupo F'), away:tbd('2º Grupo E'), homeScore:null, awayScore:null, date:'Jul 3', venue:'Gillette, Boston'},
-    // Pair 10: 1H vs 2G
-    {home:tbd('1º Grupo H'), away:tbd('2º Grupo G'), homeScore:null, awayScore:null, date:'Jul 3', venue:'Hard Rock, Miami'},
-    // Pair 11: 1J vs 2I
-    {home:tbd('1º Grupo J'), away:tbd('2º Grupo I'), homeScore:null, awayScore:null, date:'Jul 4', venue:'Levi\'s, Santa Clara'},
-    // Pair 12: 1L vs 2K
-    {home:tbd('1º Grupo L'), away:tbd('2º Grupo K'), homeScore:null, awayScore:null, date:'Jul 4', venue:'BMO Field, Toronto'},
-    // Pairs 13-16: 8 best 3rd-place teams
-    {home:tbd('3º mejor 1'), away:tbd('3º mejor 2'), homeScore:null, awayScore:null, date:'Jul 5', venue:'Lincoln Financial, Philly'},
-    {home:tbd('3º mejor 3'), away:tbd('3º mejor 4'), homeScore:null, awayScore:null, date:'Jul 5', venue:'BBVA, Monterrey'},
-    {home:tbd('3º mejor 5'), away:tbd('3º mejor 6'), homeScore:null, awayScore:null, date:'Jul 6', venue:'Azteca, Mexico City'},
-    {home:tbd('3º mejor 7'), away:tbd('3º mejor 8'), homeScore:null, awayScore:null, date:'Jul 6', venue:'Akron, Guadalajara'},
+    {home:tbd('1.º E'), away:tbd('Mejor 3.º (A/B/C/D/F)'), homeScore:null, awayScore:null, date:'Jun 28', venue:'Sede por confirmar'},
+    {home:tbd('1.º I'), away:tbd('Mejor 3.º (C/D/F/G/H)'), homeScore:null, awayScore:null, date:'Jun 28', venue:'Sede por confirmar'},
+    {home:tbd('2.º A'), away:tbd('2.º B'), homeScore:null, awayScore:null, date:'Jun 29', venue:'Sede por confirmar'},
+    {home:tbd('1.º F'), away:tbd('2.º C'), homeScore:null, awayScore:null, date:'Jun 29', venue:'Sede por confirmar'},
+    {home:tbd('2.º K'), away:tbd('2.º L'), homeScore:null, awayScore:null, date:'Jun 29', venue:'Sede por confirmar'},
+    {home:tbd('1.º H'), away:tbd('2.º J'), homeScore:null, awayScore:null, date:'Jun 30', venue:'Sede por confirmar'},
+    {home:tbd('1.º D'), away:tbd('Mejor 3.º (B/E/F/I/J)'), homeScore:null, awayScore:null, date:'Jun 30', venue:'Sede por confirmar'},
+    {home:tbd('1.º G'), away:tbd('Mejor 3.º (A/E/H/I/J)'), homeScore:null, awayScore:null, date:'Jun 30', venue:'Sede por confirmar'},
+    {home:tbd('1.º C'), away:tbd('2.º F'), homeScore:null, awayScore:null, date:'Jul 1', venue:'Sede por confirmar'},
+    {home:tbd('2.º E'), away:tbd('2.º I'), homeScore:null, awayScore:null, date:'Jul 1', venue:'Sede por confirmar'},
+    {home:tbd('1.º A'), away:tbd('Mejor 3.º (C/E/F/H/I)'), homeScore:null, awayScore:null, date:'Jul 1', venue:'Sede por confirmar'},
+    {home:tbd('1.º L'), away:tbd('Mejor 3.º (E/H/I/J/K)'), homeScore:null, awayScore:null, date:'Jul 2', venue:'Sede por confirmar'},
+    {home:tbd('1.º J'), away:tbd('2.º H'), homeScore:null, awayScore:null, date:'Jul 2', venue:'Sede por confirmar'},
+    {home:tbd('2.º D'), away:tbd('2.º G'), homeScore:null, awayScore:null, date:'Jul 2', venue:'Sede por confirmar'},
+    {home:tbd('1.º B'), away:tbd('Mejor 3.º (E/F/G/I/J)'), homeScore:null, awayScore:null, date:'Jul 3', venue:'Sede por confirmar'},
+    {home:tbd('1.º K'), away:tbd('Mejor 3.º (D/E/I/J/L)'), homeScore:null, awayScore:null, date:'Jul 3', venue:'Sede por confirmar'},
   ],
   r16: Array(8).fill(null).map((_,i)=>({home:tbd(`Gan. R32 P${i*2+1}`), away:tbd(`Gan. R32 P${i*2+2}`), homeScore:null, awayScore:null, date:'Jul 8-9', venue:'TBD'})),
   qf:  Array(4).fill(null).map((_,i)=>({home:tbd(`Gan. R16 P${i*2+1}`), away:tbd(`Gan. R16 P${i*2+2}`), homeScore:null, awayScore:null, date:'Jul 11-12', venue:'TBD'})),

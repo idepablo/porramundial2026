@@ -49,18 +49,19 @@ input::placeholder { color:rgba(238,238,248,0.2); }
   <h1>Bienvenido de nuevo</h1>
   <p class="sub">Inicia sesión para ver tus predicciones y la clasificación.</p>
 
+  <form id="login-form" onsubmit="signIn();return false;">
   <div class="field">
     <label>Correo electrónico</label>
-    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" enterkeyhint="next">
   </div>
   <div class="field">
     <label>Contraseña</label>
-    <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password"
-      onkeydown="if(event.key==='Enter') signIn()">
-    <div class="forgot"><a href="#" onclick="forgotPassword()">¿Olvidaste tu contraseña?</a></div>
+    <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password" enterkeyhint="go">
+    <div class="forgot"><a href="#" onclick="forgotPassword();return false;">¿Olvidaste tu contraseña?</a></div>
   </div>
 
-  <button class="btn" id="signin-btn" onclick="signIn()">Iniciar sesión</button>
+  <button class="btn" id="signin-btn" type="submit">Iniciar sesión</button>
+  </form>
   <div class="error-msg" id="error-msg"></div>
 
   <div class="links">
@@ -103,9 +104,10 @@ async function submitNewPassword(){
 }
 
 async function signIn() {
+  const btn      = document.getElementById('signin-btn');
+  if (btn.disabled) return; // evita envíos dobles (tap + tecla "Ir" a la vez)
   const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const btn      = document.getElementById('signin-btn');
   const errEl    = document.getElementById('error-msg');
 
   if (!email || !password) { showErr('Introduce tu correo y tu contraseña.'); return; }

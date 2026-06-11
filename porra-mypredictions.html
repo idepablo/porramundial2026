@@ -17,7 +17,7 @@
 }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
 
-.flag { font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; display: inline-block; line-height: 1; }
+.flag { font-family: 'DM Sans',"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; display: inline-block; line-height: 1; }
 
 /* ── NAV ── */
 nav {
@@ -225,11 +225,15 @@ nav {
 .sum-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
 
 @media (max-width: 600px) {
-  .match-row { grid-template-columns: 1fr auto auto 1fr; grid-template-areas: "date date date result" "home tu real away"; gap: 6px 8px; }
+  .match-row { grid-template-columns: 1fr auto auto 1fr; grid-template-areas: "date date date result" "home tu real away"; gap: 8px; padding: 12px; }
   .match-row .match-meta { grid-area: date; }
   .match-row .team-left { grid-area: home; }
   .match-row .team-right { grid-area: away; }
-  .match-row .result-cell { grid-area: result; }
+  .match-row > .score-block:not(.real) { grid-area: tu; }
+  .match-row > .score-block.real { grid-area: real; }
+  .match-row .result-cell { grid-area: result; align-self: start; }
+  .match-row .team-name { font-size: 13px; }
+  .match-row .score-block .score-label { font-size: 9px; }
   .ko-match-row { grid-template-columns: 1fr; gap: 6px; }
   .hero-stats { width: 100%; }
   .summary-bar { grid-template-columns: repeat(3,1fr); }
@@ -281,6 +285,7 @@ nav {
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab active" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
@@ -325,6 +330,8 @@ nav {
     <button class="mp-tab" onclick="scrollToSec('sec-eliminatorias')">Eliminatorias</button>
     <button class="mp-tab" onclick="scrollToSec('sec-honor')">Cuadro de Honor</button>
   </div>
+
+  <div id="vs-grupo"></div>
 
   <div class="phase-header" id="sec-grupos">
     <div class="phase-title">Fase de Grupos</div>
@@ -441,6 +448,13 @@ async function loadMyPredictions() {
   // Load user predictions
   const { data: preds } = await sb.from("predictions").select("*").eq("user_id", targetId);
 
+  // Tú vs el grupo — compare this player's picks against the whole group's consensus
+  try {
+    const { data: allPreds } = await sb.from('predictions').select('match_id,predicted_home,predicted_away');
+    const vsName = viewId ? (profile?.alias || profile?.first_name || 'Este jugador') : 'Tú';
+    renderVsGrupo(preds||[], allPreds||[], matches||[], !viewId, vsName);
+  } catch(e){ console.warn('vs grupo', e); }
+
   // Load user score
   const { data: scoreData } = await sb.from("scores").select("*").eq("user_id", targetId).single();
 
@@ -555,6 +569,45 @@ function calcGroupPts(real, pred, phase) {
   if (res === 'sign_gd') return p.sign + p.gd;
   if (res === 'sign') return p.sign;
   return 0;
+}
+
+// ── TÚ VS EL GRUPO ─────────────────────────────────────────────────────────
+function renderVsGrupo(myPreds, allPreds, matches, isSelf, name){
+  const el=document.getElementById('vs-grupo'); if(!el) return;
+  const mInfo={}; (matches||[]).forEach(m=>{ if(m.phase==='group') mInfo[m.id]={home:teamES(m.home_team),away:teamES(m.away_team)}; });
+  const sgn=(h,a)=> h>a?'1':(h<a?'2':'X');
+  const byMatch={}; (allPreds||[]).forEach(p=>{ if(!mInfo[p.match_id]) return; (byMatch[p.match_id]=byMatch[p.match_id]||[]).push(p); });
+  let agree=0, comparable=0; const rows=[];
+  (myPreds||[]).forEach(mp=>{
+    const info=mInfo[mp.match_id]; if(!info) return;
+    if(mp.predicted_home==null||mp.predicted_away==null) return;
+    const others=byMatch[mp.match_id]||[]; if(others.length<2) return;
+    comparable++;
+    const sc={'1':0,'X':0,'2':0}; const exact={};
+    others.forEach(o=>{ if(o.predicted_home==null) return; sc[sgn(o.predicted_home,o.predicted_away)]++; const k=o.predicted_home+'-'+o.predicted_away; exact[k]=(exact[k]||0)+1; });
+    const majSign=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0][0];
+    const mySign=sgn(mp.predicted_home,mp.predicted_away);
+    if(mySign===majSign) agree++;
+    const myKey=mp.predicted_home+'-'+mp.predicted_away;
+    rows.push({info, myKey, mySign, majSign, sameOthers:Math.max(0,(exact[myKey]||0)-1), diff: mySign!==majSign});
+  });
+  if(!comparable){ el.innerHTML=''; return; }
+  const lone=rows.filter(r=>r.diff).sort((a,b)=>a.sameOthers-b.sameOthers).slice(0,4);
+  const verb = isSelf ? 'coincides' : 'coincide';
+  const poss = isSelf ? 'Tus' : 'Sus';
+  const loneHtml = lone.length ? (
+    `<div style="font-size:12px;color:var(--muted);margin:14px 0 8px">${poss} apuestas más solitarias 🐺</div>` +
+    lone.map(r=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;flex-wrap:wrap">
+        <span>${r.info.home} <span style="color:var(--muted)">vs</span> ${r.info.away}</span>
+        <span style="color:var(--muted)">tú: <strong style="color:var(--text)">${r.myKey}</strong> · la mayoría: <strong style="color:var(--text)">${r.majSign}</strong> · ${r.sameOthers===0?'nadie más lo dijo':r.sameOthers+' más coinciden'}</span>
+      </div>`).join('')
+  ) : `<div style="font-size:13px;color:var(--muted);margin-top:12px">Sin apuestas a contracorriente: ${isSelf?'vas':'va'} con la mayoría en todo. 🐑</div>`;
+  const pctAgree = Math.round(agree*100/comparable);
+  el.innerHTML = `<div style="background:var(--bg2,#0e0e1c);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:22px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.5px">${isSelf?'Tú':name} vs el grupo</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">${isSelf?'Tú':name} ${verb} con la mayoría del grupo en <strong style="color:var(--gold)">${agree} de ${comparable}</strong> partidos (${pctAgree}%).</div>
+    ${loneHtml}
+  </div>`;
 }
 
 function resultClass(res) {

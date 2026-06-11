@@ -707,6 +707,7 @@ function fillReview() {
 
 // ── SUBMIT — REAL SUPABASE AUTH ──
 async function submitForm() {
+  if (window.REG_LOCKED) { alert('El registro está cerrado: el torneo ya ha comenzado.'); return; }
   const btn = document.querySelector('#step-3 .btn-primary');
   btn.textContent = 'Creando cuenta…';
   btn.disabled = true;
@@ -804,6 +805,30 @@ renderPaymentMethods('payment-methods');
 // Wire the WhatsApp banner link if a group link is configured
 (function(){ const wl = whatsappLink(); const b = document.getElementById('wa-banner-link');
   if (wl && b) { b.href = wl; b.style.display = ''; } })();
+
+// ── Cierre de registro: al empezar el primer partido (con override del admin) ──
+window.REG_LOCKED = false;
+const REG_LOCK_AUTO = new Date('2026-06-11T19:00:00Z'); // 15:00 ET / 21:00 España
+(async function checkRegistrationOpen(){
+  try{
+    let tries=0; while(typeof getSetting!=='function' && tries<50){ await new Promise(r=>setTimeout(r,80)); tries++; }
+    let regSet=null; try{ regSet=await getSetting('registration_locked'); }catch(e){}
+    window.REG_LOCKED = regSet==='true' || (regSet!=='false' && Date.now() >= REG_LOCK_AUTO.getTime());
+    if(window.REG_LOCKED){
+      const form=document.getElementById('reg-form');
+      if(form && form.parentNode){
+        const msg=document.createElement('div');
+        msg.style.cssText='background:var(--bg2,#13131f);border:1px solid var(--border);border-radius:14px;padding:34px 24px;text-align:center;max-width:440px;margin:0 auto';
+        msg.innerHTML='<div style="font-size:42px;margin-bottom:10px">🔒</div>'+
+          '<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;margin:0 0 10px;letter-spacing:1px">Registro cerrado</h2>'+
+          '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 18px">El torneo ya ha comenzado, así que el registro de nuevos jugadores está cerrado. Si ya tienes cuenta, puedes iniciar sesión.</p>'+
+          '<a href="porra-login.html" style="display:inline-block;background:var(--gold,#e8b84b);color:#13131f;text-decoration:none;border-radius:8px;padding:11px 22px;font-weight:700;font-size:14px">Iniciar sesión</a>';
+        form.parentNode.insertBefore(msg, form);
+        form.style.display='none';
+      }
+    }
+  }catch(e){ console.warn('reg check', e); }
+})();
 </script>
 </body>
 </html>

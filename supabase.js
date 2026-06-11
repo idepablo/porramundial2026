@@ -130,24 +130,31 @@ function whatsappLink() { return PAYMENT.whatsapp; }
 // ALWAYS shown in Spanish via teamES(). Used by predict, leaderboard, my-preds,
 // results and home. esDate() turns "Jun 11" → "11 jun" for display.
 const TEAM_ES = {
-  'Mexico':'México','South Africa':'Sudáfrica','South Korea':'Corea del Sur',
-  'Czechia':'Chequia','Canada':'Canadá','Bosnia & Herz.':'Bosnia y Herz.',
-  'Switzerland':'Suiza','Morocco':'Marruecos','Scotland':'Escocia',
-  'Germany':'Alemania','Ivory Coast':'Costa de Marfil','Netherlands':'Países Bajos',
-  'Sweden':'Suecia','Tunisia':'Túnez','Belgium':'Bélgica','Egypt':'Egipto',
-  'New Zealand':'Nueva Zelanda','Spain':'España','Cape Verde':'Cabo Verde',
-  'Saudi Arabia':'Arabia Saudí','France':'Francia','Norway':'Noruega',
-  'Algeria':'Argelia','DR Congo':'R.D. Congo','England':'Inglaterra',
-  'Croatia':'Croacia','Panama':'Panamá','Australia':'Australia',
-  'Türkiye':'Turquía','Ecuador':'Ecuador','Paraguay':'Paraguay',
-  'Colombia':'Colombia','Uruguay':'Uruguay','Argentina':'Argentina',
-  'Portugal':'Portugal','Japan':'Japón','USA':'EE.UU.',
-  'Brazil':'Brasil','Haiti':'Haití','Jordan':'Jordania',
-  'Austria':'Austria','Uzbekistan':'Uzbekistán','Ghana':'Ghana',
-  'Senegal':'Senegal','Iraq':'Irak','Iran':'Irán',
-  'Qatar':'Catar','Curaçao':'Curazao',
+  'United States':'Estados Unidos','USA':'Estados Unidos','US':'Estados Unidos','United States of America':'Estados Unidos',
+  'Mexico':'México','Canada':'Canadá',
+  'Spain':'España','Germany':'Alemania','France':'Francia','England':'Inglaterra','Portugal':'Portugal',
+  'Netherlands':'Países Bajos','Holland':'Países Bajos','Belgium':'Bélgica','Croatia':'Croacia','Italy':'Italia',
+  'Switzerland':'Suiza','Denmark':'Dinamarca','Poland':'Polonia','Serbia':'Serbia','Austria':'Austria',
+  'Ukraine':'Ucrania','Scotland':'Escocia','Wales':'Gales','Norway':'Noruega','Sweden':'Suecia',
+  'Czech Republic':'Chequia','Czechia':'Chequia','Turkey':'Turquía','Türkiye':'Turquía','Greece':'Grecia',
+  'Hungary':'Hungría','Romania':'Rumanía','Slovenia':'Eslovenia','Slovakia':'Eslovaquia',
+  'Republic of Ireland':'Irlanda','Ireland':'Irlanda','Iceland':'Islandia','Finland':'Finlandia',
+  'Albania':'Albania','Georgia':'Georgia',
+  'Argentina':'Argentina','Brazil':'Brasil','Uruguay':'Uruguay','Colombia':'Colombia','Ecuador':'Ecuador',
+  'Peru':'Perú','Chile':'Chile','Paraguay':'Paraguay','Venezuela':'Venezuela','Bolivia':'Bolivia',
+  'Costa Rica':'Costa Rica','Panama':'Panamá','Jamaica':'Jamaica','Honduras':'Honduras',
+  'El Salvador':'El Salvador','Guatemala':'Guatemala','Haiti':'Haití','Curaçao':'Curazao','Curacao':'Curazao',
+  'Morocco':'Marruecos','Senegal':'Senegal','Egypt':'Egipto','Nigeria':'Nigeria','Ghana':'Ghana',
+  'Cameroon':'Camerún','Algeria':'Argelia','Tunisia':'Túnez','Ivory Coast':'Costa de Marfil',
+  "Côte d'Ivoire":'Costa de Marfil','South Africa':'Sudáfrica','Mali':'Malí','DR Congo':'RD Congo',
+  'Cape Verde':'Cabo Verde','Bosnia & Herz.':'Bosnia y Herzegovina','Bosnia and Herzegovina':'Bosnia y Herzegovina',
+  'Japan':'Japón','South Korea':'Corea del Sur','Korea Republic':'Corea del Sur','Iran':'Irán','IR Iran':'Irán',
+  'Saudi Arabia':'Arabia Saudí','Australia':'Australia','Qatar':'Catar','Iraq':'Irak',
+  'United Arab Emirates':'Emiratos Árabes Unidos','Uzbekistan':'Uzbekistán','Jordan':'Jordania','New Zealand':'Nueva Zelanda'
 };
-function teamES(name){ return TEAM_ES[name] || name; }
+function teamES(name){ if(name==null) return name; return TEAM_ES[String(name).trim()] || name; }
+function esTeam(name){ return teamES(name); }
+if (typeof window !== 'undefined') { window.teamES = teamES; window.esTeam = esTeam; }
 const MONTH_ES = { Jan:'ene',Feb:'feb',Mar:'mar',Apr:'abr',May:'may',Jun:'jun',
   Jul:'jul',Aug:'ago',Sep:'sep',Oct:'oct',Nov:'nov',Dec:'dic' };
 function esDate(d){
@@ -159,6 +166,7 @@ function esDate(d){
 
 // ── SUPABASE CLIENT ──────────────────────────────────────────────────────────
 let _sb = null;
+
 function getSB() {
   if (!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   return _sb;
@@ -478,6 +486,21 @@ function injectHelpWidgets(){
     document.body.appendChild(fab);
   }
 
+  // Mobile "Volver" button on inner pages (those with a top nav, not admin).
+  if (document.getElementById('nav-auth') && !_onAdmin) {
+    if (!document.getElementById('back-fab-style')) {
+      const bs = document.createElement('style'); bs.id = 'back-fab-style';
+      bs.textContent = ".back-fab{display:none}@media(max-width:560px){.back-fab{display:flex;position:fixed;right:14px;bottom:14px;z-index:250;align-items:center;background:rgba(20,20,32,.92);border:1px solid rgba(255,255,255,.15);color:#eee;border-radius:22px;padding:9px 15px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}}";
+      document.head.appendChild(bs);
+    }
+    if (!document.getElementById('back-fab')) {
+      const bb = document.createElement('button'); bb.className = 'back-fab'; bb.id = 'back-fab';
+      bb.textContent = '‹ Volver';
+      bb.onclick = function(){ if (history.length > 1) history.back(); else location.href = 'porra-home.html'; };
+      document.body.appendChild(bb);
+    }
+  }
+
   const faqHtml = FAQ_ITEMS.map((f,i) => `<div class="faq-acc"><button class="faq-qbtn" onclick="toggleFaq(${i})"><span>${f.q}</span><span class="faq-chev" id="faq-chev-${i}">+</span></button><div class="faq-a" id="faq-a-${i}" style="display:none">${f.a}</div></div>`).join('');
   const faq = document.createElement('div');
   faq.className = 'help-overlay'; faq.id = 'faq-modal';
@@ -674,12 +697,18 @@ async function initSiteState(){
 }
 function showMaintBanner(timeStr){
   if (document.getElementById('maint-banner')) return;
-  let msg = '🔧 Mantenimiento programado próximamente. Es posible que la web no esté disponible unos minutos.';
+  const TAIL = 'La web no estará disponible mientras dure el mantenimiento. Avisaremos por WhatsApp una vez que esté operativa de nuevo.';
+  let msg = '🔧 Mantenimiento programado próximamente. ' + TAIL;
   if (timeStr) { try {
-    const d = new Date(timeStr);
+    // timeStr is stored as US-Eastern (EDT, UTC−4) wall-clock "YYYY-MM-DDTHH:MM" with
+    // no zone, so new Date() would read it as the VIEWER's local time. Parse the parts
+    // and add 4h to get real UTC, then format in each zone.
+    const [dp, tp] = String(timeStr).split('T');
+    const [Y,Mo,Da] = dp.split('-').map(Number); const [H,Mi] = (tp||'0:0').split(':').map(Number);
+    const d = new Date(Date.UTC(Y, Mo-1, Da, H+4, Mi));
     const es = d.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
     const us = d.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
-    msg = '🔧 Mantenimiento programado: ' + us + ' (EE.UU.) · ' + es + ' (España). La web podría no estar disponible unos minutos.';
+    msg = '🔧 Mantenimiento programado: ' + us + ' (Costa Este) · ' + es + ' (España). ' + TAIL;
   } catch(e){} }
   const b = document.createElement('div');
   b.id = 'maint-banner';

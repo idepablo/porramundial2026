@@ -697,6 +697,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             <button class="com-tpl" onclick="comTemplate('pago',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Recordatorio de pago</button>
             <button class="com-tpl" onclick="comTemplate('bienvenida',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Bienvenida</button>
             <button class="com-tpl" onclick="comTemplate('resultados',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Resumen de resultados</button>
+            <button class="com-tpl" onclick="comTemplate('comienzo',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">El campeonato ha comenzado</button>
           </div>
           <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Asunto</label>
           <input type="text" id="com-subject" oninput="updateComCount()" placeholder="Asunto del correo" style="width:100%;margin:6px 0 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
@@ -806,6 +807,26 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
               <div style="font-size:11px;color:var(--muted);margin-top:2px">Cierre automático: 11 jun · 15:00 (Costa Este EE.UU.) / 21:00 (España)</div>
             </div>
             <button id="cierre-btn" onclick="toggleCierre()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar ahora</button>
+          </div>
+
+          <!-- Cierre de registro -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:13px;font-weight:600">Cierre de registro</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="reg-state">Comprobando…</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Cierre automático al empezar el primer partido: 11 jun · 15:00 (Costa Este EE.UU.) / 21:00 (España)</div>
+            </div>
+            <button id="reg-btn" onclick="toggleRegistro()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar ahora</button>
+          </div>
+
+          <!-- Bloqueo de la Quiniela -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:13px;font-weight:600">Bloqueo de la Quiniela</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="quin-state">Comprobando…</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Se desbloquea automáticamente al empezar el primer partido (para no revelar las predicciones antes del cierre). Puedes forzarlo a mano.</div>
+            </div>
+            <button id="quin-btn" onclick="toggleQuiniela()" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--success,#1a8754);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Desbloquear ahora</button>
           </div>
 
           <!-- Bloquear visualización de picks -->
@@ -1817,6 +1838,8 @@ async function savePremios(btn){
 
 // ── AJUSTES wiring ──
 const CIERRE_AUTO = new Date('2026-06-11T19:00:00Z'); // 15:00 ET / 21:00 España
+const REG_LOCK_AUTO = new Date('2026-06-11T19:00:00Z'); // registro se cierra al empezar el 1er partido
+const QUINIELA_AUTO = new Date('2026-06-11T19:00:00Z'); // la quiniela se DESBLOQUEA al empezar el 1er partido
 function curSymbol(c){ return c==='USD' ? '$' : '€'; }
 function feeText(fee, cur){ return cur==='USD' ? ('$'+fee) : (fee+' €'); }
 async function loadSettings(){
@@ -1828,6 +1851,14 @@ async function loadSettings(){
     // cierre state
     const locked = String(await getSetting('predictions_locked')) === 'true' || Date.now() >= CIERRE_AUTO.getTime();
     setCierreState(locked);
+    // registro state (manual override beats the automatic lock in either direction)
+    const regSet = await getSetting('registration_locked');
+    const regLocked = regSet==='true' || (regSet!=='false' && Date.now() >= REG_LOCK_AUTO.getTime());
+    setRegState(regLocked);
+    // quiniela state (locked UNTIL the first game by default; manual override either way)
+    const quinSet = await getSetting('quiniela_locked');
+    const quinLocked = quinSet==='true' || (quinSet!=='false' && Date.now() < QUINIELA_AUTO.getTime());
+    setQuinState(quinLocked);
     // hide picks
     setHidePicksBtn(String(await getSetting('hide_picks')) === 'true');
     // maintenance + banner
@@ -1884,6 +1915,43 @@ async function toggleCierre(){
   }catch(e){ alert('Error: '+(e.message||e)); }
   b.disabled=false;
 }
+function setRegState(locked){
+  const st=document.getElementById('reg-state'), b=document.getElementById('reg-btn'); if(!b) return;
+  st.textContent = locked ? 'Estado: CERRADO — no se admiten nuevos registros.' : 'Estado: abierto — se pueden registrar nuevos jugadores.';
+  st.style.color = locked ? '#f87171' : 'var(--success,#1a8754)';
+  b.textContent = locked ? 'Reabrir registro' : 'Cerrar ahora'; b.dataset.locked = locked ? '1':'0';
+  b.style.background = locked ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+  b.style.borderColor = locked ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+  b.style.color = locked ? 'var(--success,#1a8754)' : '#f87171';
+}
+async function toggleRegistro(){
+  const b=document.getElementById('reg-btn'); const locked=b.dataset.locked==='1'; const next=!locked;
+  b.disabled=true;
+  try{
+    // store an explicit value so it overrides the automatic time-based lock in either direction
+    await getSB().from('settings').upsert([{key:'registration_locked',value: next?'true':'false'}]);
+    setRegState(next);
+  }catch(e){ alert('Error: '+(e.message||e)); }
+  b.disabled=false;
+}
+function setQuinState(locked){
+  const st=document.getElementById('quin-state'), b=document.getElementById('quin-btn'); if(!b) return;
+  st.textContent = locked ? 'Estado: BLOQUEADA — los jugadores no la ven todavía.' : 'Estado: visible — los jugadores ya pueden verla.';
+  st.style.color = locked ? '#f87171' : 'var(--success,#1a8754)';
+  b.textContent = locked ? 'Desbloquear ahora' : 'Bloquear'; b.dataset.locked = locked ? '1':'0';
+  b.style.background = locked ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+  b.style.borderColor = locked ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+  b.style.color = locked ? 'var(--success,#1a8754)' : '#f87171';
+}
+async function toggleQuiniela(){
+  const b=document.getElementById('quin-btn'); const locked=b.dataset.locked==='1'; const next=!locked;
+  b.disabled=true;
+  try{
+    await getSB().from('settings').upsert([{key:'quiniela_locked',value: next?'true':'false'}]);
+    setQuinState(next);
+  }catch(e){ alert('Error: '+(e.message||e)); }
+  b.disabled=false;
+}
 function setHidePicksBtn(on){
   const b=document.getElementById('hidepicks-btn'); if(!b) return;
   b.textContent = on ? 'Activado — Desactivar' : 'Activar'; b.dataset.on=on?'1':'0';
@@ -1918,12 +1986,12 @@ function bannerLabelFromEST(localStr){
   const dt=new Date(Date.UTC(Y,Mo-1,Da,H+off,Mi));
   const us=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
   const es=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
-  return `${us} (Costa Este EE.UU.) / ${es} (España)`;
+  return `${us} (Costa Este) / ${es} (España)`;
 }
 function updateBannerPreview(){
   const p=document.getElementById('banner-preview'); const v=document.getElementById('banner-time')?.value;
   if(!p) return;
-  p.textContent = v ? ('Vista previa: La página no estará operativa durante unos minutos a partir de las '+bannerLabelFromEST(v)+' por tareas de mantenimiento.') : '';
+  p.textContent = v ? ('Vista previa: Mantenimiento programado: '+bannerLabelFromEST(v)+'. La web no estará disponible mientras dure el mantenimiento. Avisaremos por WhatsApp una vez que esté operativa de nuevo.') : '';
 }
 function setBannerBtn(on){
   const b=document.getElementById('banner-toggle'); if(!b) return;
@@ -2013,14 +2081,14 @@ async function loadHomeDashboard(profile){
   try{
     const [u,sc,m,p,ko,ho]=await Promise.all([
       sb.from('users').select('id,first_name,alias,avatar_url'),
-      sb.from('scores').select('user_id,total'),
+      sb.from('scores').select('user_id,total,group_match_pts,standings_pts,r32_pts,r16_pts,qf_pts,sf_pts,final_pts,honours_pts,exact_scores'),
       sb.from('matches').select('id,phase,group_letter,home_team,away_team,real_home,real_away,kickoff,bonus'),
       sb.from('predictions').select('user_id,match_id,predicted_home,predicted_away'),
       sb.from('ko_predictions').select('user_id,slot_id,advanced,home_team,away_team,pred_home,pred_away'),
       sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
     ]);
     HD.users=(u.data||[]).map(x=>({id:x.id,name:x.alias||x.first_name||'—',avatar:x.avatar_url||''}));
-    HD.scores={}; (sc.data||[]).forEach(x=>HD.scores[x.user_id]=x.total||0);
+    HD.scores={}; HD.scoreRows={}; (sc.data||[]).forEach(x=>{ HD.scores[x.user_id]=x.total||0; HD.scoreRows[x.user_id]=x; });
     HD.matches=m.data||[]; HD.preds=p.data||[]; HD.ko=ko.data||[]; HD.hon=ho.data||[];
     HD.todayK=new Date().toLocaleDateString('en-CA',{timeZone:HD_TZ});
   }catch(e){ console.warn('dashboard load',e); }
@@ -2171,11 +2239,58 @@ const COM_TEMPLATES={
     b:'¡Hola!\n\nYa están actualizados los resultados y la clasificación de hoy. Entra en https://porradelmundial.com para ver cómo vas.\n\n¡A por la siguiente jornada!\nNacho'}
 };
 function comTemplate(key,btn){
+  if(key==='comienzo'){ comTemplateComienzo(btn); return; }
   const t=COM_TEMPLATES[key]; if(!t) return;
   const s=document.getElementById('com-subject'), b=document.getElementById('com-body');
   if(s) s.value=t.s; if(b) b.value=t.b; updateComCount();
   document.querySelectorAll('.com-tpl').forEach(x=>{ x.style.background='rgba(255,255,255,0.06)'; x.style.color='var(--text)'; x.style.borderColor='var(--border)'; });
   if(btn){ btn.style.background='rgba(232,184,75,0.15)'; btn.style.color='var(--gold)'; btn.style.borderColor='rgba(232,184,75,0.35)'; }
+}
+function comHighlight(btn){
+  document.querySelectorAll('.com-tpl').forEach(x=>{ x.style.background='rgba(255,255,255,0.06)'; x.style.color='var(--text)'; x.style.borderColor='var(--border)'; });
+  if(btn){ btn.style.background='rgba(232,184,75,0.15)'; btn.style.color='var(--gold)'; btn.style.borderColor='rgba(232,184,75,0.35)'; }
+}
+// Plantilla dinámica: calcula las estadísticas de la quiniela del grupo en el momento.
+async function comTemplateComienzo(btn){
+  comHighlight(btn);
+  const s=document.getElementById('com-subject'), b=document.getElementById('com-body');
+  if(b) b.value='Calculando las estadísticas de la quiniela…'; updateComCount();
+  try{
+    const D=await dlLoad();
+    const T=(typeof esTeam==='function')?esTeam:(x=>x);
+    const rnd=x=>String(x||'').split('_')[0];
+    const finalRows=(D.ko||[]).filter(k=>rnd(k.slot_id)==='final');
+    const champUsers=[...new Set(finalRows.map(k=>k.user_id))].length||1;
+    const champC={}; finalRows.filter(k=>k.advanced).forEach(k=>{const t=T(k.advanced); champC[t]=(champC[t]||0)+1;});
+    const finC={}; finalRows.forEach(k=>{[k.home_team,k.away_team].forEach(t=>{if(t){t=T(t); finC[t]=(finC[t]||0)+1;}});});
+    const botaC={},balonC={}; (D.hon||[]).forEach(h=>{ if(h.boot_1)botaC[h.boot_1]=(botaC[h.boot_1]||0)+1; if(h.ball_1)balonC[h.ball_1]=(balonC[h.ball_1]||0)+1; });
+    const top1=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0]||null;
+    const pct=(n,d)=>d>0?Math.round(n*100/d):0;
+    const nKo=[...new Set((D.ko||[]).map(k=>k.user_id))].length;
+    const champ=top1(champC), bota=top1(botaC), balon=top1(balonC);
+    const champLine = champ ? `${champ[0]} (${champ[1]} ${champ[1]===1?'voto':'votos'}, ${pct(champ[1],champUsers)}%)` : 'aún sin datos';
+    const finalistas = Object.entries(finC).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([t,n])=>`${t} (${n})`).join(' y ') || 'aún sin datos';
+    const body =
+`¡El Mundial 2026 ya está en marcha!
+
+Antes de que rueden los primeros marcadores, esto es lo que ha apostado el grupo (${nKo} cuadros completados):
+
+- Campeón más elegido: ${champLine}
+- Finalistas más repetidos: ${finalistas}
+- Bota de Oro favorita: ${bota?`${bota[0]} (${bota[1]})`:'aún sin datos'}
+- Balón de Oro favorito: ${balon?`${balon[0]} (${balon[1]})`:'aún sin datos'}
+
+Puedes ver la quiniela completa (hasta dónde creemos que llega cada selección, los marcadores más repetidos y "Tú vs el grupo") en https://porradelmundial.com
+
+Te adjunto las predicciones para que las tengas a mano.
+
+¡Que gane el mejor!
+Nacho`;
+    if(s) s.value='🏁 ¡El Mundial ha comenzado! — así ha votado el grupo';
+    if(b) b.value=body; updateComCount();
+    const note=document.getElementById('com-mail-note');
+    if(note) note.innerHTML='Para adjuntar las predicciones: ve a <strong>Descargas → Descargar Excel</strong> (versión jugadores) y adjunta ese archivo en tu cliente de correo. Los enlaces mailto no pueden adjuntar archivos automáticamente.';
+  }catch(e){ if(b){ b.value='No se pudieron calcular las estadísticas. Vuelve a intentarlo en un momento.'; updateComCount(); } }
 }
 function updateComCount(){ const b=document.getElementById('com-body'); const c=document.getElementById('com-charcount'); if(b&&c) c.textContent=b.value.length; }
 async function copyDraft(btn){
@@ -2217,14 +2332,40 @@ function copyWa(id,btn){ const ta=document.getElementById(id); if(!ta) return; t
 // ════════════════ CLASIFICACIÓN (admin) ════════════════
 let CLASIF_MODE='global';
 function clasifTab(mode){ CLASIF_MODE=mode; ['global','daily'].forEach(m=>{ const t=document.getElementById('cl-'+m+'-tab'); if(t) t.classList.toggle('active',m===mode); });
-  const lg=document.getElementById('clasif-legend'); if(lg) lg.textContent = mode==='daily' ? 'Formato: puntos obtenidos hoy / máximo posible del día.' : 'Puntos totales acumulados de cada jugador.';
+  const lg=document.getElementById('clasif-legend'); if(lg) lg.textContent = mode==='daily' ? 'Formato: puntos obtenidos hoy / máximo posible del día.' : 'Puntos totales acumulados de cada jugador. Toca un jugador para ver el desglose.';
   renderClasif(); }
 function renderClasif(){
   const box=document.getElementById('clasif-table'); if(!box) return;
-  let lb;
+  let lb, clickable=false;
   if(CLASIF_MODE==='daily'){ const d=hdComputeDay(HD.todayK); lb=d.ranking.map(r=>({name:r.name,avatar:r.avatar,pts:r.pts,sub:'/ '+d.maxFin})); }
-  else { lb=HD.users.map(u=>({name:u.name,avatar:u.avatar,pts:HD.scores[u.id]||0,sub:'pts'})).sort((a,b)=>b.pts-a.pts); }
-  box.innerHTML = lb.length ? lb.map((r,i)=>`<div class="hd-row"><span class="hd-rank">${i+1}</span>${hdAvatar(r.avatar,r.name)}<span style="flex:1">${r.name}</span><span class="hd-pts">${r.pts} <span style="color:var(--muted);font-weight:400;font-size:11px">${r.sub}</span></span></div>`).join('') : '<div style="color:var(--muted);padding:14px">Sin datos.</div>';
+  else { clickable=true; lb=HD.users.map(u=>({id:u.id,name:u.name,avatar:u.avatar,pts:HD.scores[u.id]||0,sub:'pts'})).sort((a,b)=>b.pts-a.pts); }
+  box.innerHTML = lb.length ? lb.map((r,i)=>{
+    const clk = clickable && r.id ? ` style="cursor:pointer" onclick="clasifDetail('${r.id}')" title="Ver desglose de puntos"` : '';
+    const arrow = clickable && r.id ? ' <span style="color:var(--muted);font-size:11px">▸</span>' : '';
+    return `<div class="hd-row"${clk}><span class="hd-rank">${i+1}</span>${hdAvatar(r.avatar,r.name)}<span style="flex:1">${r.name}${arrow}</span><span class="hd-pts">${r.pts} <span style="color:var(--muted);font-weight:400;font-size:11px">${r.sub}</span></span></div>`;
+  }).join('') : '<div style="color:var(--muted);padding:14px">Sin datos.</div>';
+}
+// Desglose real de puntos (tabla scores) al pulsar un jugador en la Clasificación
+function clasifDetail(uid){
+  const u=HD.users.find(x=>x.id===uid); const s=(HD.scoreRows||{})[uid];
+  if(!u||!s){ return; }
+  const row=(l,v)=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--muted)">${l}</span><span style="font-weight:600">${v||0}</span></div>`;
+  const ko=(s.r32_pts||0)+(s.r16_pts||0)+(s.qf_pts||0)+(s.sf_pts||0)+(s.final_pts||0);
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px" onclick="this.remove()">
+    <div style="background:var(--bg2,#1a1a2e);border:1px solid var(--border);border-radius:14px;max-width:440px;width:100%;max-height:85vh;overflow:auto;padding:20px" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">${hdAvatar(u.avatar,u.name)}<div style="font-weight:700;font-size:16px;flex:1">${u.name}</div><div style="font-size:22px;font-weight:800;color:var(--gold)">${s.total||0}</div></div>
+      <div style="font-size:13px">
+        <div style="color:var(--gold);font-weight:700;margin:8px 0 2px">Fase de grupos</div>
+        ${row('Puntos de partidos',s.group_match_pts)}${row('Posiciones de grupo',s.standings_pts)}${row('Resultados exactos',s.exact_scores)}
+        <div style="color:var(--gold);font-weight:700;margin:10px 0 2px">Eliminatorias</div>
+        ${row('Dieciseisavos (R32)',s.r32_pts)}${row('Octavos',s.r16_pts)}${row('Cuartos',s.qf_pts)}${row('Semifinales',s.sf_pts)}${row('Final',s.final_pts)}${row('Total eliminatorias',ko)}
+        <div style="color:var(--gold);font-weight:700;margin:10px 0 2px">Cuadro de honor</div>
+        ${row('Premios (Bota / Balón / campeón…)',s.honours_pts)}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:800"><span>TOTAL</span><span style="color:var(--gold)">${s.total||0}</span></div>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="margin-top:14px;width:100%;background:var(--gold);color:#13131f;border:none;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Cerrar</button>
+    </div></div>`;
+  const wrap=document.createElement('div'); wrap.innerHTML=html; document.body.appendChild(wrap.firstElementChild);
 }
 
 
@@ -2451,18 +2592,76 @@ function dlChampRunner(fk){ if(!fk)return['','']; const ch=fk.advanced||''; cons
 
 // Rows for one player's picks (reused by global + single)
 function dlPlayerRows(D,u,pub){
+  const T=(typeof esTeam==='function')?esTeam:(x=>x);
   const rows=[[dlName(u)]];
   if(!pub) rows.push(['Email',u.email||'']);
-  rows.push(['País',u.country||''],[]);
+  rows.push(['País',u.country||'']);
+  // Resumen del jugador: campeón y subcampeón (del cuadro final)
+  const [ch,ru]=dlChampRunner(dlFinalKo(D,u));
+  rows.push(['Campeón', ch?T(ch):'—'], ['Subcampeón', ru?T(ru):'—'], []);
   rows.push(['FASE DE GRUPOS']); rows.push(['Grupo','Partido','Predicción']);
-  (D.predsByUser[u.id]||[]).map(p=>({p,m:D.matchById[p.match_id]})).filter(x=>x.m)
-    .sort((a,b)=>(a.m.group_letter||'').localeCompare(b.m.group_letter||'')||new Date(a.m.kickoff)-new Date(b.m.kickoff))
-    .forEach(({p,m})=>rows.push(['Grupo '+(m.group_letter||''),(m.home_team||'?')+' vs '+(m.away_team||'?'),p.predicted_home+'-'+p.predicted_away]));
+  const gp=(D.predsByUser[u.id]||[]).map(p=>({p,m:D.matchById[p.match_id]})).filter(x=>x.m)
+    .sort((a,b)=>(a.m.group_letter||'').localeCompare(b.m.group_letter||'')||new Date(a.m.kickoff)-new Date(b.m.kickoff));
+  if(gp.length) gp.forEach(({p,m})=>rows.push(['Grupo '+(m.group_letter||''),T(m.home_team||'?')+' vs '+T(m.away_team||'?'),p.predicted_home+'-'+p.predicted_away]));
+  else rows.push(['(sin predicciones de la fase de grupos)']);
   rows.push([]); rows.push(['ELIMINATORIAS']); rows.push(['Ronda','Cruce','Predicción','Avanza']);
-  (D.koByUser[u.id]||[]).slice().sort((a,b)=>DL_RORDER.indexOf(dlRound(a.slot_id))-DL_RORDER.indexOf(dlRound(b.slot_id)))
-    .forEach(k=>rows.push([DL_RLABEL[dlRound(k.slot_id)]||dlRound(k.slot_id),(k.home_team||'?')+' vs '+(k.away_team||'?'),(k.pred_home!=null?k.pred_home+'-'+k.pred_away:'—'),k.advanced||'']));
+  const kp=(D.koByUser[u.id]||[]).slice().sort((a,b)=>DL_RORDER.indexOf(dlRound(a.slot_id))-DL_RORDER.indexOf(dlRound(b.slot_id)));
+  if(kp.length) kp.forEach(k=>rows.push([DL_RLABEL[dlRound(k.slot_id)]||dlRound(k.slot_id),T(k.home_team||'?')+' vs '+T(k.away_team||'?'),(k.pred_home!=null?k.pred_home+'-'+k.pred_away:'—'),k.advanced?T(k.advanced):'']));
+  else rows.push(['(sin predicciones de eliminatorias)']);
   rows.push([]); rows.push(['CUADRO DE HONOR']);
   const h=D.honByUser[u.id]||{}; rows.push(['Bota de Oro',h.boot_1||'—']); rows.push(['Balón de Oro',h.ball_1||'—']);
+  return rows;
+}
+
+// Hoja "Quiniela": estadísticas del grupo (campeón, finalistas, bota/balón, recorrido
+// de cada selección y consenso por partido). Misma lógica que la página de la Quiniela.
+function dlQuinielaSheet(D){
+  const T=(typeof esTeam==='function')?esTeam:(x=>x);
+  const ko=(D.ko||[]).map(k=>({...k,home_team:T(k.home_team),away_team:T(k.away_team),advanced:T(k.advanced)}));
+  const matches=(D.matches||[]).map(m=>({...m,home_team:T(m.home_team),away_team:T(m.away_team)}));
+  const preds=D.preds||[], hon=D.hon||[];
+  const rnd=s=>String(s||'').split('_')[0];
+  const pctOf=(n,d)=>d>0?Math.round(n*100/d)+'%':'0%';
+  const rows=[['LA QUINIELA DEL GRUPO'],['Generado el',new Date().toLocaleString('es-ES')],[]];
+  const finalRows=ko.filter(k=>rnd(k.slot_id)==='final');
+  const champUsers=[...new Set(finalRows.map(k=>k.user_id))].length||1;
+  const champC={}; finalRows.filter(k=>k.advanced).forEach(k=>champC[k.advanced]=(champC[k.advanced]||0)+1);
+  rows.push(['CAMPEÓN MÁS ELEGIDO'],['Selección','Votos','%']);
+  Object.entries(champC).sort((a,b)=>b[1]-a[1]).forEach(([t,n])=>rows.push([t,n,pctOf(n,champUsers)]));
+  rows.push([]);
+  const finC={}; finalRows.forEach(k=>{[k.home_team,k.away_team].forEach(t=>{if(t)finC[t]=(finC[t]||0)+1;});});
+  rows.push(['FINALISTAS MÁS REPETIDOS'],['Selección','Veces en la final','%']);
+  Object.entries(finC).sort((a,b)=>b[1]-a[1]).forEach(([t,n])=>rows.push([t,n,pctOf(n,champUsers)]));
+  rows.push([]);
+  const botaC={},balonC={}; hon.forEach(h=>{if(h.boot_1)botaC[h.boot_1]=(botaC[h.boot_1]||0)+1; if(h.ball_1)balonC[h.ball_1]=(balonC[h.ball_1]||0)+1;});
+  const nHon=hon.length||1;
+  rows.push(['BOTA DE ORO MÁS ELEGIDA'],['Jugador','Votos','%']);
+  Object.entries(botaC).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([t,n])=>rows.push([t,n,pctOf(n,nHon)]));
+  rows.push([]);
+  rows.push(['BALÓN DE ORO MÁS ELEGIDO'],['Jugador','Votos','%']);
+  Object.entries(balonC).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([t,n])=>rows.push([t,n,pctOf(n,nHon)]));
+  rows.push([]);
+  const koUsers=[...new Set(ko.map(k=>k.user_id))];
+  const byUser={};
+  ko.forEach(k=>{const u=k.user_id,r=rnd(k.slot_id);(byUser[u]=byUser[u]||{rounds:{},finalAdv:null});(byUser[u].rounds[r]=byUser[u].rounds[r]||new Set());if(k.home_team)byUser[u].rounds[r].add(k.home_team);if(k.away_team)byUser[u].rounds[r].add(k.away_team);if(r==='final'&&k.advanced)byUser[u].finalAdv=k.advanced;});
+  const teams=[...new Set(matches.filter(m=>m.phase==='group').flatMap(m=>[m.home_team,m.away_team]).filter(Boolean))];
+  const stage={}; teams.forEach(t=>stage[t]={grupos:0,r32:0,r16:0,qf:0,sf:0,sub:0,champ:0});
+  koUsers.forEach(u=>{const ud=byUser[u]||{rounds:{},finalAdv:null};const has=r=>ud.rounds[r]||new Set();
+    teams.forEach(t=>{let b;if(ud.finalAdv===t)b='champ';else if(has('final').has(t))b='sub';else if(has('sf').has(t))b='sf';else if(has('qf').has(t))b='qf';else if(has('r16').has(t))b='r16';else if(has('r32').has(t))b='r32';else b='grupos';stage[t][b]++;});});
+  rows.push(['¿HASTA DÓNDE LLEGA CADA SELECCIÓN? (nº de jugadores, sobre '+koUsers.length+' cuadros)']);
+  rows.push(['Selección','Grupos','Dieciseisavos','Octavos','Cuartos','Semis','Subcampeón','Campeón']);
+  teams.map(t=>({t,s:stage[t]})).sort((a,b)=>b.s.champ-a.s.champ||b.s.sub-a.s.sub||b.s.sf-a.s.sf||a.t.localeCompare(b.t))
+    .forEach(({t,s})=>rows.push([t,s.grupos,s.r32,s.r16,s.qf,s.sf,s.sub,s.champ]));
+  rows.push([]);
+  const byMatch={}; preds.forEach(p=>{(byMatch[p.match_id]=byMatch[p.match_id]||[]).push(p);});
+  const gms=matches.filter(m=>m.phase==='group').sort((a,b)=>(a.group_letter||'').localeCompare(b.group_letter||'')||new Date(a.kickoff)-new Date(b.kickoff));
+  rows.push(['CONSENSO POR PARTIDO (fase de grupos)']);
+  rows.push(['Grupo','Partido','1 (local)','X','2 (visitante)','Marcador + repetido','Veces','Nº predicciones']);
+  gms.forEach(m=>{const ps=byMatch[m.id]||[];let one=0,x=0,two=0;const sc={};
+    ps.forEach(p=>{if(p.predicted_home==null||p.predicted_away==null)return;if(p.predicted_home>p.predicted_away)one++;else if(p.predicted_home<p.predicted_away)two++;else x++;const key=p.predicted_home+'-'+p.predicted_away;sc[key]=(sc[key]||0)+1;});
+    const tot=one+x+two; const topSc=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+    rows.push(['Grupo '+(m.group_letter||''),(m.home_team||'?')+' vs '+(m.away_team||'?'),pctOf(one,tot),pctOf(x,tot),pctOf(two,tot),topSc?topSc[0]:'—',topSc?topSc[1]:0,tot]);
+  });
   return rows;
 }
 
@@ -2493,6 +2692,8 @@ async function dlPicksGlobal(btn,pub){
     const wb=XLSX.utils.book_new();
     const cws=XLSX.utils.aoa_to_sheet(cover); cws['!cols']=[{wch:6},{wch:24},{wch:28},{wch:12},{wch:14},{wch:16},{wch:16},{wch:8}];
     XLSX.utils.book_append_sheet(wb,cws,'Resumen');
+    const qws=XLSX.utils.aoa_to_sheet(dlQuinielaSheet(D)); qws['!cols']=[{wch:24},{wch:34},{wch:13},{wch:9},{wch:14},{wch:18},{wch:8},{wch:13}];
+    XLSX.utils.book_append_sheet(wb,qws,'Quiniela');
     const used=new Set(['resumen']);
     withPicks.forEach(u=>{ const ws=XLSX.utils.aoa_to_sheet(dlPlayerRows(D,u,pub)); ws['!cols']=[{wch:18},{wch:34},{wch:16},{wch:18}]; XLSX.utils.book_append_sheet(wb,ws,dlSheetName(dlName(u),used)); });
     XLSX.writeFile(wb,'porra-predicciones-'+(pub?'jugadores':'admin')+'-'+dlStamp()+'.xlsx');

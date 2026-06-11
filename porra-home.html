@@ -82,6 +82,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
   <div id="nav-auth"></div>
@@ -110,6 +111,16 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
       <div class="action-h">Resultados</div>
       <div class="action-p">Grupos, eliminatorias y resultados día a día.</div>
     </a>
+    <a class="action-card" href="porra-live.html">
+      <div class="action-ico">🔴</div>
+      <div class="action-h">Partidos en directo</div>
+      <div class="action-p">Marcadores en vivo y clasificación, en tiempo real durante los partidos.</div>
+    </a>
+    <a class="action-card" href="porra-quiniela.html">
+      <div class="action-ico">🎯</div>
+      <div class="action-h">La Quiniela del Grupo</div>
+      <div class="action-p">Qué ha apostado el grupo: campeón, recorrido de cada selección y marcadores más repetidos.</div>
+    </a>
     <a class="action-card action-card-center" href="porra-leaderboard.html">
       <div class="action-h" style="margin:0;font-size:18px">Ver clasificación completa</div>
     </a>
@@ -122,6 +133,9 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 
   <div class="section-title">Puntos del día</div>
   <div class="lb-box" id="daily-box"><div class="empty">Cargando…</div></div>
+
+  <div class="section-title">Recap del día</div>
+  <div class="lb-box" id="recap-box"><div class="empty">Cargando…</div></div>
   <div style="height:24px"></div>
 
   <div class="section-title">Top 3</div>
@@ -239,6 +253,46 @@ async function loadDailyPoints(user){
   }
 }
 
+// ── Recap del día: stats de todo el grupo (solo partidos ya terminados hoy) ──
+async function loadDailyRecap(){
+  const box = document.getElementById('recap-box'); if(!box) return;
+  try{
+    const sb = getSB();
+    const [{ data: matches }, { data: users }, { data: allPreds }] = await Promise.all([
+      sb.from('matches').select('id, kickoff, real_home, real_away'),
+      sb.from('users').select('id, first_name, alias, blocked'),
+      sb.from('predictions').select('user_id, match_id, predicted_home, predicted_away'),
+    ]);
+    const today=new Date(); const y=today.getFullYear(), mo=today.getMonth(), d=today.getDate();
+    const isToday=(ts)=>{ const k=new Date(ts); return k.getFullYear()===y && k.getMonth()===mo && k.getDate()===d; };
+    const finished=(matches||[]).filter(m=>isToday(m.kickoff) && m.real_home!=null && m.real_away!=null);
+    if(!finished.length){ box.innerHTML='<div class="empty">El recap aparecerá cuando terminen los partidos de hoy. 📊</div>'; return; }
+    const resById={}; finished.forEach(m=>resById[m.id]=m); const fIds=new Set(finished.map(m=>m.id));
+    const nameById={}; (users||[]).filter(u=>!u.blocked).forEach(u=>nameById[u.id]=u.alias||u.first_name||'—');
+    const ptsByUser={};
+    (allPreds||[]).forEach(p=>{ if(!fIds.has(p.match_id)) return; if(!(p.user_id in nameById)) return;
+      const m=resById[p.match_id]; const pt=matchPts(m.real_home,m.real_away,p.predicted_home,p.predicted_away);
+      ptsByUser[p.user_id]=(ptsByUser[p.user_id]||0)+pt; });
+    const entries=Object.keys(nameById).map(id=>({name:nameById[id],pts:ptsByUser[id]||0})).sort((a,b)=>b.pts-a.pts);
+    const total=entries.reduce((a,b)=>a+b.pts,0);
+    const participants=entries.length||1;
+    const avg=Math.round(total/participants*10)/10;
+    const top=entries[0]||{pts:0};
+    const plenos=entries.filter(e=>e.pts===top.pts && top.pts>0).map(e=>e.name);
+    const stat=(l,v,c)=>`<div style="flex:1;min-width:130px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">${l}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${c};line-height:1.15">${v}</div></div>`;
+    const plenoCard = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">🏆 Pleno del día</div>
+        <div style="font-weight:700;margin-top:3px">${plenos.length? plenos.join(', ') : '—'} <span style="color:var(--gold)">(${top.pts} pts)</span></div></div>`;
+    box.innerHTML = plenoCard + `<div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${stat('Media del grupo', avg, 'var(--text)')}
+        ${stat('Puntos repartidos', total, 'var(--exact)')}
+        ${stat('Partidos jugados hoy', finished.length, 'var(--gold)')}
+      </div>`;
+  }catch(e){ box.innerHTML='<div class="empty">No se pudo cargar el recap.</div>'; }
+}
+
 async function loadHome() {
   const user = await requireAuth();
   if (!user) return;
@@ -257,6 +311,7 @@ async function loadHome() {
   document.getElementById('greet').textContent = '¡Hola, ' + name + '!';
   showFact();
   loadDailyPoints(user);
+  loadDailyRecap();
 
   await initNav();
 

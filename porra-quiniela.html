@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Quiniela del Grupo — Porra Mundial 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07070f; --bg2: #0e0e1c; --bg3: #151523;
+  --text: #eeeef8; --muted: rgba(238,238,248,0.45); --border: rgba(255,255,255,0.08);
+  --red: #C8102E; --gold: #FFD700; --green: #006847;
+  --exact: #22c55e; --wrong: #ef4444; --warn: #fbbf24;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px;
+  background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); }
+.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; flex: 1;
+  background: linear-gradient(90deg, var(--red), var(--gold), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+.nav-links { display: flex; gap: 4px; }
+.nav-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: none; transition: all 0.15s; }
+.nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); }
+#nav-auth { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+@media(max-width:560px){
+  nav { flex-wrap: wrap; height: auto; row-gap: 6px; padding: 8px 12px; }
+  .nav-links { display: flex; order: 3; width: 100%; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-tab { white-space: nowrap; flex: 0 0 auto; }
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding: 28px 24px 70px; }
+.eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+h1 { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 1px; font-weight: 400; line-height: 1; }
+.sub { color: var(--muted); font-size: 14px; margin: 8px 0 26px; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .5px; font-weight: 400; margin-bottom: 4px; }
+.card .h-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+/* horizontal bars */
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+.bar-name { width: 150px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; background: rgba(255,255,255,0.05); border-radius: 5px; height: 18px; position: relative; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--red), var(--gold)); }
+.bar-val { width: 64px; flex-shrink: 0; text-align: right; color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media(max-width:680px){ .two-col { grid-template-columns: 1fr; } }
+/* heatmap */
+.heat-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.heat { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 12px; }
+.heat th { text-align: center; padding: 8px 6px; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid var(--border); }
+.heat th:first-child, .heat td:first-child { text-align: left; padding-left: 4px; }
+.heat td { padding: 6px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.heat .team { font-weight: 600; white-space: nowrap; }
+.cellnum { display: inline-block; min-width: 26px; padding: 3px 0; border-radius: 5px; }
+/* per-match consensus */
+.match-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
+.match-teams { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
+.match-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.chip { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); }
+.chip.gold { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.3); color: var(--gold); }
+.sign { display: inline-flex; gap: 8px; }
+.sign .s { display: flex; flex-direction: column; align-items: center; min-width: 46px; padding: 6px 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; }
+.sign .s .lbl { font-size: 11px; color: var(--muted); letter-spacing: .5px; }
+.sign .s .v { font-size: 18px; font-weight: 700; color: var(--text); line-height: 1.1; }
+.loading { text-align: center; color: var(--muted); padding: 50px 20px; font-size: 14px; }
+.note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="porra-home.html">Porra Mundial 2026</a>
+  <div class="nav-links">
+    <a class="nav-tab" href="porra-home.html">Inicio</a>
+    <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
+    <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab active" href="porra-quiniela.html">La Quiniela</a>
+    <a class="nav-tab" href="porra-live.html">En vivo</a>
+  </div>
+  <div id="nav-auth"></div>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Porra Mundial 2026</div>
+  <h1>La Quiniela del Grupo</h1>
+  <div class="sub">Lo que ha apostado el grupo entero: campeón, recorrido de cada selección, premios y el marcador más repetido en cada partido.</div>
+  <div id="content"><div class="loading">Cargando las predicciones del grupo…</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+function roundOf(slot){ return (slot||'').split('_')[0]; }
+function pct(n,d){ return d>0 ? Math.round(n*100/d) : 0; }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function bars(items, total, max){
+  // items: [{name, n}] sorted desc
+  if(!items.length) return '<div class="note">Todavía no hay datos suficientes.</div>';
+  const top = max ? items.slice(0,max) : items;
+  const big = top[0] ? top[0].n : 1;
+  return top.map(it=>{
+    const w = big>0 ? Math.round(it.n*100/big) : 0;
+    return `<div class="bar-row">
+      <div class="bar-name">${esc(it.name)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%"></div></div>
+      <div class="bar-val">${it.n} · ${pct(it.n,total)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function countBy(arr, keyFn){
+  const m={}; arr.forEach(x=>{ const k=keyFn(x); if(k!=null && k!=='') m[k]=(m[k]||0)+1; });
+  return Object.entries(m).map(([name,n])=>({name,n})).sort((a,b)=>b.n-a.n);
+}
+
+async function load(){
+  const el=document.getElementById('content');
+  try{
+    // wait for shared helper
+    let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,80)); tries++; }
+    const sb=getSB();
+    // ¿Quiniela bloqueada? Por defecto está bloqueada hasta el primer partido para no
+    // desvelar las predicciones antes del cierre. Los administradores siempre la ven.
+    try{
+      const quinSet = await getSetting('quiniela_locked');
+      const QUIN_AUTO = new Date('2026-06-11T19:00:00Z').getTime();
+      const locked = quinSet==='true' || (quinSet!=='false' && Date.now() < QUIN_AUTO);
+      if(locked){
+        let isAdmin=false;
+        try{ const u=await getCurrentUser(); if(u){ const p=await getUserProfile(u.id); isAdmin=!!(p&&p.is_admin); } }catch(e){}
+        if(!isAdmin){
+          el.innerHTML = '<div class="card" style="text-align:center;padding:44px 24px">'
+            +'<div style="font-size:42px;margin-bottom:10px">🔒</div>'
+            +'<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;letter-spacing:.5px;margin:0 0 8px">La Quiniela está bloqueada</h2>'
+            +'<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0">Para no desvelar las predicciones de nadie antes de tiempo, la Quiniela se abrirá cuando empiece el primer partido. ¡Vuelve entonces!</p>'
+            +'</div>';
+          return;
+        }
+      }
+    }catch(e){}
+    const [uR,pR,kR,hR,mR]=await Promise.all([
+      sb.from('users').select('id,first_name,alias,blocked'),
+      sb.from('predictions').select('user_id,match_id,predicted_home,predicted_away'),
+      sb.from('ko_predictions').select('user_id,slot_id,home_team,away_team,advanced'),
+      sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
+      sb.from('matches').select('id,phase,group_letter,home_team,away_team,kickoff'),
+    ]);
+    const users=(uR.data||[]).filter(u=>!u.blocked);
+    const preds=pR.data||[]; const ko=kR.data||[]; const hon=hR.data||[]; const matches=mR.data||[];
+
+    // Normalize every team name to Spanish up front (safety net for any English
+    // still stored in ko_predictions), so counting AND display are consistent.
+    const T = (typeof esTeam==='function') ? esTeam : (x=>x);
+    ko.forEach(k=>{ k.home_team=T(k.home_team); k.away_team=T(k.away_team); k.advanced=T(k.advanced); });
+    matches.forEach(m=>{ m.home_team=T(m.home_team); m.away_team=T(m.away_team); });
+
+    // ---- participants with a bracket ----
+    const koUsers=[...new Set(ko.map(k=>k.user_id))];
+    const nKo=koUsers.length || users.length || 1;
+
+    // ---- CHAMPION (final advanced) ----
+    const finalRows=ko.filter(k=>roundOf(k.slot_id)==='final');
+    const champUsers=[...new Set(finalRows.map(k=>k.user_id))].length || nKo;
+    const champ=countBy(finalRows.filter(k=>k.advanced), k=>k.advanced);
+
+    // ---- FINALISTS (teams in the final slot) ----
+    const finalist=countBy(finalRows.flatMap(k=>[k.home_team,k.away_team]).map(t=>({t})), x=>x.t);
+
+    // ---- BOTA / BALÓN ----
+    const bota=countBy(hon, h=>h.boot_1);
+    const balon=countBy(hon, h=>h.ball_1);
+    const nHon=hon.length||1;
+
+    // ---- HEATMAP: how far the group sends each team ----
+    const byUser={};
+    ko.forEach(k=>{
+      const u=k.user_id; const r=roundOf(k.slot_id);
+      (byUser[u]=byUser[u]||{rounds:{},finalAdv:null});
+      (byUser[u].rounds[r]=byUser[u].rounds[r]||new Set());
+      if(k.home_team) byUser[u].rounds[r].add(k.home_team);
+      if(k.away_team) byUser[u].rounds[r].add(k.away_team);
+      if(r==='final' && k.advanced) byUser[u].finalAdv=k.advanced;
+    });
+    const teams=[...new Set(matches.filter(m=>m.phase==='group').flatMap(m=>[m.home_team,m.away_team]).filter(Boolean))];
+    const stage={}; teams.forEach(t=>stage[t]={grupos:0,r32:0,r16:0,qf:0,sf:0,sub:0,champ:0});
+    koUsers.forEach(u=>{
+      const ud=byUser[u]||{rounds:{},finalAdv:null};
+      const has=r=>ud.rounds[r]||new Set();
+      teams.forEach(t=>{
+        let b;
+        if(ud.finalAdv===t) b='champ';
+        else if(has('final').has(t)) b='sub';
+        else if(has('sf').has(t)) b='sf';
+        else if(has('qf').has(t)) b='qf';
+        else if(has('r16').has(t)) b='r16';
+        else if(has('r32').has(t)) b='r32';
+        else b='grupos';
+        stage[t][b]++;
+      });
+    });
+    // sort teams: champion picks, then finalists, then deepest
+    const teamRows=teams.map(t=>({t, ...stage[t]}))
+      .sort((a,b)=> (b.champ-a.champ)||(b.sub-a.sub)||(b.sf-a.sf)||(b.qf-a.qf)||(b.r16-a.r16));
+
+    function heatCell(n){
+      const a = nKo>0 ? Math.min(0.85, 0.08 + n/nKo) : 0;
+      const bg = n>0 ? `background:rgba(255,215,0,${a.toFixed(2)});color:#0a0a12;font-weight:700` : 'color:rgba(238,238,248,0.25)';
+      return `<td><span class="cellnum" style="${bg}">${n||'·'}</span></td>`;
+    }
+    const heatHtml = `
+      <div class="heat-scroll"><table class="heat">
+        <thead><tr><th>Selección</th><th>Grupos</th><th>16avos</th><th>Octavos</th><th>Cuartos</th><th>Semis</th><th>Subcamp.</th><th>Campeón</th></tr></thead>
+        <tbody>${teamRows.map(r=>`<tr>
+          <td class="team">${esc(r.t)}</td>
+          ${heatCell(r.grupos)}${heatCell(r.r32)}${heatCell(r.r16)}${heatCell(r.qf)}${heatCell(r.sf)}${heatCell(r.sub)}${heatCell(r.champ)}
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="note">Cada fila suma ${nKo} (los que han rellenado el cuadro). El número es cuánta gente predice que esa selección queda eliminada en esa ronda (o gana, en la última columna).</div>`;
+
+    // ---- PER-MATCH CONSENSUS (solo partidos de HOY, sin destripar el resto) ----
+    const predByMatch={};
+    preds.forEach(p=>{ (predByMatch[p.match_id]=predByMatch[p.match_id]||[]).push(p); });
+    const todayK=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+    const todays=matches.filter(m=>m.phase==='group' && new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})===todayK)
+      .sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
+    const matchHtml = todays.length ? todays.map(m=>{
+      const ps=predByMatch[m.id]||[];
+      const tot=ps.length;
+      let one=0,x=0,two=0; const sc={};
+      ps.forEach(p=>{ const h=p.predicted_home, a=p.predicted_away;
+        if(h==null||a==null) return;
+        if(h>a) one++; else if(h<a) two++; else x++;
+        const key=h+'-'+a; sc[key]=(sc[key]||0)+1;
+      });
+      const topSc=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+      const t=new Date(m.kickoff).toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'});
+      return `<div class="match-row">
+        <div>
+          <div class="match-teams">${esc(m.home_team)} <span style="color:var(--muted)">vs</span> ${esc(m.away_team)}</div>
+          <div class="match-time">${t} ET · Grupo ${esc(m.group_letter||'')}</div>
+        </div>
+        <div class="sign">
+          <div class="s"><span class="lbl">1</span><span class="v">${pct(one,tot)}%</span></div>
+          <div class="s"><span class="lbl">X</span><span class="v">${pct(x,tot)}%</span></div>
+          <div class="s"><span class="lbl">2</span><span class="v">${pct(two,tot)}%</span></div>
+        </div>
+        ${topSc ? `<span class="chip gold">Más repetido: ${esc(topSc[0])} (${topSc[1]})</span>` : `<span class="chip">Sin predicciones</span>`}
+      </div>`;
+    }).join('') : '<div class="note">No hay partidos hoy. Esta sección muestra solo los partidos del día para no destripar el resto.</div>';
+
+    // ---- RENDER ----
+    el.innerHTML = `
+      <div class="card">
+        <h2>¿Quién será campeón?</h2>
+        <div class="h-sub">Según ${champUsers} pronósticos del cuadro final</div>
+        ${bars(champ, champUsers, 10)}
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>Finalistas favoritos</h2>
+          <div class="h-sub">Selecciones que el grupo lleva a la final</div>
+          ${bars(finalist, champUsers, 8)}
+        </div>
+        <div class="card">
+          <h2>Premios individuales</h2>
+          <div class="h-sub">Bota de Oro · de ${nHon} pronósticos</div>
+          ${bars(bota, nHon, 5)}
+          <div class="h-sub" style="margin-top:16px">Balón de Oro</div>
+          ${bars(balon, nHon, 5)}
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>¿Hasta dónde llega cada selección?</h2>
+        <div class="h-sub">El recorrido que el grupo predice para cada equipo</div>
+        ${heatHtml}
+      </div>
+
+      <div class="card">
+        <h2>La predicción del grupo, partido a partido</h2>
+        <div class="h-sub">Signo 1·X·2 y el marcador más repetido en los partidos de hoy</div>
+        ${matchHtml}
+      </div>`;
+  }catch(e){
+    console.error('quiniela', e);
+    el.innerHTML='<div class="loading">No se pudieron cargar las estadísticas. Recarga la página en un momento.</div>';
+  }
+}
+
+// populate the account / admin nav, then load stats
+if (typeof initNav === 'function') { try { initNav(); } catch(e){} }
+load();
+</script>
+</body>
+</html>
