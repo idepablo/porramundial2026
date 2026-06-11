@@ -220,7 +220,9 @@ nav {
 .pts-main { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); text-align: right; }
 .move-cell { font-size: 12px; text-align: center; width: 50px; }
 .exact-cell { font-size: 12px; text-align: center; color: var(--exact); font-family: 'Bebas Neue', sans-serif; font-size: 16px; }
-.expand-cell { color: var(--muted); font-size: 16px; text-align: center; transition: transform 0.2s; }
+.expand-cell { color: var(--muted); font-size: 16px; text-align: center; transition: transform 0.2s; cursor: pointer; }
+.pts-clickable { cursor: pointer; position: relative; }
+.pts-clickable:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gold); }
 .lb-row.expanded .expand-cell { transform: rotate(180deg); }
 
 /* ── BOTTOM LANTERNS ── */
@@ -278,6 +280,7 @@ nav {
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab active" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
 </nav>
@@ -480,9 +483,9 @@ function buildTable() {
         </td>
         <td class="move-cell">${moveHtml(p.move)}</td>
         <td class="pts-main" style="color:${p.today>0?'var(--exact)':'var(--muted)'}">+${p.today}</td>
-        <td class="pts-main">${p.total}</td>
+        <td class="pts-main pts-clickable" title="Ver desglose de puntos" onclick="event.stopPropagation(); toggleExpand('${p.id}')">${p.total}</td>
         <td class="exact-cell">${p.exact}</td>
-        <td class="expand-cell">▾</td>
+        <td class="expand-cell" title="Ver desglose de puntos" onclick="event.stopPropagation(); toggleExpand('${p.id}')">▾</td>
       </tr>
       <tr class="lb-detail-row" id="detail-${p.id}">
         <td colspan="7">${detailHtml}</td>

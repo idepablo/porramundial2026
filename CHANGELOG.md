@@ -1,3 +1,24 @@
+# Porra Mundial 2026 — Cambios (ronda 3)
+
+## SQL a ejecutar en Supabase (en este orden)
+1. `setup-supabase.sql` — tablas base + `settings` (si no está ya aplicado).
+2. `scoring-engine.sql` — función `recalculate_all_scores` y reglas de puntos.
+3. `backups-and-rollback.sql` — **NUEVO**: copias de seguridad automáticas 2×/día y restauración por etiqueta. Requiere la extensión `pg_cron` (Database → Extensions → activar `pg_cron`).
+
+## Funcionalidades nuevas (ronda 3)
+1. **Logo → Iniciar sesión**: el logo de la portada (`porra-mundial-2026.html`) ahora enlaza a `porra-login.html`.
+2. **Selector de zona horaria en el aviso (banner)**: en Ajustes puedes escribir la hora del aviso en Costa Este (EST/EDT) **o** Costa Oeste / Seattle (PST/PDT). Se guarda siempre normalizada a hora del Este, por lo que el banner que ven los jugadores no cambia de contrato.
+3. **Desglose de puntos clicable en Clasificación**: al pulsar el total de puntos (o la flecha ▾) se despliega el desglose por fase sin salir de la página. La fila sigue navegando a las predicciones del jugador.
+4. **Pestaña Comunicación**: panel de destinatarios (copiar correos de todos / pagados / pendientes para pegar en CCO) + redactor de email con 4 plantillas, contador de caracteres, copiar texto y abrir en el cliente de correo (CCO).
+5. **Partidos anteriores** (en "Partidos y Puntos"): revisa o corrige resultados de días pasados, con filtro "Solo sin resultado" para cazar marcadores olvidados. Guarda con `recalculate_all_scores`.
+6. **Cuadro de Honor — bloqueo de edición**: el enlace "Editar" de Campeón/Subcampeón ahora alterna Editar ⇄ Bloquear con resaltado, para evitar cambios accidentales tras corregir.
+7. **Copias de seguridad + restauración** (`backups-and-rollback.sql`): snapshots automáticos a las 07:00 y 19:00, limpieza diaria (conserva 14 + manuales/pre-rollback), y restauración por etiqueta con snapshot de seguridad previo. Solo cubre tablas de la base de datos (no el bucket de avatares).
+
+## Resultados en vivo
+- `porra-live.html` usa los widgets de **API-Sports**, que leen la clave desde `settings.apifootball_key`. Basta con pegar la clave en **Admin → Ajustes → Resultados en vivo**; no hace falta ningún Edge Function ni cron para los marcadores en vivo.
+
+---
+
 # Porra Mundial 2026 — Cambios (ronda 2)
 
 ## SQL a ejecutar en Supabase (en este orden, todo idempotente)

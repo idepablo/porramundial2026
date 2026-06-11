@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://widgets.api-sports.io" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados en vivo — Porra Mundial 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07070f; --bg2: #0e0e1c; --bg3: #151523;
+  --text: #eeeef8; --muted: rgba(238,238,248,0.5); --border: rgba(255,255,255,0.08);
+  --red: #C8102E; --gold: #FFD700; --green: #006847;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px;
+  background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;
+  background: linear-gradient(90deg, var(--red), var(--gold), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-tab { padding: 6px 16px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all 0.15s; }
+.nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); border-color: var(--border); }
+#nav-auth { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.page-head h1 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; font-weight: 400; }
+.sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+.grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 920px){ .grid { grid-template-columns: 1fr; } }
+.zone-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 0 4px 8px; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; min-height: 120px; }
+.card .empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 13px; }
+/* widget sizing to match the site's compact type */
+api-sports-widget {
+  --primary-font-size: 0.82rem;
+  --secondary-font-size: .8rem;
+  --button-font-size: .8rem;
+  --title-font-size: .9rem;
+  display: block;
+}
+.modal-widget { width: 90%; max-width: 700px; }
+.modal-widget-content { padding: 0; height: 60vh; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="porra-home.html" style="text-decoration:none">Porra Mundial 2026</a>
+  <div class="nav-tabs">
+    <a class="nav-tab" href="porra-home.html">Inicio</a>
+    <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
+    <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
+    <a class="nav-tab active" href="porra-live.html">En vivo</a>
+  </div>
+  <div id="nav-auth"></div>
+</nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>Resultados en vivo</h1></div>
+  <div class="sub">Calendario, marcadores en directo y clasificación del Mundial — se actualiza automáticamente durante los partidos.</div>
+  <div id="live-notice" style="display:none;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--text)">
+    Aún no hay una clave API configurada. Un administrador puede añadirla en <strong>Admin → Ajustes → Resultados en vivo</strong>.
+  </div>
+
+  <div class="grid">
+
+    <div>
+      <div class="zone-label">Partidos</div>
+      <div class="card">
+        <api-sports-widget data-type="league"></api-sports-widget>
+      </div>
+    </div>
+
+    <div>
+      <div class="zone-label">Detalle del partido</div>
+      <div id="game-content" class="card">
+        <div class="card-b">
+          <div class="empty">Selecciona un partido de la izquierda para ver el detalle (marcador, eventos y estadísticas).</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="zone-label">Clasificación</div>
+      <div class="card">
+        <api-sports-widget data-type="standings"></api-sports-widget>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     CONFIGURACIÓN DE LOS WIDGETS — API-SPORTS
+     >>> PEGA TU API KEY DE API-FOOTBALL EN data-key (sustituye TU_API_KEY_AQUI) <<<
+     ════════════════════════════════════════════════════════════════════ -->
+<api-sports-widget
+  data-type="config"
+  data-key=""
+  data-sport="football"
+  data-lang="es"
+  data-theme="dark"
+  data-show-errors="true"
+  data-show-logos="true"
+  data-refresh="60"
+  data-standings="true"
+  data-target-standings="true"
+  data-target-game="#game-content .card-b"
+  data-target-player="modal"
+  data-target-team="modal"
+  data-tab="results"
+  data-league="1"
+  data-season="2026"
+></api-sports-widget>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+(async function(){
+  try{
+    // wait for the shared Supabase helper to be ready
+    let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,100)); tries++; }
+    let key='';
+    if(typeof getSB==='function'){
+      try{ const { data } = await getSB().from('settings').select('value').eq('key','apifootball_key').maybeSingle(); key=(data&&data.value)||''; }catch(e){ console.warn('live key fetch', e); }
+    }
+    const cfg=document.querySelector('api-sports-widget[data-type="config"]');
+    if(!key || !cfg){
+      const n=document.getElementById('live-notice'); if(n) n.style.display='block';
+      return;
+    }
+    cfg.setAttribute('data-key', key);
+    // load the widget library now that the key is in place
+    const sc=document.createElement('script'); sc.type='module'; sc.crossOrigin='anonymous';
+    sc.src='https://widgets.api-sports.io/3.1.0/widgets.js'; document.head.appendChild(sc);
+  }catch(e){ console.error('live init', e); }
+})();
+</script>
+</body>
+</html>

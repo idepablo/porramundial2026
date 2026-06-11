@@ -401,6 +401,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <div class="nav-item" onclick="showPage('whatsapp', this)">
       WhatsApp
     </div>
+    <div class="nav-item" onclick="showPage('comunicacion', this)">
+      Comunicación
+    </div>
     <div class="nav-item" onclick="showPage('sandbox', this)">
       Modo Pruebas
     </div>
@@ -495,6 +498,21 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Partidos anteriores</div>
+            <div class="card-sub">Revisa o corrige resultados de días pasados. Útil si olvidaste introducir alguno.</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap">
+            <input type="checkbox" id="past-only-missing" onchange="renderPastGames()"> Solo sin resultado
+          </label>
+        </div>
+        <div id="past-games-container" style="padding:8px 16px 16px">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Cargando…</div>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:20px;overflow:visible">
         <div class="card-header"><div class="card-title">Cuadro de Honor (al final del torneo)</div></div>
         <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
@@ -513,11 +531,11 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap">
             <div style="flex:1;min-width:220px">
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Campeón <span style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleChampEdit('champ')">Editar</span></label>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Campeón <span id="champ-edit-btn" style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleChampEdit('champ')">Editar</span></label>
               <input type="text" id="champ-input" disabled placeholder="(auto desde la final)" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
             </div>
             <div style="flex:1;min-width:220px">
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Subcampeón <span style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleChampEdit('runnerup')">Editar</span></label>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Subcampeón <span id="runnerup-edit-btn" style="cursor:pointer;color:var(--gold);font-size:11px;text-decoration:underline;text-underline-offset:2px" onclick="toggleChampEdit('runnerup')">Editar</span></label>
               <input type="text" id="runnerup-input" disabled placeholder="(auto desde la final)" style="width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
             </div>
           </div>
@@ -652,6 +670,52 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     </div>
 
     <!-- ══════════════════════════════════ -->
+    <!-- PAGE: COMUNICACIÓN                 -->
+    <!-- ══════════════════════════════════ -->
+    <div class="page" id="page-comunicacion">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Destinatarios</div></div>
+        <div style="padding:16px">
+          <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px">
+            <div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);line-height:1" id="com-count-all">—</div><div style="font-size:11px;color:var(--muted)">Jugadores con email</div></div>
+            <div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#22c55e;line-height:1" id="com-count-paid">—</div><div style="font-size:11px;color:var(--muted)">Pagados</div></div>
+            <div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#fbbf24;line-height:1" id="com-count-pending">—</div><div style="font-size:11px;color:var(--muted)">Pendientes de pago</div></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="copyEmails('all',this)" style="background:var(--gold);color:#13131f;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Copiar todos los correos</button>
+            <button onclick="copyEmails('pending',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Copiar pendientes de pago</button>
+            <button onclick="copyEmails('paid',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Copiar pagados</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:10px">Pega las direcciones en el campo <strong>CCO/BCC</strong> de tu cliente de correo para que los jugadores no vean los emails de los demás.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Redactar email</div></div>
+        <div style="padding:16px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="com-tpl" onclick="comTemplate('cierre',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Recordatorio de cierre</button>
+            <button class="com-tpl" onclick="comTemplate('pago',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Recordatorio de pago</button>
+            <button class="com-tpl" onclick="comTemplate('bienvenida',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Bienvenida</button>
+            <button class="com-tpl" onclick="comTemplate('resultados',this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Resumen de resultados</button>
+          </div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Asunto</label>
+          <input type="text" id="com-subject" oninput="updateComCount()" placeholder="Asunto del correo" style="width:100%;margin:6px 0 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif">
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Mensaje</label>
+          <textarea id="com-body" rows="12" oninput="updateComCount()" placeholder="Escribe tu mensaje, o elige una plantilla arriba…" style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;line-height:1.5;resize:vertical"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11px;color:var(--muted)"><span id="com-charcount">0</span> caracteres</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="copyDraft(this)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Copiar texto</button>
+              <button onclick="openMail('all')" style="background:var(--gold);color:#13131f;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Abrir en cliente de correo</button>
+            </div>
+          </div>
+          <div id="com-mail-note" style="font-size:11px;color:var(--muted);margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════ -->
     <!-- PAGE: USUARIOS                     -->
     <!-- ══════════════════════════════════ -->
     <div class="page" id="page-users">
@@ -771,13 +835,28 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             </div>
             <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
               <div style="font-size:12px;font-weight:600;margin-bottom:6px">Aviso programado (banner)</div>
-              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Muestra un aviso en la web a todos los jugadores. Introduce la hora en <strong>Costa Este EE.UU. (EST/EDT)</strong>; el banner mostrará la hora de España y de EE.UU. automáticamente.</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Muestra un aviso en la web a todos los jugadores. Introduce la hora en la zona que elijas abajo; el banner siempre mostrará la hora de <strong>EE.UU. (Costa Este)</strong> y de <strong>España</strong> automáticamente.</div>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <input type="datetime-local" id="banner-time" style="background:var(--bg2,#13131f);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+                <select id="banner-tz" onchange="updateBannerPreview()" title="Zona horaria en la que escribes la hora" style="background:var(--bg2,#13131f);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer">
+                  <option value="ET">Costa Este (EST/EDT)</option>
+                  <option value="PT">Costa Oeste · Seattle (PST/PDT)</option>
+                </select>
                 <button id="banner-toggle" data-on="0" onclick="toggleBanner()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Activar aviso</button>
               </div>
               <div id="banner-preview" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
             </div>
+          </div>
+
+          <!-- Resultados en vivo — clave API -->
+          <div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+            <div style="font-size:13px;font-weight:600">Resultados en vivo — Clave API (API-Football)</div>
+            <div style="font-size:11px;color:var(--muted);margin:2px 0 8px">La página "En vivo" usa esta clave para mostrar marcadores y clasificación. Pégala aquí y guarda; no hace falta editar ningún archivo.</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="text" id="set-apikey" placeholder="Pega aquí tu clave de API-Football" autocomplete="off" spellcheck="false" style="flex:1;min-width:220px;background:var(--bg2,#13131f);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+              <button id="apikey-btn" onclick="saveApiKey(this)" style="background:var(--gold,#e8b84b);color:#13131f;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px">Nota: esta clave queda visible en el navegador de los jugadores (así funcionan los widgets). Si se filtra, regenérala en api-football.com y vuelve a pegarla aquí.</div>
           </div>
 
         </div>
@@ -987,7 +1066,7 @@ let currentFilter = 'all';
 let searchTerm = '';
 
 // ── PAGE SWITCHING ─────────────────────────────────────────────────────────
-const PAGE_TITLES = {results:'Partidos y Puntos', daily:'Resumen del Día', stats:'Estadísticas', whatsapp:'Mensajes WhatsApp', sandbox:'Modo Pruebas', clasif:'Clasificación', users:'Participantes', descargas:'Descargas', overview:'Inicio', settings:'Ajustes'};
+const PAGE_TITLES = {results:'Partidos y Puntos', daily:'Resumen del Día', stats:'Estadísticas', whatsapp:'Mensajes WhatsApp', comunicacion:'Comunicación', sandbox:'Modo Pruebas', clasif:'Clasificación', users:'Participantes', descargas:'Descargas', overview:'Inicio', settings:'Ajustes'};
 function toggleSidebar(){
   document.querySelector('.sidebar')?.classList.toggle('open');
   document.getElementById('sidebar-overlay')?.classList.toggle('open');
@@ -1005,6 +1084,7 @@ function showPage(id, navEl) {
   document.getElementById('page-title').textContent = PAGE_TITLES[id];
   if (id === 'stats') renderStats();
   if (id === 'whatsapp') renderWhatsapp();
+  if (id === 'comunicacion') renderComunicacion();
   if (id === 'clasif') renderClasif();
   if (id === 'descargas') initDescargas();
   if (id === 'sandbox') renderSandbox();
@@ -1104,6 +1184,72 @@ function saveAll() {
     const a = document.getElementById('a-'+i);
     if (h && h.value !== '' && a && a.value !== '') saveMatch(i);
   });
+}
+
+// ════════════════ PARTIDOS ANTERIORES (past games review/edit) ════════════════
+let PAST_MATCHES = [];
+async function loadPastGames(){
+  try{
+    const sb=getSB();
+    const startOfDay=new Date(TODAY_REAL); startOfDay.setHours(0,0,0,0);
+    const { data, error } = await sb.from('matches').select('*')
+      .lt('kickoff', startOfDay.toISOString())
+      .order('kickoff', { ascending:false });
+    if(error){ console.error('past games', error); }
+    PAST_MATCHES = data || [];
+  }catch(e){ console.warn('loadPastGames', e); PAST_MATCHES=[]; }
+  renderPastGames();
+}
+function renderPastGames(){
+  const cont=document.getElementById('past-games-container'); if(!cont) return;
+  const onlyMissing=document.getElementById('past-only-missing')?.checked;
+  let list=PAST_MATCHES.slice();
+  if(onlyMissing) list=list.filter(m=>m.real_home==null);
+  if(!list.length){
+    cont.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">'+
+      (onlyMissing?'No quedan partidos pasados sin resultado. 🎉':'Todavía no hay partidos anteriores.')+'</div>';
+    return;
+  }
+  const byDay={};
+  list.forEach(m=>{ const k=new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'}); (byDay[k]=byDay[k]||[]).push(m); });
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a)); // newest day first
+  cont.innerHTML=days.map(k=>{
+    const games=byDay[k].sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    const dayName=new Date(games[0].kickoff).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'America/New_York'});
+    const missingN=games.filter(m=>m.real_home==null).length;
+    const rows=games.map(m=>{
+      const t=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'});
+      const miss=m.real_home==null;
+      const bc=miss?'rgba(251,191,36,0.5)':'var(--border)';
+      const inS=`width:42px;text-align:center;background:var(--bg3);border:1px solid ${bc};border-radius:6px;padding:6px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif`;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="width:52px;font-size:11px;color:var(--muted);flex-shrink:0">${t} ET</div>
+        <div style="flex:1;text-align:right;font-size:13px;min-width:0">${m.home_team||'?'}</div>
+        <input type="number" min="0" max="20" id="pg-h-${m.id}" value="${m.real_home??''}" placeholder="–" style="${inS}">
+        <span style="color:var(--muted)">:</span>
+        <input type="number" min="0" max="20" id="pg-a-${m.id}" value="${m.real_away??''}" placeholder="–" style="${inS}">
+        <div style="flex:1;font-size:13px;min-width:0">${m.away_team||'?'}</div>
+        <button onclick="savePastGame('${m.id}',this)" style="flex-shrink:0;background:rgba(232,184,75,0.15);border:1px solid rgba(232,184,75,0.35);color:var(--gold);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;text-transform:capitalize;margin:6px 0 2px">${dayName}${missingN?` · <span style="color:#fbbf24">${missingN} sin resultado</span>`:''}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+async function savePastGame(id, btn){
+  const h=document.getElementById('pg-h-'+id)?.value; const a=document.getElementById('pg-a-'+id)?.value;
+  if(h===''||a===''||h==null||a==null){ alert('Introduce ambos marcadores.'); return; }
+  const t=btn.textContent; btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    const { error } = await getSB().from('matches').update({ real_home:parseInt(h), real_away:parseInt(a) }).eq('id', id);
+    if(error) throw error;
+    await getSB().rpc('recalculate_all_scores').catch(e=>console.warn('recalc', e));
+    const m=PAST_MATCHES.find(x=>x.id===id); if(m){ m.real_home=parseInt(h); m.real_away=parseInt(a); }
+    btn.textContent='Guardado ✓';
+    setTimeout(()=>{ renderPastGames(); },1100);
+  }catch(e){ alert('Error: '+(e.message||e)); btn.textContent=t; btn.disabled=false; }
 }
 
 // ── BUILD USERS TABLE — SUPABASE ──────────────────────────────────────────
@@ -1526,6 +1672,7 @@ async function saveEditUser(id){
 
   // Load real data
   await loadTodayMatches();
+  loadPastGames();
   await loadUsers();
   loadHomeDashboard(result.profile);
   setupAutocomplete('bota-input','bota-list');
@@ -1610,7 +1757,16 @@ async function toggleMaintenance(){
   b.disabled=false;
 }
 // ── PREMIOS REALES (Partidos y Puntos) ──
-function toggleChampEdit(which){ const el=document.getElementById(which==='champ'?'champ-input':'runnerup-input'); if(el){ el.disabled=!el.disabled; if(!el.disabled) el.focus(); } }
+function toggleChampEdit(which){
+  const el=document.getElementById(which==='champ'?'champ-input':'runnerup-input');
+  const btn=document.getElementById(which+'-edit-btn');
+  if(el){
+    el.disabled=!el.disabled;
+    if(!el.disabled){ el.focus(); el.style.borderColor='rgba(232,184,75,0.5)'; }
+    else { el.style.borderColor='var(--border)'; }
+  }
+  if(btn) btn.textContent = (el && !el.disabled) ? 'Bloquear' : 'Editar';
+}
 async function loadPremios(){
   try{
     const bi=document.getElementById('bota-input'); if(!bi) return;
@@ -1662,8 +1818,15 @@ async function loadSettings(){
     initMaintenance();
     const bon = String(await getSetting('maint_banner')) === 'true';
     setBannerBtn(bon);
-    const bt = await getSetting('maint_banner_time'); if(bt && document.getElementById('banner-time')) document.getElementById('banner-time').value = bt;
+    const btz = (await getSetting('maint_banner_tz')) || 'ET';
+    if(document.getElementById('banner-tz')) document.getElementById('banner-tz').value = btz;
+    const bt = await getSetting('maint_banner_time');
+    if(bt && document.getElementById('banner-time')){
+      // stored value is Eastern wall-clock; show it back in the admin's chosen zone
+      document.getElementById('banner-time').value = (btz==='PT') ? shiftWallClock(bt,-3) : bt;
+    }
     updateBannerPreview();
+    const apik = await getSetting('apifootball_key'); if(apik!=null && document.getElementById('set-apikey')) document.getElementById('set-apikey').value = apik;
   }catch(e){ console.warn('loadSettings', e); }
 }
 function updateFeePreview(){
@@ -1674,6 +1837,13 @@ async function saveCuota(btn){
   const fee=document.getElementById('set-fee').value.trim(); const cur=document.getElementById('set-currency').value;
   const t=btn.textContent; btn.disabled=true; btn.textContent='Guardando…';
   try{ await getSB().from('settings').upsert([{key:'entry_fee',value:fee},{key:'currency',value:cur}]); btn.textContent='Guardado ✓'; }
+  catch(e){ alert('Error: '+(e.message||e)); btn.textContent=t; }
+  setTimeout(()=>{btn.textContent=t;btn.disabled=false;},1500);
+}
+async function saveApiKey(btn){
+  const key=(document.getElementById('set-apikey').value||'').trim();
+  const t=btn.textContent; btn.disabled=true; btn.textContent='Guardando…';
+  try{ const {error}=await getSB().from('settings').upsert([{key:'apifootball_key',value:key}],{onConflict:'key'}); if(error){ alert('Error: '+error.message); btn.textContent=t; btn.disabled=false; return; } btn.textContent='Guardado ✓'; }
   catch(e){ alert('Error: '+(e.message||e)); btn.textContent=t; }
   setTimeout(()=>{btn.textContent=t;btn.disabled=false;},1500);
 }
@@ -1713,13 +1883,23 @@ async function toggleHidePicks(){
   b.disabled=false;
 }
 // Scheduled maintenance banner
+// Tournament runs Jun–Jul 2026, so offsets are constant: EDT = UTC−4, PDT = UTC−7.
+const BANNER_TZ_OFFSET = { ET: 4, PT: 7 }; // hours to ADD to wall-clock to reach UTC
+function bannerZone(){ return document.getElementById('banner-tz')?.value || 'ET'; }
+// Shift a "YYYY-MM-DDTHH:MM" string by <hours>, returning the same string format.
+function shiftWallClock(localStr, hours){
+  if(!localStr) return '';
+  const [d,t]=localStr.split('T'); const [Y,Mo,Da]=d.split('-').map(Number); const [H,Mi]=t.split(':').map(Number);
+  const z=new Date(Date.UTC(Y,Mo-1,Da,H,Mi)+hours*3600000); const p=n=>String(n).padStart(2,'0');
+  return `${z.getUTCFullYear()}-${p(z.getUTCMonth()+1)}-${p(z.getUTCDate())}T${p(z.getUTCHours())}:${p(z.getUTCMinutes())}`;
+}
+// Pacific wall-clock is 3h behind Eastern → +3h converts PT→ET; −3h converts ET→PT.
+function inputToEastern(localStr, zone){ return zone==='PT' ? shiftWallClock(localStr, 3) : localStr; }
 function bannerLabelFromEST(localStr){
   if(!localStr) return '';
-  // interpret the datetime-local value as US Eastern time
+  const off=BANNER_TZ_OFFSET[bannerZone()]||4;
   const [d,t]=localStr.split('T'); const [Y,Mo,Da]=d.split('-').map(Number); const [H,Mi]=t.split(':').map(Number);
-  // Eastern offset: EDT (-4) during the tournament (Jun/Jul)
-  const utc=Date.UTC(Y,Mo-1,Da,H+4,Mi);
-  const dt=new Date(utc);
+  const dt=new Date(Date.UTC(Y,Mo-1,Da,H+off,Mi));
   const us=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/New_York'});
   const es=dt.toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
   return `${us} (Costa Este EE.UU.) / ${es} (España)`;
@@ -1738,10 +1918,12 @@ function setBannerBtn(on){
 }
 async function toggleBanner(){
   const b=document.getElementById('banner-toggle'); const on=b.dataset.on==='1'; const next=!on;
-  const time=document.getElementById('banner-time')?.value||'';
-  if(next && !time){ alert('Introduce primero la hora (en Costa Este EE.UU.).'); return; }
+  const raw=document.getElementById('banner-time')?.value||'';
+  if(next && !raw){ alert('Introduce primero la hora.'); return; }
+  const zone=bannerZone();
+  const time=inputToEastern(raw, zone); // always store canonical US-Eastern wall-clock
   b.disabled=true;
-  try{ await getSB().from('settings').upsert([{key:'maint_banner',value: next?'true':'false'},{key:'maint_banner_time',value: time}]); setBannerBtn(next); }
+  try{ await getSB().from('settings').upsert([{key:'maint_banner',value: next?'true':'false'},{key:'maint_banner_time',value: time},{key:'maint_banner_tz',value: zone}]); setBannerBtn(next); }
   catch(e){ alert('Error: '+(e.message||e)); }
   b.disabled=false;
 }
@@ -1930,6 +2112,74 @@ function renderStats(){
 }
 // ════════════════ WHATSAPP ════════════════
 function waGames(matches){ return matches.map(m=>{ const t=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:HD_TZ}); const sc=(m.real_home!=null)?`${m.real_home}-${m.real_away}`:'vs'; return `• ${t}  ${m.home_team||'?'} ${sc} ${m.away_team||'?'}`; }).join('\n'); }
+// ════════════════ COMUNICACIÓN ════════════════
+function comRecipients(kind){
+  const list = (typeof USERS_DATA!=='undefined' && USERS_DATA ? USERS_DATA : [])
+    .filter(u => u.email && !u.blocked);
+  if(kind==='paid')    return list.filter(u=>u.status==='active');
+  if(kind==='pending') return list.filter(u=>u.status!=='active');
+  return list;
+}
+async function renderComunicacion(){
+  if(typeof USERS_DATA==='undefined' || !USERS_DATA || !USERS_DATA.length){
+    try{ if(typeof loadUsers==='function') await loadUsers(); }catch(e){ console.warn('com loadUsers', e); }
+  }
+  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+  set('com-count-all', comRecipients('all').length);
+  set('com-count-paid', comRecipients('paid').length);
+  set('com-count-pending', comRecipients('pending').length);
+  updateComCount();
+}
+async function clipboardWrite(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); return true; }
+    catch(e2){ return false; }
+  }
+}
+async function copyEmails(kind, btn){
+  const rcpts=comRecipients(kind);
+  if(!rcpts.length){ alert('No hay destinatarios en esa categoría.'); return; }
+  const ok=await clipboardWrite(rcpts.map(u=>u.email).join(', '));
+  if(btn){ const t=btn.textContent; btn.textContent = ok ? ('Copiado ✓ ('+rcpts.length+')') : 'Error al copiar'; setTimeout(()=>btn.textContent=t,1600); }
+}
+const COM_TEMPLATES={
+  cierre:{s:'⏰ Última hora para enviar tus predicciones — Porra Mundial 2026',
+    b:'¡Hola!\n\nRecuerda que el plazo para enviar tus predicciones se cierra justo antes del primer partido. Después del cierre ya no se podrán modificar.\n\nEntra en https://porradelmundial.com y completa tus pronósticos.\n\n¡Mucha suerte!\nNacho'},
+  pago:{s:'💸 Recordatorio: cuota de la Porra Mundial 2026',
+    b:'¡Hola!\n\nTodavía no me consta tu pago de la cuota de participación. Puedes enviarlo cuando te venga bien; en cuanto lo reciba, te activo en la clasificación.\n\nGracias y ¡suerte en el Mundial!\nNacho'},
+  bienvenida:{s:'🏆 ¡Bienvenido a la Porra Mundial 2026!',
+    b:'¡Hola!\n\nYa estás dentro de la porra del Mundial 2026. Entra en https://porradelmundial.com para registrar tus predicciones de la fase de grupos y el cuadro final.\n\nNos vemos en la clasificación.\nNacho'},
+  resultados:{s:'📊 Resumen de la jornada — Porra Mundial 2026',
+    b:'¡Hola!\n\nYa están actualizados los resultados y la clasificación de hoy. Entra en https://porradelmundial.com para ver cómo vas.\n\n¡A por la siguiente jornada!\nNacho'}
+};
+function comTemplate(key,btn){
+  const t=COM_TEMPLATES[key]; if(!t) return;
+  const s=document.getElementById('com-subject'), b=document.getElementById('com-body');
+  if(s) s.value=t.s; if(b) b.value=t.b; updateComCount();
+  document.querySelectorAll('.com-tpl').forEach(x=>{ x.style.background='rgba(255,255,255,0.06)'; x.style.color='var(--text)'; x.style.borderColor='var(--border)'; });
+  if(btn){ btn.style.background='rgba(232,184,75,0.15)'; btn.style.color='var(--gold)'; btn.style.borderColor='rgba(232,184,75,0.35)'; }
+}
+function updateComCount(){ const b=document.getElementById('com-body'); const c=document.getElementById('com-charcount'); if(b&&c) c.textContent=b.value.length; }
+async function copyDraft(btn){
+  const s=document.getElementById('com-subject')?.value||''; const b=document.getElementById('com-body')?.value||'';
+  const ok=await clipboardWrite((s?('Asunto: '+s+'\n\n'):'')+b);
+  if(btn){ const t=btn.textContent; btn.textContent= ok ? 'Copiado ✓' : 'Error al copiar'; setTimeout(()=>btn.textContent=t,1600); }
+}
+function openMail(kind){
+  const s=document.getElementById('com-subject')?.value||''; const b=document.getElementById('com-body')?.value||'';
+  const emails=comRecipients(kind||'all').map(u=>u.email);
+  const note=document.getElementById('com-mail-note');
+  const href='mailto:?bcc='+encodeURIComponent(emails.join(','))+'&subject='+encodeURIComponent(s)+'&body='+encodeURIComponent(b);
+  if(note){
+    note.innerHTML = href.length>1900
+      ? '⚠️ Son '+emails.length+' destinatarios; algunos clientes de correo recortan listas largas en CCO. Si falta gente, usa <strong>Copiar todos los correos</strong> y pégalos a mano en el campo CCO.'
+      : 'Se abrirá tu cliente de correo con '+emails.length+' destinatarios en CCO.';
+  }
+  window.location.href=href;
+}
+
 function renderWhatsapp(){
   const d=hdComputeDay(HD.todayK);
   const dateLabel=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:HD_TZ});
