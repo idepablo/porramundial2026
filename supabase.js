@@ -737,7 +737,7 @@ function showMaintBanner(timeStr){
 // FEATURE FLAG: mientras la Quiniela esté desactivada, ocultamos todos sus
 // enlaces (pestañas de navegación y tarjetas del inicio) en todo el sitio.
 // Para reactivarla, pon QUINIELA_DISABLED = false.
-const QUINIELA_DISABLED = true;
+const QUINIELA_DISABLED = false;
 function hideQuinielaLinks(){
   if(!QUINIELA_DISABLED) return;
   try{

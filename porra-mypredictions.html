@@ -573,9 +573,6 @@ function calcGroupPts(real, pred, phase) {
 
 // ── TÚ VS EL GRUPO ─────────────────────────────────────────────────────────
 function renderVsGrupo(myPreds, allPreds, matches, isSelf, name){
-  // ── FUNCIÓN DESACTIVADA TEMPORALMENTE ──────────────────────────────────────
-  // Para reactivar "Tú vs el grupo", borra estas dos líneas.
-  const _el=document.getElementById('vs-grupo'); if(_el) _el.innerHTML=''; return;
   const el=document.getElementById('vs-grupo'); if(!el) return;
   const mInfo={}; (matches||[]).forEach(m=>{ if(m.phase==='group') mInfo[m.id]={home:teamES(m.home_team),away:teamES(m.away_team)}; });
   const sgn=(h,a)=> h>a?'1':(h<a?'2':'X');
