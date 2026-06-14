@@ -378,23 +378,30 @@ function evRow(e, homeId){
   return `<div class="ev"><div class="h">${home?cell:''}</div><div class="min">${mn}</div><div class="a">${home?'':cell}</div></div>`;
 }
 function evHtml(events, homeId, f){
-  if(!events||!events.length) return '<div class="empty">Sin eventos todavía.</div>';
-  const st=f&&f.fixture&&f.fixture.status&&f.fixture.status.short, finished=FIN_ST.has(st);
+  events = events || [];
+  const st=f&&f.fixture&&f.fixture.status&&f.fixture.status.short;
+  const el=f&&f.fixture&&f.fixture.status&&f.fixture.status.elapsed;
+  const live=(typeof LIVE_ST!=='undefined')&&LIVE_ST.has(st);
+  const finished=FIN_ST.has(st);
+  if(!live && !finished) return '<div class="empty">El partido aún no ha comenzado.</div>';
   const min=e=>((e.time?.elapsed||0)+(e.time?.extra||0));
   const asc=events.slice().sort((x,y)=>min(x)-min(y));
   const div=(t)=>`<div class="ev-div">${esc(t)}</div>`;
   const [htH,htA]=evScoreAt(asc,homeId,45);
   const first=asc.filter(e=>min(e)<=45), second=asc.filter(e=>min(e)>45);
   const rev=arr=>arr.slice().reverse().map(e=>evRow(e,homeId)).join('');
-  let out='';                         // más reciente arriba
+  // fases alcanzadas (aunque no haya eventos): por estado o minuto
+  const reachedHT = finished || st==='HT' || st==='2H' || st==='ET' || st==='BT' || st==='P' || (el!=null && el>45);
+  const reachedSecond = finished || st==='2H' || st==='ET' || st==='BT' || st==='P' || (el!=null && el>45);
+  let out='';                          // más reciente arriba
   if(finished){
     const gh=f.goals?.home, ga=f.goals?.away;
     const ex = st==='AET' ? ' (tras prórroga)' : (st==='PEN' && f.score?.penalty ? ` · penaltis ${f.score.penalty.home}-${f.score.penalty.away}` : '');
     out+=div(`🔴 Final · ${gh}-${ga}${ex}`);
   }
   if(second.length) out+=rev(second);
-  if(second.length || finished) out+=div('▶ 2.ª parte');
-  out+=div(`⏸ Descanso · ${htH}-${htA}`);
+  if(reachedSecond) out+=div('▶ 2.ª parte');
+  if(reachedHT) out+=div(events.length ? `⏸ Descanso · ${htH}-${htA}` : '⏸ Descanso');
   if(first.length) out+=rev(first);
   out+=div('🟢 Inicio del encuentro');
   return out;
