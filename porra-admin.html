@@ -1225,7 +1225,7 @@ async function saveMatch(i) {
     if (error) throw error;
 
     // Trigger score recalculation for this match
-    await sb.rpc('recalculate_all_scores').catch((e)=>{ console.warn('recalc failed', e); });
+    await Promise.resolve(sb.rpc('recalculate_all_scores')).catch((e)=>{ console.warn('recalc failed', e); });
 
     // Update local state
     TODAY_MATCHES[i].homeGoals = parseInt(h);
@@ -1368,7 +1368,7 @@ async function savePastGame(id, btn){
   try{
     const { error } = await getSB().from('matches').update({ real_home:parseInt(h), real_away:parseInt(a), ko_winner }).eq('id', id);
     if(error) throw error;
-    await getSB().rpc('recalculate_all_scores').catch(e=>console.warn('recalc', e));
+    await Promise.resolve(getSB().rpc('recalculate_all_scores')).catch(e=>console.warn('recalc', e));
     const m=PAST_MATCHES.find(x=>x.id===id); if(m){ m.real_home=parseInt(h); m.real_away=parseInt(a); m.ko_winner=ko_winner; }
     btn.textContent='Guardado ✓';
     setTimeout(()=>{ renderPastGames(); },1100);
@@ -1935,7 +1935,7 @@ async function savePremios(btn){
       {key:'real_bota',value:g('bota-input')},{key:'real_balon',value:g('balon-input')},
       {key:'real_champion',value:g('champ-input')},{key:'real_runnerup',value:g('runnerup-input')},
     ]);
-    await getSB().rpc('recalculate_all_scores').catch(()=>{});
+    await Promise.resolve(getSB().rpc('recalculate_all_scores')).catch(()=>{});
     btn.textContent='Guardado y recalculado ✓';
   }catch(e){ alert('Error: '+(e.message||e)); btn.textContent=t; }
   setTimeout(()=>{btn.textContent=t;btn.disabled=false;},1800);
