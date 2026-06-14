@@ -172,6 +172,21 @@ function getSB() {
   return _sb;
 }
 
+// Resolves once the Supabase SDK global is available. On a slow mobile
+// connection the SDK script may still be downloading when a handler fires;
+// awaiting this prevents "supabase is not defined" failures and dead taps.
+window.sbReady = function (timeoutMs) {
+  timeoutMs = timeoutMs || 15000;
+  return new Promise(function (resolve, reject) {
+    if (typeof supabase !== 'undefined' && supabase && supabase.createClient) return resolve();
+    var t0 = Date.now();
+    var iv = setInterval(function () {
+      if (typeof supabase !== 'undefined' && supabase && supabase.createClient) { clearInterval(iv); resolve(); }
+      else if (Date.now() - t0 > timeoutMs) { clearInterval(iv); reject(new Error('No se pudo cargar el sistema. Revisa tu conexión e inténtalo de nuevo.')); }
+    }, 50);
+  });
+};
+
 // ── AUTH HELPERS ─────────────────────────────────────────────────────────────
 async function getCurrentUser() {
   // Use the locally-stored session (instant) instead of auth.getUser() which makes
