@@ -168,7 +168,17 @@ function esDate(d){
 let _sb = null;
 
 function getSB() {
-  if (!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  if (!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      // Bypass the Web Locks API. Its default implementation can stall for ~30-60s
+      // inside mobile in-app browsers (the WhatsApp/Instagram webview especially),
+      // which is the cause of logins that hang on phones but are instant on desktop.
+      // A pass-through lock keeps token handling working without the wait.
+      lock: async function (_name, _acquireTimeout, fn) { return await fn(); }
+    }
+  });
   return _sb;
 }
 
