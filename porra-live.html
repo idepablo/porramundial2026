@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://media.api-sports.io" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resultados en vivo — Porra Mundial 2026</title>
+<title>Resultados en directo — Porra Mundial 2026</title>
 <link rel="icon" type="image/png" href="ball.png">
 <link rel="apple-touch-icon" href="ball.png">
 <link rel="stylesheet" href="fonts.css">
@@ -129,20 +129,20 @@ table{max-width:100%}
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
     <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
-    <a class="nav-tab active" href="porra-live.html">En vivo</a>
+    <a class="nav-tab active" href="porra-live.html">En directo</a>
   </div>
   <div id="nav-auth"></div>
 </nav>
 
 <div class="wrap">
   <div class="page-head">
-    <h1>Resultados en vivo</h1>
+    <h1>Resultados en directo</h1>
     <button class="refresh-btn" id="refresh" onclick="loadLive(true)">↻ Actualizar</button>
   </div>
   <div class="sub" id="updated">Marcadores en directo, partidos de hoy y clasificación de grupos.</div>
 
   <div id="notice" style="display:none;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px">
-    Aún no hay una clave API configurada. Un administrador puede añadirla en <strong>Admin → Ajustes → Resultados en vivo</strong>.
+    Aún no hay una clave API configurada. Un administrador puede añadirla en <strong>Admin → Ajustes → Resultados en directo</strong>.
   </div>
 
   <div id="content"><div class="empty" id="loading">Cargando resultados…</div></div>
@@ -244,8 +244,6 @@ async function loadLive(manual){
       const st=f.fixture?.status?.short||'NS'; if(LIVE_ST.has(st)||FIN_ST.has(st)) return false;
       const d=new Date(f.fixture?.date).getTime(); return d>now && d-now < 14*3600000; // próximas 14h
     }).sort((a,b)=>new Date(a.fixture.date)-new Date(b.fixture.date));
-    const recent = fixtures.filter(f=>FIN_ST.has(f.fixture?.status?.short))
-      .sort((a,b)=>new Date(b.fixture.date)-new Date(a.fixture.date)).slice(0,8);
 
     // standings (una vez, salvo refresco manual)
     if(STAND_CACHE===null || manual){
@@ -253,11 +251,13 @@ async function loadLive(manual){
       catch(e){ STAND_CACHE=STAND_CACHE||[]; }
     }
 
+    LAST_FIXTURES = fixtures;
+    const recentHtml = recentSection(fixtures);
     let html='';
     if(live.length) html += section('En directo', true, live.map(matchRow).join(''));
     if(todayUpcoming.length) html += section('Próximos partidos', false, todayUpcoming.map(matchRow).join(''));
-    if(recent.length) html += section('Últimos resultados', false, recent.map(matchRow).join(''));
-    if(!live.length && !todayUpcoming.length && !recent.length)
+    if(recentHtml) html += recentHtml;
+    if(!live.length && !todayUpcoming.length && !recentHtml)
       html += `<div class="card"><div class="empty">Aún no hay partidos para mostrar. Vuelve cuando arranque la jornada.</div></div>`;
     html += standingsHtml(STAND_CACHE);
 
@@ -279,6 +279,27 @@ async function loadLive(manual){
 }
 
 let FIXBYID={}, DETAIL_ID=null, DETAIL_TAB='ev', DETAIL_DATA=null, DETAIL_POLL=null;
+let RECENT_DATE=null, LAST_FIXTURES=null;
+function localDateKey(iso){ try{ return new Date(iso).toLocaleDateString('en-CA'); }catch(e){ return ''; } }
+function recentListHtml(){
+  if(!LAST_FIXTURES) return '';
+  const games=LAST_FIXTURES.filter(f=>FIN_ST.has(f.fixture?.status?.short) && localDateKey(f.fixture?.date)===RECENT_DATE)
+    .sort((a,b)=>new Date(a.fixture.date)-new Date(b.fixture.date));
+  return games.length ? games.map(matchRow).join('') : '<div class="empty">No hay resultados ese día.</div>';
+}
+function recentSection(fixtures){
+  const fin=fixtures.filter(f=>FIN_ST.has(f.fixture?.status?.short));
+  if(!fin.length) return '';
+  const dates=[...new Set(fin.map(f=>localDateKey(f.fixture?.date)))].filter(Boolean).sort(); // asc, sólo días pasados/hoy
+  const yKey=localDateKey(new Date(Date.now()-86400000).toISOString());
+  if(RECENT_DATE===null || !dates.includes(RECENT_DATE)) RECENT_DATE = dates.includes(yKey) ? yKey : dates[dates.length-1];
+  const opts=dates.slice().reverse().map(d=>{
+    const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+    return `<option value="${d}"${d===RECENT_DATE?' selected':''}>${lbl}</option>`;
+  }).join('');
+  return `<div class="sect"><div class="sect-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>Últimos resultados</span><select id="recent-date" onchange="setRecentDate(this.value)" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;-webkit-appearance:menulist">${opts}</select></div><div class="card" id="recent-list">${recentListHtml()}</div></div>`;
+}
+function setRecentDate(v){ RECENT_DATE=v; const el=document.getElementById('recent-list'); if(el) el.innerHTML=recentListHtml(); }
 const STAT_ES={'Ball Possession':'Posesión','Total Shots':'Tiros','Shots on Goal':'Tiros a puerta','Shots off Goal':'Tiros fuera','Blocked Shots':'Tiros bloqueados','Corner Kicks':'Córners','Offsides':'Fueras de juego','Fouls':'Faltas','Yellow Cards':'Tarjetas amarillas','Red Cards':'Tarjetas rojas','Goalkeeper Saves':'Paradas','Total passes':'Pases totales','Passes accurate':'Pases acertados','Passes %':'Precisión de pase'};
 function lastName(n){ n=String(n||''); const p=n.trim().split(' '); return p.length>1?p.slice(1).join(' '):n; }
 function detHeader(f){

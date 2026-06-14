@@ -802,27 +802,45 @@ async function initLiveBanner(){
     }
     let box=document.getElementById('global-live-banner');
     if(!box){ box=document.createElement('div'); box.id='global-live-banner'; nav.insertAdjacentElement('afterend', box); }
+    // Detección FIABLE de "en directo" vía API-Football (igual que la página En directo).
+    // Un filtro barato con la BD evita llamar al API cuando no hay partidos cerca.
+    const API_FB='https://v3.football.api-sports.io', FB_LEAGUE=1, FB_SEASON=2026;
+    const FB_LIVE=new Set(['1H','HT','2H','ET','BT','P','LIVE','SUSP','INT']);
+    const TE=(typeof teamES==='function')?teamES:(x=>x);
+    let _fbKey=null, _cache={t:0, live:[], soon:[]};
+    const fbKey=async()=>{ if(_fbKey!=null) return _fbKey; try{ const { data }=await getSB().from('settings').select('value').eq('key','apifootball_key').maybeSingle(); _fbKey=(data&&data.value)||''; }catch(e){ _fbKey=''; } return _fbKey; };
+    const fbGet=async(p)=>{ const k=await fbKey(); if(!k) return []; try{ const r=await fetch(API_FB+p,{headers:{'x-apisports-key':k}}); const j=await r.json(); return j.response||[]; }catch(e){ return []; } };
     const fill=async()=>{
       try{
-        const sb=getSB(); const now=Date.now();
-        const PRE=15*60000;      // aviso 15 min antes del inicio
-        const POST=180*60000;    // se mantiene hasta 3h tras el inicio (o hasta que haya resultado)
-        const since=new Date(now-POST).toISOString();
-        const until=new Date(now+PRE).toISOString();
-        const { data }=await sb.from('matches').select('home_team,away_team,kickoff').is('real_home',null).gte('kickoff',since).lte('kickoff',until).order('kickoff');
-        const list=(data||[]);
-        if(!list.length){ box.innerHTML=''; box.style.display='none'; return; }
-        const TE=(typeof teamES==='function')?teamES:(x=>x);
+        const now=Date.now();
+        // Filtro barato (BD): ventana amplia y tolerante a horas aproximadas.
+        const lo=new Date(now-7*3600000).toISOString(), hi=new Date(now+7*3600000).toISOString();
+        const { data:near }=await getSB().from('matches').select('id').gte('kickoff',lo).lte('kickoff',hi).limit(1);
+        if(!near||!near.length){ box.style.display='none'; box.innerHTML=''; return; }
+        if(now-_cache.t>25000){
+          const [lr,nr]=await Promise.all([
+            fbGet('/fixtures?league='+FB_LEAGUE+'&season='+FB_SEASON+'&live=all'),
+            fbGet('/fixtures?league='+FB_LEAGUE+'&season='+FB_SEASON+'&next=6'),
+          ]);
+          _cache={t:now, live:lr||[], soon:nr||[]};
+        }
+        const live=(_cache.live||[]).filter(f=>f.fixture&&f.fixture.status&&FB_LIVE.has(f.fixture.status.short));
+        const soon=(_cache.soon||[]).filter(f=>{ const d=f.fixture&&f.fixture.date; if(!d) return false; const ko=new Date(d).getTime(); return ko>now && (ko-now)<=15*60000; });
+        if(!live.length && !soon.length){ box.style.display='none'; box.innerHTML=''; return; }
         box.style.display='block';
-        box.innerHTML=list.map(m=>{
-          const ko=new Date(m.kickoff).getTime();
-          const teams='<span class="live-banner-teams">'+TE(m.home_team)+' <span style="color:var(--muted)">vs</span> '+TE(m.away_team)+'</span>';
-          if(ko>now){ // antes del inicio
-            const mins=Math.max(1,Math.round((ko-now)/60000));
-            return '<a class="live-banner-row pre" href="porra-live.html"><span class="live-pill pre">PRONTO</span>'+teams+'<span class="live-banner-go">Empieza en '+mins+' min →</span></a>';
-          }
-          return '<a class="live-banner-row" href="porra-live.html"><span class="live-pill">EN DIRECTO</span>'+teams+'<span class="live-banner-go">Ver en directo →</span></a>';
+        const liveRows=live.map(f=>{
+          const h=TE(f.teams&&f.teams.home&&f.teams.home.name), a=TE(f.teams&&f.teams.away&&f.teams.away.name);
+          const gh=(f.goals&&f.goals.home)!=null?f.goals.home:0, ga=(f.goals&&f.goals.away)!=null?f.goals.away:0;
+          const st=f.fixture.status.short, el=f.fixture.status.elapsed;
+          const min=st==='HT'?'Descanso':(el!=null?el+"\u0027":'En juego');
+          return '<a class="live-banner-row" href="porra-live.html"><span class="live-pill">EN DIRECTO</span><span class="live-banner-teams">'+h+' <b>'+gh+'-'+ga+'</b> '+a+'</span><span class="live-banner-go">'+min+' \u00b7 Ver \u2192</span></a>';
         }).join('');
+        const soonRows=soon.map(f=>{
+          const h=TE(f.teams&&f.teams.home&&f.teams.home.name), a=TE(f.teams&&f.teams.away&&f.teams.away.name);
+          const mins=Math.max(1,Math.round((new Date(f.fixture.date).getTime()-now)/60000));
+          return '<a class="live-banner-row pre" href="porra-live.html"><span class="live-pill pre">PRONTO</span><span class="live-banner-teams">'+h+' <span style="color:var(--muted)">vs</span> '+a+'</span><span class="live-banner-go">Empieza en '+mins+' min \u2192</span></a>';
+        }).join('');
+        box.innerHTML=liveRows+soonRows;
       }catch(e){ /* silencioso */ }
     };
     fill(); setInterval(fill, 30000);
