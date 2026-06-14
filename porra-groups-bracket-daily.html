@@ -314,8 +314,7 @@ table{max-width:100%}
 <div id="nav-auth"></div>
 </nav>
 
- <div id="live-banner" style="display:none"></div>
-
+ 
 <!-- PAGE TABS -->
 <div class="page-tabs">
   <div class="page-tab active" onclick="showPage('grupos', this)">Grupos y Clasificación</div>
@@ -607,7 +606,7 @@ function buildGroups() {
                   <td class="score-cell">
                     ${m.homeGoals!==null
                       ? `<div class="score-box"><span class="score-num">${m.homeGoals}</span></div>`
-                      : (m.inPlay ? `<a href="porra-live.html" class="live-pill" onclick="event.stopPropagation()" title="Partido en juego — ver en directo">EN VIVO</a>` : `<div class="score-pending">-</div>`)}
+                      : (m.inPlay ? `<a href="porra-live.html" class="live-pill" onclick="event.stopPropagation()" title="Partido en juego — ver en directo">DIRECTO</a>` : `<div class="score-pending">-</div>`)}
                   </td>
                   <td style="text-align:center;color:var(--muted);font-size:12px;padding:0 2px">:</td>
                   <td class="score-cell">
@@ -877,19 +876,6 @@ async function loadFromSupabase() {
       '<div style="padding:40px;text-align:center;color:var(--muted)">Error al cargar los partidos. Actualiza la página.</div>';
     return; 
   }
-
-  // Banner de partidos en juego ahora (todas las fases)
-  try {
-    const nowMs = Date.now();
-    const liveNow = matchData.filter(m => m.real_home == null && m.kickoff && new Date(m.kickoff).getTime() <= nowMs && nowMs < new Date(m.kickoff).getTime() + 180*60000);
-    const lb = document.getElementById('live-banner');
-    if (lb) {
-      if (liveNow.length) {
-        lb.innerHTML = liveNow.map(m => `<a class="live-banner-row" href="porra-live.html"><span class="live-pill">EN DIRECTO</span><span class="live-banner-teams">${teamES(m.home_team)} <span style="color:var(--muted)">vs</span> ${teamES(m.away_team)}</span><span class="live-banner-go">Ver en directo →</span></a>`).join('');
-        lb.style.display = 'block';
-      } else { lb.style.display='none'; lb.innerHTML=''; }
-    }
-  } catch(e){}
 
   // 2. Rebuild GROUPS from real DB data
   const groupMap = {};

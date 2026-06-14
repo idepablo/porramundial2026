@@ -946,9 +946,9 @@ function buildPdayControls(){
   const box=document.getElementById('pday-matrix');
   const days=[...new Set(PDLY.matches.map(m=>matchDateKey(m.kickoff)))].filter(Boolean).sort();
   if(!days.length){ if(box) box.innerHTML='<div style="color:var(--muted);padding:16px;font-size:13px">Aún no hay partidos.</div>'; return; }
-  const now=Date.now();
-  const started=days.filter(d=>PDLY.matches.some(m=>matchDateKey(m.kickoff)===d && new Date(m.kickoff).getTime()<=now));
-  const def=started.length?started[started.length-1]:days[0];
+  const todayKey=matchDateKey(new Date().toISOString());
+  // por defecto: hoy si hay partidos hoy; si no, el último día pasado con partidos
+  const def = days.includes(todayKey) ? todayKey : (days.filter(d=>d<=todayKey).pop() || days[0]);
   sel.innerHTML=days.map(d=>{
     const label=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
     return `<option value="${d}" ${d===def?'selected':''}>${label}</option>`;
@@ -958,19 +958,18 @@ function buildPdayControls(){
 function renderDailyPred(dateKey){
   const box=document.getElementById('pday-matrix'); if(!box) return;
   const T=t=>(typeof teamES==='function'?teamES(t):t)||t||'?';
-  const now=Date.now();
+  const todayKey=matchDateKey(new Date().toISOString());
   const dayMatches=PDLY.matches.filter(m=>matchDateKey(m.kickoff)===dateKey).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
   if(!dayMatches.length){ box.innerHTML='<div style="color:var(--muted);padding:16px">No hay partidos ese día.</div>'; return; }
-  const fmtPick=(ph,pa)=>{ if(ph==null||pa==null) return '—'; const s=ph>pa?'1':(ph<pa?'2':'X'); return `${s} | ${ph}-${pa}`; };
+  const locked = false; // todo desbloqueado; por defecto se muestra el día actual
+  const fmtPick=(ph,pa)=>{ if(ph==null||pa==null) return '—'; const s=ph>pa?'1':(ph<pa?'2':'X'); return `<span style="color:var(--gold);font-weight:700">${s}</span><span style="color:rgba(255,255,255,.28);margin:0 5px">|</span><span style="color:var(--text)">${ph}-${pa}</span>`; };
   const ths=dayMatches.map(m=>{
-    const open=new Date(m.kickoff).getTime()<=now;
-    const res=m.real_home!=null?`<div style="font-size:11px;color:var(--gold);margin-top:2px">${m.real_home}-${m.real_away}</div>`:(open?'':'<div style="font-size:10px;color:var(--muted);margin-top:2px">🔒</div>');
+    const res=m.real_home!=null?`<div style="font-size:11px;color:var(--gold);margin-top:2px">${m.real_home}-${m.real_away}</div>`:(locked?'<div style="font-size:10px;color:var(--muted);margin-top:2px">🔒</div>':'');
     return `<th style="text-align:center;padding:6px 8px;font-size:11px;line-height:1.25;font-weight:600;white-space:nowrap">${T(m.home_team)}<br>${T(m.away_team)}${res}</th>`;
   }).join('');
   const body=PDLY.users.map(u=>{
     const tds=dayMatches.map(m=>{
-      const open=new Date(m.kickoff).getTime()<=now;
-      if(!open) return '<td style="text-align:center;color:rgba(255,255,255,.18)">🔒</td>';
+      if(locked) return '<td style="text-align:center;color:rgba(255,255,255,.18)">🔒</td>';
       let txt='—';
       if(m.phase==='group'){ const pd=PDLY.predBy[u.id]&&PDLY.predBy[u.id][m.id]; if(pd) txt=fmtPick(pd.ph,pd.pa); }
       else { const ko=(PDLY.koBy[u.id]||[]).find(k=>k.home_team===m.home_team&&k.away_team===m.away_team); if(ko) txt=fmtPick(ko.pred_home,ko.pred_away); }

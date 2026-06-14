@@ -778,6 +778,59 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteState);
 else initSiteState();
 
+// ── BANNER GLOBAL "EN DIRECTO" (en todas las páginas de la app) ───────────────
+// Aparece automáticamente bajo la barra de navegación cuando hay un partido en
+// juego (kickoff <= ahora < kickoff+3h y sin resultado aún). Enlaza a En directo.
+async function initLiveBanner(){
+  try{
+    const path=(location.pathname.split('/').pop()||'').toLowerCase();
+    const EXEMPT=['porra-login.html','porra-register.html','porra-admin.html','mantenimiento.html','porra-mundial-2026.html','porra-live.html','index.html',''];
+    if(EXEMPT.includes(path)) return;
+    const nav=document.querySelector('nav'); if(!nav) return;
+    if(!document.getElementById('glb-css')){
+      const st=document.createElement('style'); st.id='glb-css';
+      st.textContent="#global-live-banner{max-width:880px;margin:0 auto;padding:10px 16px 0}"
+        +"#global-live-banner .live-banner-row{display:flex;align-items:center;gap:11px;background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.4);border-radius:12px;padding:11px 14px;margin-bottom:8px;text-decoration:none;color:var(--text,#eee)}"
+        +"#global-live-banner .live-pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.4px;color:#fff;background:var(--red,#C8102E);border-radius:10px;padding:3px 8px;white-space:nowrap;animation:glbpulse 1.4s infinite}"
+        +"#global-live-banner .live-banner-row.pre{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.4)}"
+        +"#global-live-banner .live-pill.pre{background:var(--gold,#FFD700);color:#1a1a1a;animation:none}"
+        +"#global-live-banner .live-banner-row.pre .live-banner-go{color:var(--gold,#FFD700)}"
+        +"#global-live-banner .live-banner-teams{font-weight:600;font-size:14px}"
+        +"#global-live-banner .live-banner-go{margin-left:auto;color:#ff5b5b;font-size:12px;font-weight:700;white-space:nowrap}"
+        +"@keyframes glbpulse{0%,100%{opacity:1}50%{opacity:.55}}";
+      document.head.appendChild(st);
+    }
+    let box=document.getElementById('global-live-banner');
+    if(!box){ box=document.createElement('div'); box.id='global-live-banner'; nav.insertAdjacentElement('afterend', box); }
+    const fill=async()=>{
+      try{
+        const sb=getSB(); const now=Date.now();
+        const PRE=15*60000;      // aviso 15 min antes del inicio
+        const POST=180*60000;    // se mantiene hasta 3h tras el inicio (o hasta que haya resultado)
+        const since=new Date(now-POST).toISOString();
+        const until=new Date(now+PRE).toISOString();
+        const { data }=await sb.from('matches').select('home_team,away_team,kickoff').is('real_home',null).gte('kickoff',since).lte('kickoff',until).order('kickoff');
+        const list=(data||[]);
+        if(!list.length){ box.innerHTML=''; box.style.display='none'; return; }
+        const TE=(typeof teamES==='function')?teamES:(x=>x);
+        box.style.display='block';
+        box.innerHTML=list.map(m=>{
+          const ko=new Date(m.kickoff).getTime();
+          const teams='<span class="live-banner-teams">'+TE(m.home_team)+' <span style="color:var(--muted)">vs</span> '+TE(m.away_team)+'</span>';
+          if(ko>now){ // antes del inicio
+            const mins=Math.max(1,Math.round((ko-now)/60000));
+            return '<a class="live-banner-row pre" href="porra-live.html"><span class="live-pill pre">PRONTO</span>'+teams+'<span class="live-banner-go">Empieza en '+mins+' min →</span></a>';
+          }
+          return '<a class="live-banner-row" href="porra-live.html"><span class="live-pill">EN DIRECTO</span>'+teams+'<span class="live-banner-go">Ver en directo →</span></a>';
+        }).join('');
+      }catch(e){ /* silencioso */ }
+    };
+    fill(); setInterval(fill, 30000);
+  }catch(e){}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLiveBanner);
+else initLiveBanner();
+
 
 /* ═══════════════════════════════════════════════════════════════
    EL ORÁCULO · chat-bot con caña (se inyecta en todas las páginas)
