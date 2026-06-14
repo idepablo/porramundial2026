@@ -877,6 +877,25 @@ async function loadFromSupabase() {
     return; 
   }
 
+  // Detección de partidos EN DIRECTO vía API-Football (para la pastilla "DIRECTO").
+  let LIVE_PAIRS = new Set();
+  try {
+    const { data: kr } = await sb.from('settings').select('value').eq('key','apifootball_key').maybeSingle();
+    const apiKey = kr && kr.value;
+    if (apiKey) {
+      const r = await fetch('https://v3.football.api-sports.io/fixtures?league=1&season=2026&live=all', { headers:{ 'x-apisports-key': apiKey } });
+      const j = await r.json();
+      const LIVE_ST = new Set(['1H','HT','2H','ET','BT','P','LIVE','SUSP','INT']);
+      (j.response || []).forEach(fx => {
+        if (fx.fixture && fx.fixture.status && LIVE_ST.has(fx.fixture.status.short)) {
+          const h = teamES(fx.teams && fx.teams.home && fx.teams.home.name);
+          const a = teamES(fx.teams && fx.teams.away && fx.teams.away.name);
+          LIVE_PAIRS.add(h + '||' + a);
+        }
+      });
+    }
+  } catch(e) { /* si el API falla, simplemente no se marca ninguno en directo */ }
+
   // 2. Rebuild GROUPS from real DB data
   const groupMap = {};
   matchData.filter(m => m.phase === 'group').forEach(m => {
@@ -899,7 +918,7 @@ async function loadFromSupabase() {
     const esTime = kickoff.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/Madrid' });
     const etTime = kickoff.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/New_York' });
     const timeLabel = `${usDate} · ${etTime} (Costa Este EE.UU.)<br>${esDate!==usDate ? esDate+' · ' : ''}${esTime} (España)`;
-    const inPlay = (m.real_home == null) && kickoff.getTime() <= Date.now() && Date.now() < kickoff.getTime() + 180*60000;
+    const inPlay = (m.real_home == null) && LIVE_PAIRS.has(teamES(m.home_team) + '||' + teamES(m.away_team));
     const jIdx    = groupMap[g].matches.filter(x => x.jornada).length;
     const jornada = jIdx < 2 ? 'J1' : jIdx < 4 ? 'J2' : 'J3';
     groupMap[g].matches.push({

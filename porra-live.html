@@ -46,6 +46,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .m .side.r { justify-content:flex-end; text-align:right; }
 .m .nm { font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .m .lg { width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+.tbl td.team .lg { width:20px; height:20px; object-fit:contain; flex-shrink:0; }
 .m .sc { min-width:64px; text-align:center; flex-shrink:0; }
 .m .sc .g { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; }
 .m .sc .st { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
@@ -65,7 +66,10 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
   .wrap { padding:18px 12px 60px; }
   .page-head h1 { font-size:26px; }
   .m .nm { font-size:13px; }
-  .m .lg { width:20px; height:20px; }
+  .m .lg { width:17px; height:17px; }
+  .dteam .lg { width:34px; height:34px; }
+  .tbl td.team .lg { width:17px; height:17px; }
+  .dscore { font-size:36px; }
   .grp-grid { grid-template-columns:1fr; }
 }
 
@@ -87,6 +91,18 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .md-tabs{display:flex;border-bottom:1px solid var(--border);position:sticky;top:49px;background:var(--bg);z-index:5;margin-top:14px}
 .md-tabs .tab{flex:1;text-align:center;padding:12px 4px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
 .md-tabs .tab.on{color:var(--text);border-bottom-color:var(--gold)}
+.md-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.md-tabs::-webkit-scrollbar{display:none}
+.md-tabs .tab{flex:1 0 auto;min-width:84px;white-space:nowrap}
+.sub-note{font-size:12px;color:var(--muted);margin:-6px 2px 14px}
+.players-list .prow{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.players-list .pr-rt{font-family:'Bebas Neue',sans-serif;font-size:18px;text-align:center;background:var(--bg3);border-radius:8px;padding:2px 0}
+.players-list .pr-nm{font-size:13px;font-weight:600}
+.players-list .pr-ga{font-size:12px;color:var(--muted);white-space:nowrap}
+.h2h-sum{text-align:center;font-size:13px;font-weight:600;color:var(--gold);padding:6px 0 12px}
+.h2h-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.h2h-row .h2h-d{color:var(--muted);font-size:11px;min-width:62px}
+.h2h-row .h2h-m{flex:1}
 #md-body{padding:16px}
 .ev{display:grid;grid-template-columns:1fr 46px 1fr;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .ev .min{justify-self:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--gold);background:var(--bg3);border-radius:20px;width:42px;text-align:center;padding:2px 0}
@@ -137,6 +153,7 @@ table{max-width:100%}
 <div class="wrap">
   <div class="page-head">
     <h1>Resultados en directo</h1>
+    <div class="sub-note">⏰ Todos los horarios se muestran adaptados a tu hora local.</div>
     <button class="refresh-btn" id="refresh" onclick="loadLive(true)">↻ Actualizar</button>
   </div>
   <div class="sub" id="updated">Marcadores en directo, partidos de hoy y clasificación de grupos.</div>
@@ -155,6 +172,8 @@ table{max-width:100%}
     <div class="tab on" data-t="ev" onclick="detTab('ev')">Eventos</div>
     <div class="tab" data-t="al" onclick="detTab('al')">Alineaciones</div>
     <div class="tab" data-t="st" onclick="detTab('st')">Estadísticas</div>
+    <div class="tab" data-t="pl" onclick="detTab('pl')">Jugadores</div>
+    <div class="tab" data-t="h2h" onclick="detTab('h2h')">H2H</div>
     <div class="tab" data-t="in" onclick="detTab('in')">Info</div>
   </div>
   <div id="md-body"><div class="empty">Cargando…</div></div>
@@ -300,7 +319,7 @@ function recentSection(fixtures){
   return `<div class="sect"><div class="sect-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>Últimos resultados</span><select id="recent-date" onchange="setRecentDate(this.value)" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;-webkit-appearance:menulist">${opts}</select></div><div class="card" id="recent-list">${recentListHtml()}</div></div>`;
 }
 function setRecentDate(v){ RECENT_DATE=v; const el=document.getElementById('recent-list'); if(el) el.innerHTML=recentListHtml(); }
-const STAT_ES={'Ball Possession':'Posesión','Total Shots':'Tiros','Shots on Goal':'Tiros a puerta','Shots off Goal':'Tiros fuera','Blocked Shots':'Tiros bloqueados','Corner Kicks':'Córners','Offsides':'Fueras de juego','Fouls':'Faltas','Yellow Cards':'Tarjetas amarillas','Red Cards':'Tarjetas rojas','Goalkeeper Saves':'Paradas','Total passes':'Pases totales','Passes accurate':'Pases acertados','Passes %':'Precisión de pase'};
+const STAT_ES={'Ball Possession':'Posesión','expected_goals':'Goles esperados (xG)','Shots insidebox':'Tiros dentro del área','Shots outsidebox':'Tiros fuera del área','Total passes':'Pases totales','Total Shots':'Tiros','Shots on Goal':'Tiros a puerta','Shots off Goal':'Tiros fuera','Blocked Shots':'Tiros bloqueados','Corner Kicks':'Córners','Offsides':'Fueras de juego','Fouls':'Faltas','Yellow Cards':'Tarjetas amarillas','Red Cards':'Tarjetas rojas','Goalkeeper Saves':'Paradas','Total passes':'Pases totales','Passes accurate':'Pases acertados','Passes %':'Precisión de pase'};
 function lastName(n){ n=String(n||''); const p=n.trim().split(' '); return p.length>1?p.slice(1).join(' '):n; }
 function detHeader(f){
   const st=f.fixture?.status?.short||'NS', live=LIVE_ST.has(st), fin=FIN_ST.has(st);
@@ -316,22 +335,36 @@ function detHeader(f){
       <div class="dteam">${logo(f.teams?.away?.logo)}<div class="dnm">${esc(T(f.teams?.away?.name))}</div></div>
     </div>${venue?`<div class="dstadium">${venue}</div>`:''}`;
 }
+function evLabel(e){
+  const d=(e.detail||''), t=e.type||'';
+  if(t==='Goal'){
+    if(/own/i.test(d)) return {ic:'⚽', tag:'Gol en propia puerta'};
+    if(/missed|fail/i.test(d)) return {ic:'❌', tag:'Penalti fallado'};
+    if(/penal/i.test(d)) return {ic:'⚽', tag:'Gol de penalti'};
+    return {ic:'⚽', tag:(e.assist&&e.assist.name)?('Gol · asist. '+lastName(e.assist.name)):'Gol'};
+  }
+  if(t==='Card') return /red/i.test(d) ? {ic:'🟥', tag:'Tarjeta roja'} : {ic:'🟨', tag:'Tarjeta amarilla'};
+  if(t==='subst') return {ic:'🔄', tag:'Cambio'};
+  if(/var/i.test(t)){
+    const map={'Goal cancelled':'Gol anulado (VAR)','Goal Disallowed - offside':'Gol anulado · fuera de juego (VAR)','Penalty confirmed':'Penalti confirmado (VAR)','Penalty cancelled':'Penalti anulado (VAR)','Card upgrade':'Tarjeta revisada (VAR)'};
+    return {ic:'📺', tag: map[d] || ('VAR: '+(d||'revisión'))};
+  }
+  return {ic:'•', tag:d||''};
+}
 function evHtml(events, homeId){
   if(!events||!events.length) return '<div class="empty">Sin eventos todavía.</div>';
   return events.map(e=>{
     const mn=(e.time?.elapsed??'')+(e.time?.extra?'+'+e.time.extra:'')+"'";
-    const home=e.team?.id===homeId; const red=/red/i.test(e.detail||'');
-    const ic=e.type==='Goal'?'⚽':(e.type==='Card'?(red?'🟥':'🟨'):(e.type==='subst'?'🔄':'•'));
+    const home=e.team?.id===homeId; const L=evLabel(e);
     const who=e.type==='subst'?`${esc(lastName(e.assist?.name))} → ${esc(lastName(e.player?.name))}`:esc(e.player?.name||'');
-    const what=e.type==='Goal'?(e.assist?.name?('Asist. '+esc(lastName(e.assist.name))):esc(e.detail||'Gol')):esc(e.detail||'');
-    const cell=`<span class="who">${ic} ${who}</span><div class="what">${what}</div>`;
+    const cell=`<span class="who">${L.ic} ${who}</span><div class="what">${esc(L.tag)}</div>`;
     return `<div class="ev"><div class="h">${home?cell:''}</div><div class="min">${mn}</div><div class="a">${home?'':cell}</div></div>`;
   }).join('');
 }
 function statHtml(stats){
   if(!stats||stats.length<2) return '<div class="empty">Sin estadísticas todavía.</div>';
   const h=stats[0].statistics||[], a=stats[1].statistics||[]; const amap={}; a.forEach(x=>amap[x.type]=x.value);
-  const order=['Ball Possession','Total Shots','Shots on Goal','Corner Kicks','Fouls','Offsides','Yellow Cards','Red Cards','Goalkeeper Saves','Passes %'];
+  const order=['Ball Possession','expected_goals','Total Shots','Shots on Goal','Shots insidebox','Shots outsidebox','Corner Kicks','Fouls','Offsides','Yellow Cards','Red Cards','Goalkeeper Saves','Total passes','Passes %'];
   const num=v=>parseFloat(String(v==null?0:v).replace('%',''))||0;
   const rows=order.map(type=>{
     const hv=(h.find(x=>x.type===type)||{}).value, av=amap[type];
@@ -340,6 +373,33 @@ function statHtml(stats){
     return `<div class="stat"><div class="lab"><b>${hv==null?0:hv}</b><span>${STAT_ES[type]||type}</span><b>${av==null?0:av}</b></div><div class="bar"><div class="l" style="width:${(hn/tot*100).toFixed(0)}%"></div><div class="r" style="width:${(an/tot*100).toFixed(0)}%"></div></div></div>`;
   }).join('');
   return rows||'<div class="empty">Sin estadísticas todavía.</div>';
+}
+function playersHtml(data, homeId){
+  if(!data||!data.length) return '<div class="empty">Las valoraciones de los jugadores aparecen cuando arranca el partido.</div>';
+  const rows=[];
+  data.forEach(t=>{ (t.players||[]).forEach(p=>{ const st=(p.statistics&&p.statistics[0])||{}; const r=parseFloat(st.games&&st.games.rating); if(!isNaN(r)) rows.push({ name:p.player&&p.player.name, team:t.team&&t.team.name, r, g:(st.goals&&st.goals.total)||0, a:(st.goals&&st.goals.assists)||0 }); }); });
+  if(!rows.length) return '<div class="empty">Las valoraciones de los jugadores aparecen cuando arranca el partido.</div>';
+  rows.sort((x,y)=>y.r-x.r);
+  const head='<div class="sub-note" style="margin:0 0 10px">Jugadores destacados (valoración del partido)</div>';
+  return head+'<div class="players-list">'+rows.slice(0,10).map(p=>{
+    const ga=[]; if(p.g) ga.push('⚽'+p.g); if(p.a) ga.push('🅰 '+p.a);
+    const rc=p.r>=7.5?'var(--green)':(p.r>=6.5?'var(--gold)':'var(--muted)');
+    return `<div class="prow"><span class="pr-rt" style="color:${rc}">${p.r.toFixed(1)}</span><span class="pr-nm">${esc(lastName(p.name))} <span style="color:var(--muted);font-size:11px;font-weight:400">${esc(T(p.team))}</span></span><span class="pr-ga">${ga.join('  ')}</span></div>`;
+  }).join('')+'</div>';
+}
+function h2hHtml(list, f){
+  if(!list||!list.length) return '<div class="empty">Sin enfrentamientos previos recientes entre estas selecciones.</div>';
+  const hid=f&&f.teams&&f.teams.home&&f.teams.home.id, aid=f&&f.teams&&f.teams.away&&f.teams.away.id;
+  let hw=0,aw=0,dr=0;
+  list.forEach(m=>{ const gh=m.goals&&m.goals.home, ga=m.goals&&m.goals.away; if(gh==null||ga==null) return;
+    const winId = gh>ga ? (m.teams&&m.teams.home&&m.teams.home.id) : (ga>gh ? (m.teams&&m.teams.away&&m.teams.away.id) : null);
+    if(winId==null) dr++; else if(winId===hid) hw++; else if(winId===aid) aw++; });
+  const summ=`<div class="h2h-sum">${esc(T(f&&f.teams&&f.teams.home&&f.teams.home.name))} ${hw} · ${dr} ${dr===1?'empate':'empates'} · ${aw} ${esc(T(f&&f.teams&&f.teams.away&&f.teams.away.name))}</div>`;
+  const rows=list.slice(0,10).map(m=>{
+    const d=new Date(m.fixture&&m.fixture.date).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'2-digit'});
+    return `<div class="h2h-row"><span class="h2h-d">${d}</span><span class="h2h-m">${esc(T(m.teams&&m.teams.home&&m.teams.home.name))} <b>${m.goals&&m.goals.home}-${m.goals&&m.goals.away}</b> ${esc(T(m.teams&&m.teams.away&&m.teams.away.name))}</span></div>`;
+  }).join('');
+  return summ+rows;
 }
 function pitchHtml(lu){
   if(!lu) return '';
@@ -384,21 +444,29 @@ function renderDetailBody(){
   if(DETAIL_TAB==='ev') body.innerHTML=evHtml(D.events, homeId);
   else if(DETAIL_TAB==='al') body.innerHTML=lineupHtml(D.lineups);
   else if(DETAIL_TAB==='st') body.innerHTML=statHtml(D.stats);
+  else if(DETAIL_TAB==='pl') body.innerHTML=playersHtml(D.players, homeId);
+  else if(DETAIL_TAB==='h2h') body.innerHTML=h2hHtml(D.h2h, D.f);
   else body.innerHTML=infoHtml(D.f);
 }
 function detTab(t){ DETAIL_TAB=t; document.querySelectorAll('#mdetail .md-tabs .tab').forEach(x=>x.classList.toggle('on', x.dataset.t===t)); renderDetailBody(); }
 async function loadDetail(){
   const id=DETAIL_ID; if(!id) return;
   try{
-    const [fx,ev,lu,st]=await Promise.all([
+    const base=FIXBYID[id];
+    const hid=base&&base.teams&&base.teams.home&&base.teams.home.id;
+    const aid=base&&base.teams&&base.teams.away&&base.teams.away.id;
+    const h2hReq=(hid&&aid)?apiGet(`/fixtures/headtohead?h2h=${hid}-${aid}&last=10`).catch(()=>[]):Promise.resolve([]);
+    const [fx,ev,lu,st,pl,h2h]=await Promise.all([
       apiGet(`/fixtures?id=${id}`).catch(()=>[]),
       apiGet(`/fixtures/events?fixture=${id}`).catch(()=>[]),
       apiGet(`/fixtures/lineups?fixture=${id}`).catch(()=>[]),
       apiGet(`/fixtures/statistics?fixture=${id}`).catch(()=>[]),
+      apiGet(`/fixtures/players?fixture=${id}`).catch(()=>[]),
+      h2hReq,
     ]);
     if(DETAIL_ID!==id) return;
     const f=(fx&&fx[0])||FIXBYID[id]; if(f) FIXBYID[id]=f;
-    DETAIL_DATA={f, events:ev||[], lineups:lu||[], stats:st||[]};
+    DETAIL_DATA={f, events:ev||[], lineups:lu||[], stats:st||[], players:pl||[], h2h:h2h||[]};
     renderDetailShell();
     const live=f&&LIVE_ST.has(f.fixture?.status?.short);
     if(DETAIL_POLL){clearInterval(DETAIL_POLL);DETAIL_POLL=null;}
