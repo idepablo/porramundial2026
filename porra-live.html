@@ -303,7 +303,7 @@ async function loadLive(manual){
 }
 
 let FIXBYID={}, DETAIL_ID=null, DETAIL_TAB='ev', DETAIL_DATA=null, DETAIL_POLL=null;
-let RECENT_DATE=null, LAST_FIXTURES=null;
+let RECENT_DATE=null, LAST_FIXTURES=null, RECENT_USER_SET=false;
 function localDateKey(iso){ try{ return new Date(iso).toLocaleDateString('en-CA'); }catch(e){ return ''; } }
 function recentListHtml(){
   if(!LAST_FIXTURES) return '';
@@ -315,15 +315,19 @@ function recentSection(fixtures){
   const fin=fixtures.filter(f=>FIN_ST.has(f.fixture?.status?.short));
   if(!fin.length) return '';
   const dates=[...new Set(fin.map(f=>localDateKey(f.fixture?.date)))].filter(Boolean).sort(); // asc, sólo días pasados/hoy
+  const tKey=localDateKey(new Date().toISOString());
   const yKey=localDateKey(new Date(Date.now()-86400000).toISOString());
-  if(RECENT_DATE===null || !dates.includes(RECENT_DATE)) RECENT_DATE = dates.includes(yKey) ? yKey : dates[dates.length-1];
+  // por defecto el día de HOY en cuanto acabe su primer partido; si no, ayer; si no, el último con resultados
+  const auto = dates.includes(tKey) ? tKey : (dates.includes(yKey) ? yKey : dates[dates.length-1]);
+  if(!RECENT_USER_SET) RECENT_DATE = auto;            // sigue actualizándose solo hasta que el usuario elija
+  else if(!dates.includes(RECENT_DATE)) RECENT_DATE = auto;
   const opts=dates.slice().reverse().map(d=>{
     const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
     return `<option value="${d}"${d===RECENT_DATE?' selected':''}>${lbl}</option>`;
   }).join('');
   return `<div class="sect"><div class="sect-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>Últimos resultados</span><select id="recent-date" onchange="setRecentDate(this.value)" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;-webkit-appearance:menulist">${opts}</select></div><div class="card" id="recent-list">${recentListHtml()}</div></div>`;
 }
-function setRecentDate(v){ RECENT_DATE=v; const el=document.getElementById('recent-list'); if(el) el.innerHTML=recentListHtml(); }
+function setRecentDate(v){ RECENT_DATE=v; RECENT_USER_SET=true; const el=document.getElementById('recent-list'); if(el) el.innerHTML=recentListHtml(); }
 const STAT_ES={'Ball Possession':'Posesión','expected_goals':'Goles esperados (xG)','Shots insidebox':'Tiros dentro del área','Shots outsidebox':'Tiros fuera del área','Total passes':'Pases totales','Total Shots':'Tiros','Shots on Goal':'Tiros a puerta','Shots off Goal':'Tiros fuera','Blocked Shots':'Tiros bloqueados','Corner Kicks':'Córners','Offsides':'Fueras de juego','Fouls':'Faltas','Yellow Cards':'Tarjetas amarillas','Red Cards':'Tarjetas rojas','Goalkeeper Saves':'Paradas','Total passes':'Pases totales','Passes accurate':'Pases acertados','Passes %':'Precisión de pase'};
 function lastName(n){ n=String(n||''); const p=n.trim().split(' '); return p.length>1?p.slice(1).join(' '):n; }
 function detHeader(f){
