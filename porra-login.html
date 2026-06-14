@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Iniciar sesión — Porra Mundial 2026</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,6 +39,12 @@ input::placeholder { color:rgba(238,238,248,0.2); }
 .forgot { text-align:right; font-size:12px; margin-top:4px; }
 .forgot a { color:var(--muted); text-decoration:none; font-size:12px; }
 .forgot a:hover { color:var(--text); }
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 </head>
 <body>

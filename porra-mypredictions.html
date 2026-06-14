@@ -5,7 +5,8 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mis Predicciones — Porra Mundial 2026</title>
+<title>Predicciones — Porra Mundial 2026</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -273,6 +274,12 @@ nav {
 
 .nav-logo { flex: 1; }
 #nav-auth { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 </head>
 <body>
@@ -284,8 +291,8 @@ nav {
     <a class="nav-tab" href="porra-home.html">Inicio</a>
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
-    <a class="nav-tab active" href="porra-mypredictions.html">Mis Predicciones</a>
-    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
+    <a class="nav-tab active" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
@@ -315,7 +322,7 @@ nav {
 
   <!-- SUMMARY BAR -->
   <div class="summary-bar">
-    <div class="sum-item"><div class="sum-n" style="color:var(--exact)" id="sum-exact">0</div><div class="sum-l">Resultados exactos</div></div>
+    <div class="sum-item"><div class="sum-n" style="color:var(--exact)" id="sum-exact">0</div><div class="sum-l">Plenos</div></div>
     <div class="sum-item"><div class="sum-n" style="color:var(--sign)" id="sum-sign">0</div><div class="sum-l">Acierto 1X2</div></div>
     <div class="sum-item"><div class="sum-n" style="color:var(--wrong)" id="sum-wrong">0</div><div class="sum-l">Fallados</div></div>
     <div class="sum-item"><div class="sum-n" style="color:var(--muted)" id="sum-pending">–</div><div class="sum-l">Pendiente</div></div>
@@ -325,13 +332,36 @@ nav {
   <!-- ════════════════════════════════ -->
   <!-- GROUP STAGE MATCHES             -->
   <!-- ════════════════════════════════ -->
-  <div class="mp-tabs">
-    <button class="mp-tab" onclick="scrollToSec('sec-grupos')">Grupos</button>
-    <button class="mp-tab" onclick="scrollToSec('sec-eliminatorias')">Eliminatorias</button>
-    <button class="mp-tab" onclick="scrollToSec('sec-honor')">Cuadro de Honor</button>
+  <style>
+    #pday-matrix th{color:var(--muted);border-bottom:1px solid var(--border)}
+    #pday-matrix td{border-bottom:1px solid rgba(255,255,255,.05);padding:6px 8px}
+    #pday-matrix tbody tr:hover{background:rgba(255,255,255,.03)}
+    #pday-matrix tr.me-row td{background:rgba(255,215,0,.12)}
+    #pday-matrix tr.hl-row td{background:rgba(255,215,0,.24)}
+    .mp-subtab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:14px;font-weight:600;padding:10px 6px;cursor:pointer}
+    .mp-subtab.active{color:var(--text);border-bottom-color:var(--gold)}
+  </style>
+  <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:18px">
+    <button class="mp-subtab active" id="psub-diarias" onclick="predTab('diarias')">Diarias</button>
+    <button class="mp-subtab" id="psub-globales" onclick="predTab('globales')">Globales</button>
   </div>
 
-  <div id="vs-grupo"></div>
+  <div id="ptab-diarias">
+    <div class="phase-header"><div class="phase-title">Predicciones diarias</div></div>
+    <div style="color:var(--muted);font-size:12.5px;margin:-4px 0 12px">Selecciona la fecha que quieras visualizar.</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px">
+      <select id="pday-date" onchange="renderDailyPred(this.value)" style="background:var(--bg3,#151523);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit;text-transform:capitalize"></select>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div id="pday-matrix"><div style="color:var(--muted);padding:16px;font-size:13px">Cargando…</div></div></div>
+  </div>
+
+  <div id="ptab-globales" style="display:none">
+    <div class="phase-header"><div class="phase-title">Predicciones totales</div></div>
+    <div class="mp-tabs">
+      <button class="mp-tab" onclick="scrollToSec('sec-grupos')">Grupos</button>
+      <button class="mp-tab" onclick="scrollToSec('sec-eliminatorias')">Eliminatorias</button>
+      <button class="mp-tab" onclick="scrollToSec('sec-honor')">Cuadro de Honor</button>
+    </div>
 
   <div class="phase-header" id="sec-grupos">
     <div class="phase-title">Fase de Grupos</div>
@@ -375,6 +405,8 @@ nav {
   </div>
 
   <div class="honours-grid" id="honours-container"></div>
+
+</div><!-- /ptab-globales -->
 
 </div><!-- /content -->
 
@@ -448,12 +480,7 @@ async function loadMyPredictions() {
   // Load user predictions
   const { data: preds } = await sb.from("predictions").select("*").eq("user_id", targetId);
 
-  // Tú vs el grupo — compare this player's picks against the whole group's consensus
-  try {
-    const { data: allPreds } = await sb.from('predictions').select('match_id,predicted_home,predicted_away');
-    const vsName = viewId ? (profile?.alias || profile?.first_name || 'Este jugador') : 'Tú';
-    renderVsGrupo(preds||[], allPreds||[], matches||[], !viewId, vsName);
-  } catch(e){ console.warn('vs grupo', e); }
+  // (Tú vs el grupo se ha movido a Estadísticas)
 
   // Load user score
   const { data: scoreData } = await sb.from("scores").select("*").eq("user_id", targetId).single();
@@ -462,6 +489,22 @@ async function loadMyPredictions() {
     document.querySelector(".hero-stat-n.gold") && (document.querySelector(".hero-stat-n.gold").textContent = scoreData.total || 0);
     document.getElementById("sum-exact") && (document.getElementById("sum-exact").textContent = scoreData.exact_scores || 0);
   }
+  try {
+    const pm={}; (preds||[]).forEach(p=>pm[p.match_id]=p);
+    let sign=0, wrong=0, pending=0;
+    (matches||[]).filter(m=>m.phase==='group').forEach(m=>{
+      const p=pm[m.id]; if(!p||p.predicted_home==null) return;
+      if(m.real_home==null){ pending++; return; }
+      const exact=p.predicted_home===m.real_home && p.predicted_away===m.real_away;
+      const okSign=Math.sign(p.predicted_home-p.predicted_away)===Math.sign(m.real_home-m.real_away);
+      if(exact){} else if(okSign){ sign++; } else { wrong++; }
+    });
+    // eliminatorias pendientes (partidos con equipos asignados aún sin resultado)
+    (matches||[]).filter(m=>m.phase!=='group' && m.home_team && m.real_home==null).forEach(()=>{ pending++; });
+    const setN=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+    setN('sum-sign',sign); setN('sum-wrong',wrong); setN('sum-pending',pending);
+    setN('sum-total', scoreData?(scoreData.total||0):0);
+  } catch(e){ console.warn('summary', e); }
 
   // Build GROUP_MATCHES from DB
   if (matches && preds) {
@@ -821,6 +864,12 @@ function buildKO() {
 }
 
 // ── EXPORT PICKS (Excel/CSV) ───────────────────────────────────────────────
+function predTab(t){
+  document.getElementById('ptab-diarias').style.display = t==='diarias'?'':'none';
+  document.getElementById('ptab-globales').style.display = t==='globales'?'':'none';
+  document.getElementById('psub-diarias').classList.toggle('active', t==='diarias');
+  document.getElementById('psub-globales').classList.toggle('active', t==='globales');
+}
 function scrollToSec(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
 function toggleDl(e){ e.stopPropagation(); const m=document.getElementById('dl-menu'); if(m) m.style.display = m.style.display==='none'?'block':'none'; }
 function closeDl(){ const m=document.getElementById('dl-menu'); if(m) m.style.display='none'; }
@@ -869,6 +918,70 @@ function buildHonours() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadMyPredictions();
+
+// ── PREDICCIONES DIARIA (matriz usuarios × partidos, con bloqueo por partido) ──
+let PDLY = { matches:[], predBy:{}, koBy:{}, users:[] };
+async function initDailyPred(){
+  try{
+    let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,100)); tries++; }
+    const sb=getSB();
+    try{ const _u=await getCurrentUser(); window.MY_UID=_u?_u.id:null; }catch(e){}
+    const [us, pr, kr, mr] = await Promise.all([
+      sb.from('users').select('id,first_name,last_name,alias'),
+      fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
+      fetchAll('ko_predictions','user_id,home_team,away_team,pred_home,pred_away'),
+      sb.from('matches').select('id,phase,kickoff,real_home,real_away,home_team,away_team'),
+    ]);
+    PDLY.matches = mr.data || [];
+    PDLY.users = (us.data||[]).map(u=>({ id:u.id, name:(u.alias && u.alias.trim()) || ((u.first_name||'')+' '+(u.last_name||'')).trim() || '?' }))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+    PDLY.predBy={}; (pr||[]).forEach(p=>{ (PDLY.predBy[p.user_id]=PDLY.predBy[p.user_id]||{})[p.match_id]={ph:p.predicted_home,pa:p.predicted_away}; });
+    PDLY.koBy={}; (kr||[]).forEach(k=>{ (PDLY.koBy[k.user_id]=PDLY.koBy[k.user_id]||[]).push(k); });
+    buildPdayControls();
+  }catch(e){ console.warn('pred diaria', e); }
+}
+function buildPdayControls(){
+  const sel=document.getElementById('pday-date'); if(!sel) return;
+  const box=document.getElementById('pday-matrix');
+  const days=[...new Set(PDLY.matches.map(m=>matchDateKey(m.kickoff)))].filter(Boolean).sort();
+  if(!days.length){ if(box) box.innerHTML='<div style="color:var(--muted);padding:16px;font-size:13px">Aún no hay partidos.</div>'; return; }
+  const now=Date.now();
+  const started=days.filter(d=>PDLY.matches.some(m=>matchDateKey(m.kickoff)===d && new Date(m.kickoff).getTime()<=now));
+  const def=started.length?started[started.length-1]:days[0];
+  sel.innerHTML=days.map(d=>{
+    const label=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    return `<option value="${d}" ${d===def?'selected':''}>${label}</option>`;
+  }).join('');
+  renderDailyPred(def);
+}
+function renderDailyPred(dateKey){
+  const box=document.getElementById('pday-matrix'); if(!box) return;
+  const T=t=>(typeof teamES==='function'?teamES(t):t)||t||'?';
+  const now=Date.now();
+  const dayMatches=PDLY.matches.filter(m=>matchDateKey(m.kickoff)===dateKey).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  if(!dayMatches.length){ box.innerHTML='<div style="color:var(--muted);padding:16px">No hay partidos ese día.</div>'; return; }
+  const fmtPick=(ph,pa)=>{ if(ph==null||pa==null) return '—'; const s=ph>pa?'1':(ph<pa?'2':'X'); return `${s} | ${ph}-${pa}`; };
+  const ths=dayMatches.map(m=>{
+    const open=new Date(m.kickoff).getTime()<=now;
+    const res=m.real_home!=null?`<div style="font-size:11px;color:var(--gold);margin-top:2px">${m.real_home}-${m.real_away}</div>`:(open?'':'<div style="font-size:10px;color:var(--muted);margin-top:2px">🔒</div>');
+    return `<th style="text-align:center;padding:6px 8px;font-size:11px;line-height:1.25;font-weight:600;white-space:nowrap">${T(m.home_team)}<br>${T(m.away_team)}${res}</th>`;
+  }).join('');
+  const body=PDLY.users.map(u=>{
+    const tds=dayMatches.map(m=>{
+      const open=new Date(m.kickoff).getTime()<=now;
+      if(!open) return '<td style="text-align:center;color:rgba(255,255,255,.18)">🔒</td>';
+      let txt='—';
+      if(m.phase==='group'){ const pd=PDLY.predBy[u.id]&&PDLY.predBy[u.id][m.id]; if(pd) txt=fmtPick(pd.ph,pd.pa); }
+      else { const ko=(PDLY.koBy[u.id]||[]).find(k=>k.home_team===m.home_team&&k.away_team===m.away_team); if(ko) txt=fmtPick(ko.pred_home,ko.pred_away); }
+      return `<td style="text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums">${txt}</td>`;
+    }).join('');
+    const me = u.id===window.MY_UID;
+    return `<tr class="${me?'me-row':''}"><td style="white-space:nowrap">${u.name}</td>${tds}</tr>`;
+  }).join('');
+  box.innerHTML=`<table class="lb-table" style="width:100%;border-collapse:collapse;min-width:${180+dayMatches.length*84}px;font-size:13px">
+    <thead><tr><th style="text-align:left;padding:6px 8px">Jugador</th>${ths}</tr></thead><tbody>${body}</tbody></table>`;
+}
+initDailyPred();
 if (typeof initNav === "function") initNav();
 </script>
 <script>

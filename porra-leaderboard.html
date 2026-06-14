@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clasificación — Porra Mundial 2026</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,7 +55,7 @@ nav {
 /* ── TOURNAMENT STATS ── */
 .tourney-stats {
   max-width: 1000px; margin: 20px auto 0; padding: 0 24px;
-  display: grid; grid-template-columns: repeat(5,1fr); gap: 10px;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
 }
 .ts-card {
   background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
@@ -108,9 +109,9 @@ nav {
 .p2 .podium-avatar { width: 60px; height: 60px; font-size: 22px; border: 2px solid var(--s2); background: linear-gradient(135deg, #555, #7a1020); }
 .p3 .podium-avatar { width: 56px; height: 56px; font-size: 20px; border: 2px solid var(--s3); background: linear-gradient(135deg, #5a3510, #1a5c3a); }
 
-.podium-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.podium-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .p1 .podium-name { font-size: 16px; }
-.podium-country { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.podium-country { font-size: 12px; color: var(--muted); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; height: 16px; }
 .podium-pts { font-family: 'Bebas Neue', sans-serif; color: var(--gold); line-height: 1; }
 .p1 .podium-pts { font-size: 48px; }
 .p2 .podium-pts { font-size: 38px; }
@@ -165,6 +166,8 @@ nav {
   font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap;
 }
 .sort-btn.active { background: rgba(255,215,0,0.08); color: var(--gold); border-color: rgba(255,215,0,0.25); }
+.lb-tabbtn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:14px;font-weight:600;padding:10px 6px;cursor:pointer}
+.lb-tabbtn.active{color:var(--text);border-bottom-color:var(--gold)}
 .sort-btn:hover:not(.active) { color: var(--text); border-color: rgba(255,255,255,0.15); }
 
 /* ── MAIN TABLE ── */
@@ -187,8 +190,13 @@ nav {
 .lb-row:hover { background: rgba(255,255,255,0.03); }
 .lb-row.me { background: rgba(255,215,0,0.05); }
 .lb-row.me:hover { background: rgba(255,215,0,0.08); }
-.lb-row.red-lantern { background: rgba(239,68,68,0.04); }
-.lb-row.red-lantern:hover { background: rgba(239,68,68,0.07); }
+.lb-row.red-lantern { background: rgba(239,68,68,0.10); }
+.lb-row.red-lantern:hover { background: rgba(239,68,68,0.14); }
+.lb-row.red-lantern .player-name,
+.lb-row.red-lantern .player-alias,
+.lb-row.red-lantern .pts-main,
+.lb-row.red-lantern .exact-cell,
+.lb-row.red-lantern .rank-cell { color: #ff6b6b !important; }
 .lb-row td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
 
 /* expanded detail row */
@@ -225,10 +233,12 @@ nav {
 .pts-main { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); text-align: right; }
 .move-cell { font-size: 12px; text-align: center; width: 50px; }
 .exact-cell { font-size: 12px; text-align: center; color: var(--exact); font-family: 'Bebas Neue', sans-serif; font-size: 16px; }
-.expand-cell { color: var(--muted); font-size: 16px; text-align: center; transition: transform 0.2s; cursor: pointer; }
+.expand-cell { color: var(--muted); font-size: 11px; text-align: center; cursor: pointer; white-space: nowrap; }
+.expand-cell::after { content: "Ver más"; }
+.lb-row.expanded .expand-cell::after { content: "Ver menos"; color: var(--gold); }
 .pts-clickable { cursor: pointer; position: relative; }
 .pts-clickable:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gold); }
-.lb-row.expanded .expand-cell { transform: rotate(180deg); }
+
 
 /* ── BOTTOM LANTERNS ── */
 .lantern-label {
@@ -274,6 +284,12 @@ nav {
 
 .nav-logo { flex: 1; }
 #nav-auth { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 </head>
 <body>
@@ -284,8 +300,8 @@ nav {
     <a class="nav-tab" href="porra-home.html">Inicio</a>
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab active" href="porra-leaderboard.html">Clasificación</a>
-    <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
-    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
@@ -303,15 +319,20 @@ nav {
 
 <!-- TOURNAMENT STATS -->
 <div class="tourney-stats">
-  <div class="ts-card"><div class="ts-n" id="ts-myrank">#–</div><div class="ts-l">Tu posición</div></div>
-  <div class="ts-card"><div class="ts-n" id="ts-matches">0</div><div class="ts-l">Partidos jugados</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-participants">0</div><div class="ts-l">Participantes</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-pool">0 €</div><div class="ts-l">Bote</div></div>
-  <div class="ts-card"><div class="ts-n" id="ts-move">—</div><div class="ts-l">Movimiento</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-matches">0</div><div class="ts-l">Partidos jugados</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-myrank">#–</div><div class="ts-l">Tu posición</div></div>
   <div class="ts-card"><div class="ts-n" id="ts-mypts">–</div><div class="ts-l">Tus puntos</div></div>
+  <div class="ts-card"><div class="ts-n" id="ts-move">—</div><div class="ts-l">Cambio en clasificación</div></div>
 </div>
 
 <!-- PODIUM TOP 3 -->
+<div class="lb-tabbar" style="max-width:1000px;margin:18px auto 0;padding:0 24px;display:flex;gap:6px;border-bottom:1px solid var(--border)">
+  <button class="lb-tabbtn active" id="lbtb-global" onclick="lbTab('global')">Global</button>
+  <button class="lb-tabbtn" id="lbtb-diaria" onclick="lbTab('diaria')">Diaria</button>
+</div>
+<div id="lb-global">
 <div class="podium-wrap">
   <div class="podium-eyebrow">Top 3</div>
   <div class="podium-stage" id="podium-stage"></div>
@@ -324,7 +345,7 @@ nav {
     <input class="search-lb" id="search-input" placeholder="Buscar jugador…" oninput="filterTable(this.value)">
     <button class="sort-btn active" id="sort-total" onclick="sortBy('total',this)">Puntos ↕</button>
     <button class="sort-btn" id="sort-today" onclick="sortBy('today',this)">Puntos hoy ↕</button>
-    <button class="sort-btn" id="sort-exact" onclick="sortBy('exact',this)">Exactos ↕</button>
+    <button class="sort-btn" id="sort-exact" onclick="sortBy('exact',this)">Plenos ↕</button>
   </div>
 
   <div class="lb-table-scroll">
@@ -333,17 +354,29 @@ nav {
       <tr>
         <th style="width:40px">#</th>
         <th>Jugador</th>
-        <th style="width:50px;text-align:center">Mov.</th>
-        <th class="right" style="width:80px">Hoy</th>
-        <th class="right sorted" style="width:90px">Puntos</th>
-        <th style="width:60px;text-align:center">Exactos</th>
-        <th style="width:36px;text-align:center"></th>
+        <th class="right sorted" style="width:84px;cursor:pointer" onclick="sortByCol('total',this)">Puntos</th>
+        <th class="right" style="width:70px;cursor:pointer" onclick="sortByCol('today',this)">Hoy</th>
+        <th style="width:54px;text-align:center;cursor:pointer" onclick="sortByCol('mov',this)">Mov.</th>
+        <th style="width:62px;text-align:center;cursor:pointer" onclick="sortByCol('exact',this)">Plenos</th>
+        <th style="width:78px;text-align:center"></th>
       </tr>
     </thead>
     <tbody id="lb-tbody"></tbody>
   </table>
   </div>
 </div>
+</div><!-- /lb-global -->
+
+<div id="lb-diaria" style="display:none">
+<!-- CLASIFICACIÓN DIARIA -->
+<div class="table-section" style="margin-top:6px">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;font-weight:400">Clasificación diaria</h2>
+    <select id="daily-date" onchange="renderDailyClasif(this.value)" style="background:var(--bg3,#151523);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit;text-transform:capitalize"></select>
+  </div>
+  <div class="lb-table-scroll"><div id="daily-matrix"><div style="color:var(--muted);padding:16px;font-size:13px">Cargando…</div></div></div>
+</div>
+</div><!-- /lb-diaria -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
@@ -352,12 +385,13 @@ nav {
 let JUGADORS = [];
 
 let currentSort = 'total';
+let SORT_DIR = -1; // -1 desc, 1 asc
 let searchTerm  = '';
 let expandedRow = null;
 
 // ── PODIUM TOP 3 ─────────────────────────────────────────────────────────
 function buildPodium() {
-  const top3 = [...JUGADORS].sort((a,b)=>b.total-a.total).slice(0,3);
+  const top3 = [...JUGADORS].sort((a,b)=>(b.total-a.total)||(b.exact-a.exact)).slice(0,3);
   const stage = document.getElementById('podium-stage');
 
   // Order: 2nd | 1st | 3rd
@@ -403,9 +437,12 @@ function moveHtml(m)    {
 function buildTable() {
   const tbody = document.getElementById('lb-tbody');
   const sorted = [...JUGADORS].sort((a,b) => {
-    if (currentSort === 'today') return b.today - a.today;
-    if (currentSort === 'exact') return b.exact - a.exact;
-    return b.total - a.total;
+    let asc;
+    if (currentSort === 'today') asc = a.today - b.today;
+    else if (currentSort === 'exact') asc = a.exact - b.exact;
+    else if (currentSort === 'mov') asc = a.move - b.move;
+    else asc = a.total - b.total;
+    return (SORT_DIR * asc) || (b.exact - a.exact) || (b.total - a.total);
   });
 
   const filtered = sorted.filter(p => {
@@ -415,7 +452,7 @@ function buildTable() {
   });
 
   // Rank by total always
-  const totalSorted = [...JUGADORS].sort((a,b)=>b.total-a.total);
+  const totalSorted = [...JUGADORS].sort((a,b)=>(b.total-a.total)||(b.exact-a.exact));
   const rankMap = {};
   totalSorted.forEach((p,i) => rankMap[p.id] = i+1);
 
@@ -448,12 +485,12 @@ function buildTable() {
         <div class="detail-phase">
           <div class="detail-phase-pts">${ph.r32}</div>
           <div class="detail-phase-max">/ 272</div>
-          <div class="detail-phase-label">R32</div>
+          <div class="detail-phase-label">Dieciseisavos</div>
         </div>
         <div class="detail-phase">
           <div class="detail-phase-pts">${ph.r16}</div>
           <div class="detail-phase-max">/ 192</div>
-          <div class="detail-phase-label">R16</div>
+          <div class="detail-phase-label">Octavos</div>
         </div>
         <div class="detail-phase">
           <div class="detail-phase-pts">${ph.qf}</div>
@@ -466,18 +503,18 @@ function buildTable() {
           <div class="detail-phase-label">SF</div>
         </div>
         <div class="detail-phase">
-          <div class="detail-phase-pts">${ph.final + ph.honours}</div>
-          <div class="detail-phase-max">/ 144</div>
-          <div class="detail-phase-label">Final+Hon.</div>
+          <div class="detail-phase-pts">${ph.final}</div>
+          <div class="detail-phase-max">/ 89</div>
+          <div class="detail-phase-label">Final</div>
+        </div>
+        <div class="detail-phase">
+          <div class="detail-phase-pts">${ph.honours}</div>
+          <div class="detail-phase-max">/ 55</div>
+          <div class="detail-phase-label">Cuadro de honor</div>
         </div>
       </div>`;
 
-    // Separator for bottom 3
-    const lanternSep = (rank === total - 2) && !searchTerm
-      ? `<tr><td colspan="7"><div class="lantern-label">🏮 Farolillos Rojos — últimos 3</div></td></tr>`
-      : '';
-
-    return `${lanternSep}
+    return `
       <tr class="lb-row ${rowClass}" id="player-row-${p.id}" style="cursor:pointer" onclick="location.href='porra-mypredictions.html?user=${p.id}'">
         <td><div class="rank-cell ${rankClass}">${rank}</div></td>
         <td>
@@ -489,11 +526,11 @@ function buildTable() {
             </div>
           </div>
         </td>
-        <td class="move-cell">${moveHtml(p.move)}</td>
-        <td class="pts-main" style="color:${p.today>0?'var(--exact)':'var(--muted)'}">+${p.today}</td>
         <td class="pts-main pts-clickable" title="Ver desglose de puntos" onclick="event.stopPropagation(); toggleExpand('${p.id}')">${p.total}</td>
+        <td class="pts-main" style="color:${p.today>0?'var(--exact)':'var(--muted)'}">+${p.today}</td>
+        <td class="move-cell">${moveHtml(p.move)}</td>
         <td class="exact-cell">${p.exact}</td>
-        <td class="expand-cell" title="Ver desglose de puntos" onclick="event.stopPropagation(); toggleExpand('${p.id}')">▾</td>
+        <td class="expand-cell" title="Ver desglose de puntos" onclick="event.stopPropagation(); toggleExpand('${p.id}')"></td>
       </tr>
       <tr class="lb-detail-row" id="detail-${p.id}">
         <td colspan="7">${detailHtml}</td>
@@ -520,16 +557,77 @@ function scrollToPlayer(id) {
   if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); toggleExpand(id); }
 }
 
+function applySort(field){ if(currentSort===field){ SORT_DIR = -SORT_DIR; } else { currentSort=field; SORT_DIR=-1; } buildTable(); }
 function sortBy(field, btn) {
-  currentSort = field;
+  applySort(field);
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  buildTable();
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.lb-table thead th').forEach(t=>t.classList.remove('sorted'));
+}
+function lbTab(t){
+  document.getElementById('lb-global').style.display = t==='global'?'':'none';
+  document.getElementById('lb-diaria').style.display = t==='diaria'?'':'none';
+  document.getElementById('lbtb-global').classList.toggle('active', t==='global');
+  document.getElementById('lbtb-diaria').classList.toggle('active', t==='diaria');
+}
+function sortByCol(field, th){
+  applySort(field);
+  const map={total:'sort-total',today:'sort-today',exact:'sort-exact'};
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  const b=map[field]?document.getElementById(map[field]):null; if(b)b.classList.add('active');
+  document.querySelectorAll('.lb-table thead th').forEach(t=>t.classList.remove('sorted'));
+  if(th) th.classList.add('sorted');
 }
 
 function filterTable(val) {
   searchTerm = val.toLowerCase();
   buildTable();
+}
+
+// ── CLASIFICACIÓN DIARIA (matriz usuarios × partidos) ─────────────────────
+let DLY = { matches:[], predBy:{}, koBy:{}, users:[] };
+
+function buildDailyControls(){
+  const sel = document.getElementById('daily-date'); if(!sel) return;
+  const days = [...new Set(DLY.matches.map(m => matchDateKey(m.kickoff)))].filter(Boolean).sort();
+  const box = document.getElementById('daily-matrix');
+  if(!days.length){ if(box) box.innerHTML='<div style="color:var(--muted);padding:16px;font-size:13px">Aún no hay partidos.</div>'; return; }
+  const played = days.filter(d => DLY.matches.some(m => matchDateKey(m.kickoff)===d && m.real_home!=null));
+  const def = played.length ? played[played.length-1] : days[days.length-1];
+  sel.innerHTML = days.map(d => {
+    const label = new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    return `<option value="${d}" ${d===def?'selected':''}>${label}</option>`;
+  }).join('');
+  renderDailyClasif(def);
+}
+
+function renderDailyClasif(dateKey){
+  const box = document.getElementById('daily-matrix'); if(!box) return;
+  const T = t => (typeof teamES==='function'?teamES(t):t)||t||'?';
+  const dayMatches = DLY.matches.filter(m => matchDateKey(m.kickoff)===dateKey)
+    .sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
+  if(!dayMatches.length){ box.innerHTML='<div style="color:var(--muted);padding:16px">No hay partidos ese día.</div>'; return; }
+  const rows = DLY.users.map(u => {
+    const cells = dayMatches.map(m => {
+      let pts=0, has=false; const played = m.real_home!=null;
+      if(played){
+        if(m.phase==='group'){ const pd = DLY.predBy[u.id] && DLY.predBy[u.id][m.id]; if(pd){ has=true; pts=matchPoints('group',pd.ph,pd.pa,m.real_home,m.real_away); } }
+        else { const ko=(DLY.koBy[u.id]||[]).find(k=>k.home_team===m.home_team&&k.away_team===m.away_team); if(ko){ has=true; pts=matchPoints(m.phase,ko.pred_home,ko.pred_away,m.real_home,m.real_away); } }
+      }
+      return { pts, has, played };
+    });
+    const total = cells.reduce((s,c)=>s+c.pts,0);
+    return { name:u.name, cells, total };
+  }).sort((a,b)=> b.total-a.total);
+  const ths = dayMatches.map(m => {
+    const res = m.real_home!=null ? `<div style="font-size:11px;color:var(--gold);margin-top:2px">${m.real_home}-${m.real_away}</div>` : '<div style="font-size:10px;color:var(--muted);margin-top:2px">—</div>';
+    return `<th style="text-align:center;padding:6px 8px;font-size:11px;line-height:1.25;font-weight:600">${T(m.home_team)}<br>${T(m.away_team)}${res}</th>`;
+  }).join('');
+  const body = rows.map((r,i)=>{
+    const tds = r.cells.map(c=>`<td style="text-align:center;color:${c.pts>0?'var(--exact,#3ad29f)':(c.played?'var(--muted)':'rgba(255,255,255,.15)')};font-weight:${c.pts>0?'700':'400'}">${c.played?(c.has?c.pts:'·'):''}</td>`).join('');
+    return `<tr><td style="text-align:center;color:var(--muted)">${i+1}</td><td style="white-space:nowrap">${r.name}</td>${tds}<td style="text-align:center;font-weight:700;color:var(--gold)">${r.total}</td></tr>`;
+  }).join('');
+  box.innerHTML = `<table class="lb-table" style="min-width:${260+dayMatches.length*72}px"><thead><tr><th style="width:34px">#</th><th>Jugador</th>${ths}<th style="text-align:center;width:60px">Total</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 // ── LOAD FROM SUPABASE ────────────────────────────────────────────────────
@@ -578,7 +676,38 @@ async function loadClasificación() {
   });
 
   // Sort by total
-  JUGADORS.sort((a, b) => b.total - a.total);
+  JUGADORS.sort((a, b) => (b.total - a.total) || (b.exact - a.exact));
+
+  // ── PUNTOS HOY: puntos de los partidos jugados hoy (zona horaria España) ──
+  try {
+    const todayKey = matchDateKey(new Date().toISOString());
+    const [pr, kr, mr] = await Promise.all([
+      fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
+      fetchAll('ko_predictions','user_id,home_team,away_team,pred_home,pred_away'),
+      sb.from('matches').select('id,phase,kickoff,real_home,real_away,home_team,away_team'),
+    ]);
+    const matches = mr.data || [];
+    const todayMatches = matches.filter(m => m.real_home != null && matchDateKey(m.kickoff) === todayKey);
+    const predBy = {}; (pr||[]).forEach(p => { (predBy[p.user_id] = predBy[p.user_id] || {})[p.match_id] = {ph:p.predicted_home, pa:p.predicted_away}; });
+    const koBy = {}; (kr||[]).forEach(k => { (koBy[k.user_id] = koBy[k.user_id] || []).push(k); });
+    JUGADORS.forEach(p => {
+      let pts = 0;
+      todayMatches.forEach(m => {
+        if (m.phase === 'group') {
+          const pd = predBy[p.id] && predBy[p.id][m.id];
+          if (pd) pts += matchPoints('group', pd.ph, pd.pa, m.real_home, m.real_away);
+        } else {
+          const ko = (koBy[p.id]||[]).find(k => k.home_team===m.home_team && k.away_team===m.away_team);
+          if (ko) pts += matchPoints(m.phase, ko.pred_home, ko.pred_away, m.real_home, m.real_away);
+        }
+      });
+      p.today = pts;
+    });
+    buildTable(); buildPodium();
+    DLY.matches = matches; DLY.predBy = predBy; DLY.koBy = koBy;
+    DLY.users = JUGADORS.map(p => ({ id:p.id, name:(p.alias || ((p.first+' '+p.last).trim()) || '?') }));
+    buildDailyControls();
+  } catch(e) { console.warn('puntos hoy', e); }
 
   // Update stats
   const totalParticipantes = JUGADORS.length;

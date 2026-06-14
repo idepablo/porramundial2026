@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Porra Mundial 2026</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -477,6 +478,15 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:20px;border:1px solid rgba(232,184,75,.35)">
+        <div class="card-header"><div><div class="card-title">Eliminatorias</div></div></div>
+        <div style="padding:14px 16px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Cuando terminen <strong>todos</strong> los partidos de grupos, publica los Dieciseisavos con el bracket oficial de la FIFA (1.os, 2.os y 8 mejores terceros). Esto <strong>sí escribe</strong> en la base de datos y recalcula. Después, los ganadores avanzan solos al introducir cada resultado. En empates de eliminatoria, elige quién pasa (penaltis).</div>
+          <button class="save-all-btn" onclick="publishR32(this)">Publicar dieciseisavos (oficial)</button>
+          <span id="r32-pub-status" style="margin-left:10px;color:var(--muted);font-size:12px"></span>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:20px">
         <div class="card-header">
           <div>
@@ -492,8 +502,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
           <div class="card-title" id="upcoming-title">Próximos</div>
           <div class="card-sub">Aún no hay resultados que introducir</div>
         </div>
-        <div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">
-          <span id="upcoming-matches">Cargando...</span>
+        <div style="padding:12px 16px">
+          <select id="upcoming-date" onchange="renderUpcoming()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;text-transform:capitalize;margin-bottom:10px"></select>
+          <div id="upcoming-list"><div style="color:var(--muted);font-size:13px">Cargando…</div></div>
         </div>
       </div>
 
@@ -507,6 +518,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             <input type="checkbox" id="past-only-missing" onchange="renderPastGames()"> Solo sin resultado
           </label>
         </div>
+        <div style="padding:8px 16px 0"><select id="past-date" onchange="renderPastGames()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;text-transform:capitalize"></select></div>
         <div id="past-games-container" style="padding:8px 16px 16px">
           <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Cargando…</div>
         </div>
@@ -727,7 +739,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         <button class="filter-btn active" id="filter-all" onclick="filterUsers('all',this)">Todos</button>
         <button class="filter-btn" id="filter-pending" onclick="filterUsers('pending',this)">Pendientes</button>
         <button class="filter-btn" id="filter-active" onclick="filterUsers('active',this)">Pagados</button>
-        <input type="text" placeholder="Buscar por nombre o email…" oninput="searchUsers(this.value)" style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        <input type="text" placeholder="Buscar por nombre, alias o email…" oninput="searchUsers(this.value)" style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
         <button class="copy-btn" onclick="exportCSV()" style="padding:9px 14px">Exportar CSV</button>
       </div>
       <div class="card" style="overflow-x:auto">
@@ -894,6 +906,12 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   .ac-item{padding:9px 14px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
   .ac-item:hover,.ac-item.active{background:rgba(255,255,255,.07)}
   .ac-item .ac-country{color:var(--muted);font-size:11px}
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 <script src="squads-wc2026.js"></script>
 <script src="supabase.js"></script>
@@ -930,6 +948,8 @@ async function loadTodayMatches() {
     homeGoals: m.real_home ?? null,
     awayGoals: m.real_away ?? null,
     bonus:     m.bonus || 1,
+    phase:     m.phase,
+    koWinner:  m.ko_winner ?? null,
   }));
 
   const dateStr = TODAY_REAL.toLocaleDateString('es-ES', {day:'numeric',month:'long',year:'numeric'});
@@ -983,7 +1003,8 @@ async function loadDailySummary() {
   const { data: scoreData } = await sb
     .from('scores')
     .select('total, exact_scores, user_id, users(first_name, last_name, alias)')
-    .order('total', { ascending: false });
+    .order('total', { ascending: false })
+    .order('exact_scores', { ascending: false });
 
   const totalParticipants = scoreData?.length || 0;
   const totalPtsToday = 0; // Would need a daily_pts field for accurate tracking
@@ -1115,6 +1136,8 @@ function buildMatches() {
   const c = document.getElementById('matches-container');
   c.innerHTML = TODAY_MATCHES.map((m,i) => {
     const hasResult = m.homeGoals !== null;
+    const isKo = m.phase && m.phase!=='group';
+    const tie = hasResult && m.homeGoals===m.awayGoals;
     return `<div class="match-entry-row${hasResult?' saved':''}" id="row-${i}">
       <div class="match-meta">
         <div class="match-time">${m.time}</div>
@@ -1145,7 +1168,11 @@ function buildMatches() {
       <button class="save-btn${hasResult?' saved-state':''}" id="save-${i}" onclick="saveMatch(${i})">
         ${hasResult?'✓ Saved':'Save'}
       </button>
-    </div>`;
+    </div>${isKo?`<div class="ko-tie" id="ko-${i}" style="display:${tie?'flex':'none'};gap:14px;align-items:center;flex-wrap:wrap;padding:8px 14px;margin:-4px 0 10px;background:rgba(232,184,75,.08);border:1px solid rgba(232,184,75,.3);border-radius:8px;font-size:13px">
+      <span style="color:var(--gold);font-weight:600">Empate · ¿quién pasa? (penaltis)</span>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="kw-${i}" value="home" ${m.koWinner&&m.koWinner===m.home.name?'checked':''}> ${m.home.name}</label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="kw-${i}" value="away" ${m.koWinner&&m.koWinner===m.away.name?'checked':''}> ${m.away.name}</label>
+    </div>`:''}`;
   }).join('');
 }
 
@@ -1156,6 +1183,12 @@ function onScoreInput(i) {
     const el = document.getElementById(id);
     el.classList.toggle('filled', el.value !== '');
   });
+  const m = TODAY_MATCHES[i];
+  if (m && m.phase && m.phase!=='group') {
+    const tie = h!=='' && a!=='' && parseInt(h)===parseInt(a);
+    const box = document.getElementById('ko-'+i);
+    if (box) box.style.display = tie ? 'flex' : 'none';
+  }
 }
 
 function onBonusChange(i, sel) {
@@ -1172,6 +1205,12 @@ async function saveMatch(i) {
 
   const match = TODAY_MATCHES[i];
   const bonus = parseInt(document.getElementById('bonus-'+i)?.value || 1);
+  let ko_winner = null;
+  if (match.phase && match.phase!=='group' && parseInt(h)===parseInt(a)) {
+    const sel = document.querySelector('input[name="kw-'+i+'"]:checked');
+    if (!sel) { alert('Empate en eliminatoria: elige quién pasa (penaltis) antes de guardar.'); btn.textContent='Save'; btn.disabled=false; return; }
+    ko_winner = sel.value==='home' ? match.home.name : match.away.name;
+  }
   const sb    = getSB();
 
   try {
@@ -1180,6 +1219,7 @@ async function saveMatch(i) {
       real_home: parseInt(h),
       real_away: parseInt(a),
       bonus,
+      ko_winner,
     }).eq('id', match.id);
     if (error) throw error;
 
@@ -1189,6 +1229,7 @@ async function saveMatch(i) {
     // Update local state
     TODAY_MATCHES[i].homeGoals = parseInt(h);
     TODAY_MATCHES[i].awayGoals = parseInt(a);
+    TODAY_MATCHES[i].koWinner = ko_winner;
     btn.textContent = '✓ Saved'; btn.className = 'save-btn saved-state';
     document.getElementById('row-'+i).classList.add('saved');
 
@@ -1208,6 +1249,41 @@ function saveAll() {
 
 // ════════════════ PARTIDOS ANTERIORES (past games review/edit) ════════════════
 let PAST_MATCHES = [];
+function afFlag(code){ if(!code) return ''; return `<img src="https://flagcdn.com/w20/${(''+code).toLowerCase()}.png" style="width:18px;height:13px;border-radius:2px;object-fit:cover;vertical-align:middle;margin:0 4px;border:1px solid rgba(255,255,255,.1)" onerror="this.style.display='none'">`; }
+let UPCOMING=[];
+async function loadUpcomingMatches(){
+  try{
+    const sb=getSB();
+    const { data } = await sb.from('matches').select('*').gt('kickoff', new Date().toISOString()).order('kickoff',{ascending:true});
+    UPCOMING = (data||[]).filter(m=>m.real_home==null);
+  }catch(e){ UPCOMING=[]; }
+  const sel=document.getElementById('upcoming-date');
+  if(sel){
+    const days=[...new Set(UPCOMING.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})))].sort();
+    sel.innerHTML = days.length ? days.map((d,i)=>{ const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); return `<option value="${d}" ${i===0?'selected':''}>${lbl}</option>`; }).join('') : '<option value="">Sin próximos partidos</option>';
+  }
+  renderUpcoming();
+}
+function renderUpcoming(){
+  const cont=document.getElementById('upcoming-list'); if(!cont) return;
+  const selDate=document.getElementById('upcoming-date')?document.getElementById('upcoming-date').value:'';
+  let list=UPCOMING.slice();
+  if(selDate) list=list.filter(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})===selDate);
+  if(!list.length){ cont.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px">No hay partidos ese día.</div>'; return; }
+  list.sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  cont.innerHTML=list.map(m=>{
+    const t=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'});
+    const es=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+    const tag=m.phase==='group'?('Grupo '+(m.group_letter||'')):((m.phase||'').toUpperCase());
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-family:'DM Sans',sans-serif;font-size:13px">
+      <div style="width:80px;font-size:11px;color:var(--muted);flex-shrink:0;line-height:1.35">${t} ET<br>${es} ES</div>
+      <div style="flex:1;text-align:right;min-width:0">${m.home_team||'?'}${afFlag(m.home_flag)}</div>
+      <span style="color:var(--muted)">vs</span>
+      <div style="flex:1;min-width:0">${afFlag(m.away_flag)}${m.away_team||'?'}</div>
+      <div style="width:66px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0">${tag}</div>
+    </div>`;
+  }).join('');
+}
 async function loadPastGames(){
   try{
     const sb=getSB();
@@ -1218,13 +1294,20 @@ async function loadPastGames(){
     if(error){ console.error('past games', error); }
     PAST_MATCHES = data || [];
   }catch(e){ console.warn('loadPastGames', e); PAST_MATCHES=[]; }
+  const psel=document.getElementById('past-date');
+  if(psel){
+    const days=[...new Set(PAST_MATCHES.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})))].sort((a,b)=>b.localeCompare(a));
+    psel.innerHTML='<option value="">Todos los días</option>'+days.map(d=>{ const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); return `<option value="${d}">${lbl}</option>`; }).join('');
+  }
   renderPastGames();
 }
 function renderPastGames(){
   const cont=document.getElementById('past-games-container'); if(!cont) return;
   const onlyMissing=document.getElementById('past-only-missing')?.checked;
+  const selDate=document.getElementById('past-date')?document.getElementById('past-date').value:'';
   let list=PAST_MATCHES.slice();
   if(onlyMissing) list=list.filter(m=>m.real_home==null);
+  if(selDate) list=list.filter(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})===selDate);
   if(!list.length){
     cont.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">'+
       (onlyMissing?'No quedan partidos pasados sin resultado. 🎉':'Todavía no hay partidos anteriores.')+'</div>';
@@ -1242,15 +1325,21 @@ function renderPastGames(){
       const miss=m.real_home==null;
       const bc=miss?'rgba(251,191,36,0.5)':'var(--border)';
       const inS=`width:42px;text-align:center;background:var(--bg3);border:1px solid ${bc};border-radius:6px;padding:6px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif`;
+      const isKo=m.phase&&m.phase!=='group';
+      const ptie=m.real_home!=null&&m.real_home===m.real_away;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
         <div style="width:52px;font-size:11px;color:var(--muted);flex-shrink:0">${t} ET</div>
-        <div style="flex:1;text-align:right;font-size:13px;min-width:0">${m.home_team||'?'}</div>
-        <input type="number" min="0" max="20" id="pg-h-${m.id}" value="${m.real_home??''}" placeholder="–" style="${inS}">
+        <div style="flex:1;text-align:right;font-size:13px;min-width:0;font-family:'DM Sans',sans-serif">${m.home_team||'?'}${afFlag(m.home_flag)}</div>
+        <input type="number" min="0" max="20" id="pg-h-${m.id}" value="${m.real_home??''}" placeholder="–" oninput="onPastScore('${m.id}')" style="${inS}">
         <span style="color:var(--muted)">:</span>
-        <input type="number" min="0" max="20" id="pg-a-${m.id}" value="${m.real_away??''}" placeholder="–" style="${inS}">
-        <div style="flex:1;font-size:13px;min-width:0">${m.away_team||'?'}</div>
+        <input type="number" min="0" max="20" id="pg-a-${m.id}" value="${m.real_away??''}" placeholder="–" oninput="onPastScore('${m.id}')" style="${inS}">
+        <div style="flex:1;font-size:13px;min-width:0;font-family:'DM Sans',sans-serif">${afFlag(m.away_flag)}${m.away_team||'?'}</div>
         <button onclick="savePastGame('${m.id}',this)" style="flex-shrink:0;background:rgba(232,184,75,0.15);border:1px solid rgba(232,184,75,0.35);color:var(--gold);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
-      </div>`;
+      </div>${isKo?`<div class="ko-tie" id="kopg-${m.id}" style="display:${ptie?'flex':'none'};gap:12px;align-items:center;flex-wrap:wrap;padding:6px 10px;margin:0 0 8px;background:rgba(232,184,75,.08);border:1px solid rgba(232,184,75,.3);border-radius:8px;font-size:12px">
+        <span style="color:var(--gold);font-weight:600">Empate · ¿quién pasa?</span>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="kwpg-${m.id}" value="home" ${m.ko_winner&&m.ko_winner===m.home_team?'checked':''}> ${m.home_team||'?'}</label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="kwpg-${m.id}" value="away" ${m.ko_winner&&m.ko_winner===m.away_team?'checked':''}> ${m.away_team||'?'}</label>
+      </div>`:''}`;
     }).join('');
     return `<div style="margin-bottom:14px">
       <div style="font-size:12px;font-weight:600;text-transform:capitalize;margin:6px 0 2px">${dayName}${missingN?` · <span style="color:#fbbf24">${missingN} sin resultado</span>`:''}</div>
@@ -1258,15 +1347,28 @@ function renderPastGames(){
     </div>`;
   }).join('');
 }
+function onPastScore(id){
+  const m=PAST_MATCHES.find(x=>x.id===id); if(!m||!m.phase||m.phase==='group') return;
+  const h=document.getElementById('pg-h-'+id)?.value, a=document.getElementById('pg-a-'+id)?.value;
+  const tie = h!=='' && a!=='' && h!=null && a!=null && parseInt(h)===parseInt(a);
+  const box=document.getElementById('kopg-'+id); if(box) box.style.display=tie?'flex':'none';
+}
 async function savePastGame(id, btn){
   const h=document.getElementById('pg-h-'+id)?.value; const a=document.getElementById('pg-a-'+id)?.value;
   if(h===''||a===''||h==null||a==null){ alert('Introduce ambos marcadores.'); return; }
+  const pm=PAST_MATCHES.find(x=>x.id===id);
+  let ko_winner=null;
+  if(pm && pm.phase && pm.phase!=='group' && parseInt(h)===parseInt(a)){
+    const sel=document.querySelector('input[name="kwpg-'+id+'"]:checked');
+    if(!sel){ alert('Empate en eliminatoria: elige quién pasa (penaltis) antes de guardar.'); return; }
+    ko_winner = sel.value==='home' ? pm.home_team : pm.away_team;
+  }
   const t=btn.textContent; btn.disabled=true; btn.textContent='Guardando…';
   try{
-    const { error } = await getSB().from('matches').update({ real_home:parseInt(h), real_away:parseInt(a) }).eq('id', id);
+    const { error } = await getSB().from('matches').update({ real_home:parseInt(h), real_away:parseInt(a), ko_winner }).eq('id', id);
     if(error) throw error;
     await getSB().rpc('recalculate_all_scores').catch(e=>console.warn('recalc', e));
-    const m=PAST_MATCHES.find(x=>x.id===id); if(m){ m.real_home=parseInt(h); m.real_away=parseInt(a); }
+    const m=PAST_MATCHES.find(x=>x.id===id); if(m){ m.real_home=parseInt(h); m.real_away=parseInt(a); m.ko_winner=ko_winner; }
     btn.textContent='Guardado ✓';
     setTimeout(()=>{ renderPastGames(); },1100);
   }catch(e){ alert('Error: '+(e.message||e)); btn.textContent=t; btn.disabled=false; }
@@ -1366,6 +1468,7 @@ function buildUsers() {
     const matchSearch = !searchTerm ||
       u.first.toLowerCase().includes(searchTerm) ||
       u.last.toLowerCase().includes(searchTerm) ||
+      (u.alias||'').toLowerCase().includes(searchTerm) ||
       u.email.toLowerCase().includes(searchTerm);
     return matchFilter && matchSearch;
   });
@@ -1572,7 +1675,7 @@ async function loadOverviewStats() {
   set('ov-spread', totals.length ? (Math.max(...totals) - Math.min(...totals)) : 0);
   set('ov-exact', (scores || []).reduce((a,s)=>a+(s.exact_scores||0),0));
   set('ov-totalpts', (scores || []).reduce((a,s)=>a+(s.total||0),0).toLocaleString('es-ES'));
-  const players = (lb || []).map(u => ({ n: u.alias || u.first_name || '—', t: (u.scores && u.scores.total) || 0 })).sort((a,b)=>b.t-a.t);
+  const players = (lb || []).map(u => ({ n: u.alias || u.first_name || '—', t: (u.scores && u.scores.total) || 0, e: (u.scores && u.scores.exact_scores) || 0 })).sort((a,b)=>(b.t-a.t)||(b.e-a.e));
   if (players.length) { set('ov-leader', players[0].n); set('ov-leader-sub', players[0].t + ' pts'); }
 }
 
@@ -1693,6 +1796,7 @@ async function saveEditUser(id){
   // Load real data
   await loadTodayMatches();
   loadPastGames();
+  loadUpcomingMatches();
   await loadUsers();
   loadHomeDashboard(result.profile);
   setupAutocomplete('bota-input','bota-list');
@@ -2552,6 +2656,53 @@ function sbxRandom(){ sbxGroupMatches().forEach(m=>{ SBX[m.id]={h:Math.floor(Mat
 function sbxReset(){ SBX={}; SBX_KO={r32:[],r16:[],qf:[],sf:[],final:[]}; SBX_AWARDS={bota:'',balon:''}; sbxBuild(); sbxRenderGroups(); sbxRenderKO(); sbxRenderAwards(); sbxRenderBoard(); }
 function renderSandbox(){ sbxBuild(); sbxRenderGroups(); sbxRenderKO(); sbxRenderAwards(); sbxRenderBoard(); }
 
+// ════════════════ PUBLICAR DIECISEISAVOS (real, desde resultados de grupos) ════════════════
+// Resuelve el bracket oficial con los resultados REALES y lo escribe en la BD.
+async function koResolveR32(){
+  const sb=getSB();
+  const { data: gm } = await sb.from('matches').select('group_letter,home_team,away_team,real_home,real_away').eq('phase','group');
+  const groups=[...new Set((gm||[]).map(m=>m.group_letter))].sort();
+  const incomplete=[]; const first={},second={}; const thirds=[];
+  groups.forEach(g=>{
+    const grp=(gm||[]).filter(m=>m.group_letter===g);
+    if(!(grp.length>0 && grp.every(m=>m.real_home!=null && m.real_away!=null))){ incomplete.push(g); return; }
+    const st={}; const ens=t=>st[t]||(st[t]={team:t,pts:0,gd:0,gf:0});
+    grp.forEach(m=>{ const A=ens(m.home_team),B=ens(m.away_team);
+      A.gf+=m.real_home;B.gf+=m.real_away;A.gd+=(m.real_home-m.real_away);B.gd+=(m.real_away-m.real_home);
+      if(m.real_home>m.real_away)A.pts+=3; else if(m.real_home<m.real_away)B.pts+=3; else {A.pts++;B.pts++;} });
+    const tbl=Object.values(st).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.team.localeCompare(b.team));
+    if(tbl[0])first[g]=tbl[0]; if(tbl[1])second[g]=tbl[1]; if(tbl[2])thirds.push({...tbl[2],group:g});
+  });
+  if(incomplete.length) return {error:'Faltan TODOS los resultados de estos grupos: '+incomplete.join(', ')};
+  const bestThirds=thirds.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf).slice(0,8);
+  const qg=bestThirds.map(x=>x.group), thirdBy={}; bestThirds.forEach(x=>thirdBy[x.group]=x);
+  const tslots=[]; R32_SLOTS.forEach((sl,i)=>{ if(sl.t) tslots.push({idx:i,allowed:new Set(sl.t.split(''))}); });
+  const ms=new Array(tslots.length).fill(-1);
+  function aug(gi,seen){ for(let s=0;s<tslots.length;s++){ if(seen[s])continue; if(!tslots[s].allowed.has(qg[gi]))continue; seen[s]=true; if(ms[s]===-1||aug(ms[s],seen)){ ms[s]=gi; return true; } } return false; }
+  for(let gi=0;gi<qg.length;gi++) aug(gi,new Array(tslots.length).fill(false));
+  const slotThird={}; tslots.forEach((ts,k)=>{ if(ms[k]>=0) slotThird[ts.idx]=qg[ms[k]]; });
+  const code=(c)=>{ if(!c)return ''; const x=c[0]==='1'?first[c.slice(1)]:second[c.slice(1)]; return x?x.team:''; };
+  const r32=R32_SLOTS.map((sl,i)=>({ a:code(sl.a)||'', b: sl.t ? (slotThird[i]?thirdBy[slotThird[i]].team:'') : (code(sl.b)||'') }));
+  return {r32};
+}
+async function publishR32(btn){
+  if(!confirm('Vas a PUBLICAR los Dieciseisavos con los clasificados reales (1.os, 2.os y 8 mejores terceros) y recalcular. ¿Continuar?')) return;
+  const st=document.getElementById('r32-pub-status'); const o=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Publicando…';}
+  try{
+    const res=await koResolveR32();
+    if(res.error){ alert(res.error); if(st)st.textContent=res.error; if(btn){btn.disabled=false;btn.textContent=o;} return; }
+    const sb=getSB();
+    for(let i=0;i<16;i++){
+      const { error } = await sb.from('matches').update({ home_team:res.r32[i].a||null, away_team:res.r32[i].b||null }).eq('id','r32_'+i);
+      if(error) throw error;
+    }
+    await sb.rpc('recalculate_all_scores');
+    if(btn){btn.textContent='✓ Publicado';}
+    if(st)st.textContent='Dieciseisavos publicados y puntuaciones recalculadas.';
+  }catch(e){ alert('Error: '+(e.message||e)); if(btn){btn.disabled=false;btn.textContent=o;} }
+}
+
 
 // ════════════════ DESCARGAS (Excel via SheetJS) ════════════════
 let DL_CACHE=null;
@@ -2733,7 +2884,7 @@ async function dlPoints(btn){
   try{
     const D=await dlLoad();
     const rows=[['#','Jugador','Total','Grupos (partidos)','Clasificación','R32','Octavos','Cuartos','Semis','Final','Honores','Resultados exactos','Puesto']];
-    D.users.map(u=>({u,s:D.scoreByUser[u.id]||{}})).sort((a,b)=>(b.s.total||0)-(a.s.total||0)).forEach((x,i)=>{ const s=x.s;
+    D.users.map(u=>({u,s:D.scoreByUser[u.id]||{}})).sort((a,b)=>((b.s.total||0)-(a.s.total||0))||((b.s.exact_scores||0)-(a.s.exact_scores||0))).forEach((x,i)=>{ const s=x.s;
       rows.push([i+1,dlName(x.u),s.total||0,s.group_match_pts||0,s.standings_pts||0,s.r32_pts||0,s.r16_pts||0,s.qf_pts||0,s.sf_pts||0,s.final_pts||0,s.honours_pts||0,s.exact_scores||0,s.rank||(i+1)]); });
     const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:5},{wch:22},{wch:8},{wch:16},{wch:13},{wch:7},{wch:9},{wch:9},{wch:8},{wch:8},{wch:9},{wch:18},{wch:8}];
     XLSX.utils.book_append_sheet(wb,ws,'Puntos');

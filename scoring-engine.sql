@@ -18,6 +18,33 @@ insert into settings (key, value) values ('real_bota',''), ('real_balon',''), ('
 on conflict (key) do nothing;
 alter table scores add column if not exists prev_rank int;
 
+-- ── Eliminatorias: ganador de cruce (con penaltis) + avance de bracket ──
+create or replace function ko_winner_of(p text, idx int)
+returns text language plpgsql stable security definer set search_path=public as $kw$
+declare m record;
+begin
+  select * into m from public.matches where id = p||'_'||idx;
+  if not found or m.real_home is null or m.real_away is null then return null; end if;
+  if    m.real_home > m.real_away then return m.home_team;
+  elsif m.real_away > m.real_home then return m.away_team;
+  else  return nullif(m.ko_winner,'');
+  end if;
+end$kw$;
+
+create or replace function advance_bracket()
+returns void language plpgsql security definer set search_path=public as $ab$
+declare rounds text[] := array['r32','r16','qf','sf','final']; ri int; cur text; nxt text; k int; n_next int;
+begin
+  for ri in 1..4 loop
+    cur := rounds[ri]; nxt := rounds[ri+1];
+    n_next := case nxt when 'r16' then 8 when 'qf' then 4 when 'sf' then 2 else 1 end;
+    for k in 0..(n_next-1) loop
+      update public.matches set home_team=ko_winner_of(cur,2*k), away_team=ko_winner_of(cur,2*k+1)
+       where id = nxt||'_'||k;
+    end loop;
+  end loop;
+end$ab$;
+
 create or replace function recalculate_all_scores() returns void language plpgsql
 security definer set search_path = public as $$
 declare
@@ -26,10 +53,11 @@ declare
   v_r32 int; v_r16 int; v_qf int; v_sf int; v_fin int; v_hon int; v_total int;
   real_bota text; real_balon text; champ text; runnerup text; champ_ovr text; runner_ovr text;
 begin
+  perform advance_bracket();
   select nullif(value,'') into real_bota  from settings where key='real_bota';
   select nullif(value,'') into real_balon from settings where key='real_balon';
-  select case when real_home>real_away then home_team else away_team end,
-         case when real_home>real_away then away_team else home_team end
+  select case when real_home>real_away then home_team when real_away>real_home then away_team else nullif(ko_winner,'') end,
+         case when real_home>real_away then away_team when real_away>real_home then home_team when nullif(ko_winner,'') is null then null when ko_winner=home_team then away_team else home_team end
     into champ, runnerup
   from matches where phase='final' and real_home is not null order by id limit 1;
   -- manual override from admin (Premios reales), if provided
@@ -39,7 +67,7 @@ begin
   if runner_ovr is not null then runnerup := runner_ovr; end if;
 
   -- snapshot previous standing so the leaderboard can show movement
-  update scores set prev_rank = rank;
+  update scores set prev_rank = rank where true;
 
   for u in select id from users loop
     v_grp:=0; v_exact:=0; v_stand:=0; v_r32:=0; v_r16:=0; v_qf:=0; v_sf:=0; v_fin:=0; v_hon:=0;
@@ -161,8 +189,10 @@ begin
       honours_pts=excluded.honours_pts,exact_scores=excluded.exact_scores,updated_at=now();
   end loop;
 
-  with ranked as (select user_id, row_number() over (order by total desc) rk from scores)
+  with ranked as (select user_id, row_number() over (order by total desc, exact_scores desc) rk from scores)
   update scores s set rank=r.rk from ranked r where r.user_id=s.user_id;
 end$$;
 
 grant execute on function recalculate_all_scores() to anon, authenticated;
+grant execute on function ko_winner_of(text,int) to anon, authenticated;
+grant execute on function advance_bracket() to anon, authenticated;

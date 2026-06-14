@@ -752,3 +752,147 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteState);
 else initSiteState();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   EL ORÁCULO · chat-bot con caña (se inyecta en todas las páginas)
+   Llama a la Edge Function "asistente". Solo aparece con sesión.
+   Para desactivarlo en una página: window.BOT_DISABLED = true;
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  const FN_URL = SUPABASE_URL + '/functions/v1/asistente';
+  const BOT_NAME = 'El Oráculo';
+
+  async function initBot() {
+    try {
+      if (window.BOT_DISABLED) return;
+      if (document.getElementById('pulpo-btn')) return;
+      // Solo para usuarios con sesión iniciada
+      let user = null;
+      try { user = await getCurrentUser(); } catch (e) {}
+      if (!user) return;
+
+      const css = document.createElement('style');
+      css.textContent = `
+        #pulpo-btn{position:fixed;right:18px;bottom:18px;z-index:9998;width:58px;height:58px;border-radius:50%;
+          border:2px solid rgba(255,255,255,.85);cursor:pointer;padding:0;background:#fff url('ball.jpg') center/cover;
+          box-shadow:0 6px 20px rgba(0,0,0,.45);transition:transform .15s}
+        #pulpo-btn:hover{transform:scale(1.08)}
+        #pulpo-label{position:fixed;right:86px;bottom:32px;z-index:9998;background:var(--bg2,#0e0e1c);
+          border:1px solid var(--border,rgba(255,255,255,.14));color:var(--text,#eee);font-size:12px;font-weight:600;
+          padding:7px 12px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.4);white-space:nowrap;cursor:pointer;
+          display:flex;align-items:center;gap:7px}
+        #pulpo-label .dot{width:7px;height:7px;border-radius:50%;background:var(--exact,#3ad29f);animation:orpulse 1.6s infinite}
+        @keyframes orpulse{0%,100%{opacity:1}50%{opacity:.4}}
+        #pulpo-label.hide{display:none}
+        #pulpo-panel{position:fixed;right:18px;bottom:84px;z-index:9999;width:min(360px,calc(100vw - 28px));
+          height:min(520px,calc(100vh - 130px));display:none;flex-direction:column;overflow:hidden;
+          background:var(--bg2,#0e0e1c);border:1px solid var(--border,rgba(255,255,255,.12));
+          border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+        #pulpo-panel.open{display:flex}
+        #pulpo-head{padding:13px 15px;background:linear-gradient(180deg,var(--bg3,#151523),var(--bg2,#0e0e1c));
+          border-bottom:1px solid var(--border,rgba(255,255,255,.1));display:flex;align-items:center;gap:9px}
+        #pulpo-head .t{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:19px;color:var(--text,#eee)}
+        #pulpo-head .x{margin-left:auto;background:none;border:none;color:var(--muted,#888);font-size:20px;cursor:pointer;line-height:1}
+        #pulpo-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+        .pm{max-width:84%;padding:9px 12px;border-radius:13px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+        .pm.bot{align-self:flex-start;background:var(--bg3,#1a1a2b);color:var(--text,#eee);border-bottom-left-radius:4px}
+        .pm.me{align-self:flex-end;background:var(--red,#C8102E);color:#fff;border-bottom-right-radius:4px}
+        .pm.typing{opacity:.6;font-style:italic}
+        #pulpo-form{display:flex;gap:8px;padding:11px;border-top:1px solid var(--border,rgba(255,255,255,.1))}
+        #pulpo-in{flex:1;background:var(--bg,#07070f);border:1px solid var(--border,rgba(255,255,255,.14));
+          border-radius:10px;color:var(--text,#eee);padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
+        #pulpo-send{background:var(--gold,#FFD700);color:#000;border:none;border-radius:10px;padding:0 15px;font-weight:700;cursor:pointer}
+        #pulpo-send:disabled{opacity:.5;cursor:default}
+      `;
+      document.head.appendChild(css);
+
+      const btn = document.createElement('button');
+      btn.id = 'pulpo-btn'; btn.title = 'Pregunta al Oráculo';
+      const label = document.createElement('div');
+      label.id = 'pulpo-label'; label.innerHTML = '<span class="dot"></span>Pregunta al Oráculo';
+      const panel = document.createElement('div');
+      panel.id = 'pulpo-panel';
+      panel.innerHTML =
+        '<div id="pulpo-head"><span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#fff url(\'ball.jpg\') center/cover;border:1px solid rgba(255,255,255,.5)"></span><span class="t">' + BOT_NAME + '</span>'
+        + '<button class="x" id="pulpo-x">✕</button></div>'
+        + '<div id="pulpo-msgs"></div>'
+        + '<form id="pulpo-form"><input id="pulpo-in" autocomplete="off" placeholder="Pregúntame… si te atreves" maxlength="500">'
+        + '<button id="pulpo-send" type="submit">➤</button></form>';
+      document.body.appendChild(btn);
+      document.body.appendChild(label);
+      document.body.appendChild(panel);
+
+      const msgs = panel.querySelector('#pulpo-msgs');
+      const input = panel.querySelector('#pulpo-in');
+      const sendBtn = panel.querySelector('#pulpo-send');
+      let greeted = false;
+
+      function add(text, who) {
+        const d = document.createElement('div');
+        d.className = 'pm ' + who; d.textContent = text;
+        msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+        return d;
+      }
+      function toggle(open) {
+        panel.classList.toggle('open', open);
+        label.classList.toggle('hide', open);
+        if (open) {
+          if (!greeted) { add('Soy el Oráculo. Pregunta lo que quieras… pero no llores si la respuesta no te gusta.', 'bot'); greeted = true; }
+          setTimeout(() => input.focus(), 50);
+        }
+      }
+      btn.addEventListener('click', () => toggle(!panel.classList.contains('open')));
+      label.addEventListener('click', () => toggle(true));
+      panel.querySelector('#pulpo-x').addEventListener('click', () => toggle(false));
+
+      panel.querySelector('#pulpo-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const q = input.value.trim(); if (!q) return;
+        add(q, 'me'); input.value = ''; sendBtn.disabled = true;
+        const typing = add('escribiendo…', 'bot'); typing.classList.add('typing');
+        try {
+          const r = await fetch(FN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON, 'apikey': SUPABASE_ANON },
+            body: JSON.stringify({ question: q, user_id: user.id })
+          });
+          const j = await r.json();
+          typing.remove();
+          add(j.reply || 'Me he quedado mudo, cosa rara.', 'bot');
+        } catch (err) {
+          typing.remove();
+          add('No me llega la señal… será la VAR. Prueba otra vez.', 'bot');
+        }
+        sendBtn.disabled = false; input.focus();
+      });
+    } catch (e) { /* el bot nunca debe romper la página */ }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initBot);
+  else initBot();
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PUNTOS POR PARTIDO — helper compartido (clasificación diaria,
+   "puntos hoy", capturas, etc.). Refleja el motor de puntuación SQL.
+   Grupos: 1X2 +1 · dif +2 · exacto +3 (acumulativo, máx 6)
+   Eliminatorias: r32 2/3/4 · r16 3/4/5 · qf 4/5/6 · sf 5/6/7 · final 10/15/20
+   ═══════════════════════════════════════════════════════════════ */
+window.PORRA_KOVALS = { r32:[2,3,4], r16:[3,4,5], qf:[4,5,6], sf:[5,6,7], final:[10,15,20] };
+window.matchPoints = function(phase, ph, pa, rh, ra){
+  if(ph==null||pa==null||rh==null||ra==null) return 0;
+  const oneX2 = Math.sign(ph-pa)===Math.sign(rh-ra);
+  const gd    = (ph-pa)===(rh-ra);
+  const exact = ph===rh && pa===ra;
+  const v = window.PORRA_KOVALS[phase];
+  if(!v) return (oneX2?1:0)+(gd?2:0)+(exact?3:0);     // grupos
+  return (oneX2?v[0]:0)+(gd?v[1]:0)+(exact?v[2]:0);   // eliminatorias
+};
+// Clave de día (YYYY-MM-DD). Por defecto en horario del país anfitrión (EE.UU.,
+// zona Este), que es como se organizan las jornadas del Mundial — así un partido
+// nocturno en EE.UU. no se cuenta en el día siguiente (hora de España).
+window.matchDateKey = function(iso, tz){
+  try{ return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz||'America/New_York'}); }catch(e){ return ''; }
+};

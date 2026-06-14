@@ -3,11 +3,13 @@
 <head>
   <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://widgets.api-sports.io" crossorigin>
+  <link rel="preconnect" href="https://v3.football.api-sports.io" crossorigin>
+  <link rel="preconnect" href="https://media.api-sports.io" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resultados en vivo — Porra Mundial 2026</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -15,36 +17,63 @@
   --text: #eeeef8; --muted: rgba(238,238,248,0.5); --border: rgba(255,255,255,0.08);
   --red: #C8102E; --gold: #FFD700; --green: #006847;
 }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px;
-  background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 56px;
+  background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 10px; }
+.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; flex-shrink: 0;
   background: linear-gradient(90deg, var(--red), var(--gold), var(--green));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-.nav-tab { padding: 6px 16px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all 0.15s; }
+.nav-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all 0.15s; }
 .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
 .nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); border-color: var(--border); }
 #nav-auth { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-.wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 22px 16px 60px; }
 .page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
 .page-head h1 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; font-weight: 400; }
-.sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
-.grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 18px; align-items: start; }
-@media (max-width: 920px){ .grid { grid-template-columns: 1fr; } }
-.zone-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 0 4px 8px; }
-.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; min-height: 120px; }
-.card .empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 13px; }
-/* widget sizing to match the site's compact type */
-api-sports-widget {
-  --primary-font-size: 0.82rem;
-  --secondary-font-size: .8rem;
-  --button-font-size: .8rem;
-  --title-font-size: .9rem;
-  display: block;
+.refresh-btn { margin-left:auto; background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; font-family:inherit; }
+.sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.sect { margin-bottom: 22px; }
+.sect-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 0 2px 9px; display:flex; align-items:center; gap:7px; }
+.live-dot { width:8px; height:8px; border-radius:50%; background:#ff3b3b; box-shadow:0 0 0 0 rgba(255,59,59,.6); animation:pulse 1.4s infinite; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(255,59,59,.6)} 70%{box-shadow:0 0 0 8px rgba(255,59,59,0)} 100%{box-shadow:0 0 0 0 rgba(255,59,59,0)} }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.empty { padding: 22px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.m { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid rgba(255,255,255,.05); }
+.m:last-child { border-bottom:none; }
+.m.livenow { background:rgba(255,59,59,.05); }
+.m .side { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.m .side.r { justify-content:flex-end; text-align:right; }
+.m .nm { font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.m .lg { width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+.m .sc { min-width:64px; text-align:center; flex-shrink:0; }
+.m .sc .g { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; }
+.m .sc .st { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.m .sc .min { color:#ff5b5b; font-weight:700; }
+.m .sc .ko { font-size:13px; color:var(--text); }
+.m .sc .kosub { font-size:10px; color:var(--muted); }
+.tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.tbl th { color:var(--muted); font-weight:600; text-align:center; padding:5px 4px; font-size:11px; }
+.tbl th.l, .tbl td.l { text-align:left; }
+.tbl td { padding:6px 4px; text-align:center; border-top:1px solid rgba(255,255,255,.04); }
+.tbl td.team { display:flex; align-items:center; gap:7px; }
+.grp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.grp-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:10px 14px; }
+.grp-card h3 { font-family:'Bebas Neue',sans-serif; font-size:15px; color:var(--gold); letter-spacing:1px; font-weight:400; margin-bottom:4px; }
+@media (max-width:600px){
+  nav { padding:0 12px; height:auto; min-height:56px; flex-wrap:wrap; padding-bottom:8px; }
+  .wrap { padding:18px 12px 60px; }
+  .page-head h1 { font-size:26px; }
+  .m .nm { font-size:13px; }
+  .m .lg { width:20px; height:20px; }
+  .grp-grid { grid-template-columns:1fr; }
 }
-.modal-widget { width: 90%; max-width: 700px; }
-.modal-widget-content { padding: 0; height: 60vh; }
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 </head>
 <body>
@@ -55,139 +84,149 @@ api-sports-widget {
     <a class="nav-tab" href="porra-home.html">Inicio</a>
     <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
-    <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
-    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
     <a class="nav-tab active" href="porra-live.html">En vivo</a>
   </div>
   <div id="nav-auth"></div>
 </nav>
 
 <div class="wrap">
-  <div class="page-head"><h1>Resultados en vivo</h1></div>
-  <div class="sub">Calendario, marcadores en directo y clasificación del Mundial — se actualiza automáticamente durante los partidos.</div>
-  <div id="live-notice" style="display:none;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--text)">
+  <div class="page-head">
+    <h1>Resultados en vivo</h1>
+    <button class="refresh-btn" id="refresh" onclick="loadLive(true)">↻ Actualizar</button>
+  </div>
+  <div class="sub" id="updated">Marcadores en directo, partidos de hoy y clasificación de grupos.</div>
+
+  <div id="notice" style="display:none;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px">
     Aún no hay una clave API configurada. Un administrador puede añadirla en <strong>Admin → Ajustes → Resultados en vivo</strong>.
   </div>
 
-  <div class="grid">
-
-    <div>
-      <div class="zone-label">Partidos</div>
-      <div class="card">
-        <api-sports-widget data-type="league"></api-sports-widget>
-      </div>
-    </div>
-
-    <div>
-      <div class="zone-label">Detalle del partido</div>
-      <div id="game-content" class="card">
-        <div class="card-b">
-          <div class="empty">Selecciona un partido de la izquierda para ver el detalle (marcador, eventos y estadísticas).</div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="zone-label">Clasificación</div>
-      <div class="card">
-        <api-sports-widget data-type="standings"></api-sports-widget>
-      </div>
-    </div>
-
-  </div>
+  <div id="content"><div class="empty" id="loading">Cargando resultados…</div></div>
 </div>
-
-<!-- ════════════════════════════════════════════════════════════════════
-     CONFIGURACIÓN DE LOS WIDGETS — API-SPORTS
-     >>> PEGA TU API KEY DE API-FOOTBALL EN data-key (sustituye TU_API_KEY_AQUI) <<<
-     ════════════════════════════════════════════════════════════════════ -->
-<api-sports-widget
-  data-type="config"
-  data-key=""
-  data-sport="football"
-  data-lang="es"
-  data-theme="dark"
-  data-show-errors="true"
-  data-show-logos="true"
-  data-refresh="60"
-  data-player-injuries="true"
-  data-team-squad="true"
-  data-team-statistics="true"
-  data-player-statistics="true"
-  data-game-tab="statistics"
-  data-standings="true"
-  data-target-standings="true"
-  data-target-game="#game-content .card-b"
-  data-target-player="modal"
-  data-target-team="modal"
-  data-tab="today"
-  data-league="1"
-  data-season="2026"
-></api-sports-widget>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
 <script>
-(async function(){
+const API='https://v3.football.api-sports.io';
+const LEAGUE=1, SEASON=2026;
+const LIVE_ST=new Set(['1H','HT','2H','ET','BT','P','LIVE','SUSP','INT']);
+const FIN_ST=new Set(['FT','AET','PEN']);
+let KEY='', POLL=null, STAND_CACHE=null;
+
+const T = n => (typeof teamES==='function' ? teamES(n) : n) || n || '?';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function apiGet(path){
+  const r = await fetch(API+path, { headers:{ 'x-apisports-key': KEY } });
+  const j = await r.json();
+  if (j && j.errors && (Array.isArray(j.errors)? j.errors.length : Object.keys(j.errors).length))
+    throw new Error(typeof j.errors==='object'? JSON.stringify(j.errors) : String(j.errors));
+  return j.response || [];
+}
+
+function logo(u){ return u ? `<img class="lg" src="${esc(u)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''; }
+
+function matchRow(f){
+  const st = f.fixture?.status?.short || 'NS';
+  const live = LIVE_ST.has(st), fin = FIN_ST.has(st);
+  const h = T(f.teams?.home?.name), a = T(f.teams?.away?.name);
+  const gh = f.goals?.home, ga = f.goals?.away;
+  let mid;
+  if (live){
+    const el = f.fixture?.status?.elapsed; const tag = st==='HT'?'Descanso':(el!=null?el+"'":'En juego');
+    mid = `<div class="g">${gh??0} - ${ga??0}</div><div class="st min">${tag}</div>`;
+  } else if (fin){
+    const pen = st==='PEN' && f.score?.penalty ? `<div class="kosub">pen. ${f.score.penalty.home}-${f.score.penalty.away}</div>` : '';
+    mid = `<div class="g">${gh??0} - ${ga??0}</div><div class="st">${st==='AET'?'Tras prórr.':st==='PEN'?'Penaltis':'Final'}</div>${pen}`;
+  } else {
+    const d = new Date(f.fixture?.date);
+    const es = d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+    mid = `<div class="ko">${es}</div><div class="kosub">hora España</div>`;
+  }
+  return `<div class="m${live?' livenow':''}">
+    <div class="side r"><span class="nm">${esc(h)}</span>${logo(f.teams?.home?.logo)}</div>
+    <div class="sc">${mid}</div>
+    <div class="side">${logo(f.teams?.away?.logo)}<span class="nm">${esc(a)}</span></div>
+  </div>`;
+}
+
+function section(label, dotted, rows){
+  return `<div class="sect"><div class="sect-label">${dotted?'<span class="live-dot"></span>':''}${label}</div><div class="card">${rows}</div></div>`;
+}
+
+function standingsHtml(groups){
+  if(!groups || !groups.length) return '';
+  const cards = groups.map(g=>{
+    const rows = g.map((t,i)=>{
+      const c = i<2 ? '#22c55e' : (i===2 ? 'var(--gold)' : 'var(--muted)');
+      return `<tr>
+        <td style="color:${c};font-weight:700">${i+1}</td>
+        <td class="l team">${logo(t.team?.logo)}<span class="nm">${esc(T(t.team?.name))}</span></td>
+        <td>${t.all?.played??0}</td>
+        <td>${t.goalsDiff>0?'+':''}${t.goalsDiff??0}</td>
+        <td style="font-weight:700">${t.points??0}</td>
+      </tr>`;
+    }).join('');
+    const gname = g[0]?.group ? esc(g[0].group.replace(/Group/i,'Grupo')) : 'Grupo';
+    return `<div class="grp-card"><h3>${gname}</h3>
+      <table class="tbl"><thead><tr><th>#</th><th class="l">Equipo</th><th>PJ</th><th>DG</th><th>Pts</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  }).join('');
+  return `<div class="sect"><div class="sect-label">Clasificación de grupos</div><div class="grp-grid">${cards}</div></div>`;
+}
+
+async function loadLive(manual){
+  const cont=document.getElementById('content');
   try{
-    // wait for the shared Supabase helper to be ready
-    let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,100)); tries++; }
-    const sb = (typeof getSB==='function') ? getSB() : null;
-    let key='';
-    if(sb){
-      try{ const { data } = await sb.from('settings').select('value').eq('key','apifootball_key').maybeSingle(); key=(data&&data.value)||''; }catch(e){ console.warn('live key fetch', e); }
-    }
-    const cfg=document.querySelector('api-sports-widget[data-type="config"]');
-    if(!key || !cfg){
-      const n=document.getElementById('live-notice'); if(n) n.style.display='block';
-      return;
-    }
+    if(manual) document.getElementById('refresh').textContent='Actualizando…';
+    const fixtures = await apiGet(`/fixtures?league=${LEAGUE}&season=${SEASON}`);
+    const now=Date.now();
+    const live = fixtures.filter(f=>LIVE_ST.has(f.fixture?.status?.short));
+    const todayUpcoming = fixtures.filter(f=>{
+      const st=f.fixture?.status?.short||'NS'; if(LIVE_ST.has(st)||FIN_ST.has(st)) return false;
+      const d=new Date(f.fixture?.date).getTime(); return d>now && d-now < 14*3600000; // próximas 14h
+    }).sort((a,b)=>new Date(a.fixture.date)-new Date(b.fixture.date));
+    const recent = fixtures.filter(f=>FIN_ST.has(f.fixture?.status?.short))
+      .sort((a,b)=>new Date(b.fixture.date)-new Date(a.fixture.date)).slice(0,8);
 
-    // Mostramos los partidos a partir de 1 hora antes del primer encuentro
-    // (así se pueden ver alineaciones, previa, etc.). Antes de eso, mensaje de espera.
-    const LEAD_MS = 60*60*1000; // 1 hora
-    let anyStarted=true, nextKick=null;
-    if(sb){ try{
-      const { data: ms } = await sb.from('matches').select('kickoff');
-      const now=Date.now();
-      const times=(ms||[]).map(m=>new Date(m.kickoff).getTime()).filter(t=>!isNaN(t));
-      anyStarted = times.some(t => t - LEAD_MS <= now); // ¿algún partido empieza dentro de 1h o ya empezó?
-      const future=times.filter(t=>t>now).sort((a,b)=>a-b);
-      nextKick = future.length ? future[0] : null;
-    }catch(e){ console.warn('live gate', e); } }
-
-    if(!anyStarted){
-      const lw=document.querySelector('api-sports-widget[data-type="league"]');
-      const card=lw ? lw.closest('.card') : null;
-      const fmtET = nextKick ? new Date(nextKick).toLocaleString('es-ES',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'}) : null;
-      const fmtES = nextKick ? new Date(nextKick).toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}) : null;
-      if(card){
-        card.innerHTML = '<div class="card-b" style="padding:30px 20px;text-align:center">'
-          +'<div style="font-size:34px;margin-bottom:8px">⏳</div>'
-          +'<div style="font-weight:700;margin-bottom:6px">Los partidos aparecerán pronto</div>'
-          +'<div style="color:var(--muted);font-size:13px;line-height:1.6">La previa, alineaciones y marcadores se mostrarán aquí desde 1 hora antes del primer partido'
-          + (fmtET ? '.<br>Primer partido: '+fmtET+' (Costa Este) · '+fmtES+' (España).' : '.')
-          +'</div></div>';
-      }
-      // Recargar automáticamente cuando falte 1 hora para el primer partido (si es dentro de 24 h).
-      if(nextKick){ const ms=(nextKick-LEAD_MS)-Date.now()+5000; if(ms>0 && ms<24*3600000) setTimeout(()=>location.reload(), ms); }
-      // Seguimos cargando los widgets para que la Clasificación sí se muestre.
+    // standings (una vez, salvo refresco manual)
+    if(STAND_CACHE===null || manual){
+      try{ const s=await apiGet(`/standings?league=${LEAGUE}&season=${SEASON}`); STAND_CACHE=s?.[0]?.league?.standings||[]; }
+      catch(e){ STAND_CACHE=STAND_CACHE||[]; }
     }
 
-    cfg.setAttribute('data-key', key);
-    // load the widget library now that the key is in place
-    const sc=document.createElement('script'); sc.type='module'; sc.crossOrigin='anonymous';
-    sc.src='https://widgets.api-sports.io/3.1.0/widgets.js';
-    // El widget lee la clave al inicializarse; como la inyectamos en caliente,
-    // hay que forzar una reinicialización para que la recoja (método oficial de API-Sports).
-    const reinit = () => {
-      try{ document.dispatchEvent(new Event('DOMContentLoaded',{bubbles:true,cancelable:true})); }catch(e){}
-    };
-    sc.addEventListener('load', () => { setTimeout(reinit, 300); setTimeout(reinit, 1200); });
-    document.head.appendChild(sc);
-    // Red de seguridad por si 'load' ya había disparado o tarda:
-    [800, 2000, 3500].forEach(ms => setTimeout(reinit, ms));
-  }catch(e){ console.error('live init', e); }
+    let html='';
+    if(live.length) html += section('En directo', true, live.map(matchRow).join(''));
+    if(todayUpcoming.length) html += section('Próximos partidos', false, todayUpcoming.map(matchRow).join(''));
+    if(recent.length) html += section('Últimos resultados', false, recent.map(matchRow).join(''));
+    if(!live.length && !todayUpcoming.length && !recent.length)
+      html += `<div class="card"><div class="empty">Aún no hay partidos para mostrar. Vuelve cuando arranque la jornada.</div></div>`;
+    html += standingsHtml(STAND_CACHE);
+
+    cont.innerHTML = html;
+    const hora = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('updated').textContent = `Última actualización: ${hora}` + (live.length?' · en directo':'');
+    if(manual) document.getElementById('refresh').textContent='↻ Actualizar';
+
+    // Poll cada 60s solo si hay partidos en directo o próximos pronto
+    const keepPolling = live.length>0 || todayUpcoming.some(f=>new Date(f.fixture.date).getTime()-now < 2*3600000);
+    if(POLL){ clearInterval(POLL); POLL=null; }
+    if(keepPolling) POLL=setInterval(()=>loadLive(false), 60000);
+  }catch(e){
+    console.error('live', e);
+    const dom=/not allowed/i.test(String(e.message));
+    cont.innerHTML = `<div class="card"><div class="empty">${dom?'La API rechazó la llamada desde este dominio. Un administrador debe autorizar el dominio en el panel de API-Football.':'No se han podido cargar los resultados ahora mismo. Inténtalo de nuevo en un momento.'}</div></div>`;
+    if(manual) document.getElementById('refresh').textContent='↻ Actualizar';
+  }
+}
+
+(async function(){
+  let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,100)); tries++; }
+  const sb=(typeof getSB==='function')?getSB():null;
+  if(sb){ try{ const {data}=await sb.from('settings').select('value').eq('key','apifootball_key').maybeSingle(); KEY=(data&&data.value)||''; }catch(e){} }
+  if(!KEY){ document.getElementById('notice').style.display='block'; document.getElementById('loading').textContent='Sin clave API.'; return; }
+  loadLive(false);
 })();
 </script>
 </body>

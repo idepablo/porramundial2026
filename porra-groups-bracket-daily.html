@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Porra Mundial 2026 — Groups</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -85,6 +86,12 @@ nav {
 .score-num { width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.07); }
 .score-sep { color: var(--muted); font-size: 12px; }
 .score-pending { color: var(--muted); font-size: 11px; text-align: center; }
+.live-pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.4px;color:#fff;background:var(--red,#C8102E);border-radius:10px;padding:2px 7px;text-decoration:none;white-space:nowrap;animation:livepulse 1.4s infinite}
+#live-banner{padding:12px 24px 0}
+.live-banner-row{display:flex;align-items:center;gap:12px;background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.4);border-radius:12px;padding:11px 16px;margin-bottom:8px;text-decoration:none;color:var(--text)}
+.live-banner-teams{font-weight:600;font-size:14px}
+.live-banner-go{margin-left:auto;color:#ff5b5b;font-size:12px;font-weight:700;white-space:nowrap}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.45}}
 .result-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .result-dot.win { background: var(--qualify); }
 .result-dot.draw { background: var(--maybe); }
@@ -273,6 +280,12 @@ nav {
 
 .nav-logo { flex: 1; }
 #nav-auth { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
+/* --- responsive safety (auto) --- */
+html{overflow-x:clip}
+img,svg,video{max-width:100%;height:auto}
+table{max-width:100%}
+@media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
 </head>
 <body>
@@ -283,12 +296,14 @@ nav {
     <a class="nav-tab" href="porra-home.html">Inicio</a>
     <a class="nav-tab active" href="porra-groups-bracket-daily.html">Resultados</a>
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
-    <a class="nav-tab" href="porra-mypredictions.html">Mis Predicciones</a>
-    <a class="nav-tab" href="porra-quiniela.html">La Quiniela</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
     <a class="nav-tab" href="porra-live.html">En vivo</a>
   </div>
 <div id="nav-auth"></div>
 </nav>
+
+ <div id="live-banner" style="display:none"></div>
 
 <!-- PAGE TABS -->
 <div class="page-tabs">
@@ -581,13 +596,13 @@ function buildGroups() {
                   <td class="score-cell">
                     ${m.homeGoals!==null
                       ? `<div class="score-box"><span class="score-num">${m.homeGoals}</span></div>`
-                      : `<div class="score-pending">-</div>`}
+                      : (m.inPlay ? `<a href="porra-live.html" class="live-pill" onclick="event.stopPropagation()" title="Partido en juego — ver en directo">EN VIVO</a>` : `<div class="score-pending">-</div>`)}
                   </td>
                   <td style="text-align:center;color:var(--muted);font-size:12px;padding:0 2px">:</td>
                   <td class="score-cell">
                     ${m.awayGoals!==null
                       ? `<div class="score-box"><span class="score-num">${m.awayGoals}</span></div>`
-                      : `<div class="score-pending">-</div>`}
+                      : (m.inPlay ? `` : `<div class="score-pending">-</div>`)}
                   </td>
                   <td>
                     <div class="team-cell right">
@@ -852,6 +867,19 @@ async function loadFromSupabase() {
     return; 
   }
 
+  // Banner de partidos en juego ahora (todas las fases)
+  try {
+    const nowMs = Date.now();
+    const liveNow = matchData.filter(m => m.real_home == null && m.kickoff && new Date(m.kickoff).getTime() <= nowMs && nowMs < new Date(m.kickoff).getTime() + 180*60000);
+    const lb = document.getElementById('live-banner');
+    if (lb) {
+      if (liveNow.length) {
+        lb.innerHTML = liveNow.map(m => `<a class="live-banner-row" href="porra-live.html"><span class="live-pill">EN DIRECTO</span><span class="live-banner-teams">${teamES(m.home_team)} <span style="color:var(--muted)">vs</span> ${teamES(m.away_team)}</span><span class="live-banner-go">Ver en directo →</span></a>`).join('');
+        lb.style.display = 'block';
+      } else { lb.style.display='none'; lb.innerHTML=''; }
+    }
+  } catch(e){}
+
   // 2. Rebuild GROUPS from real DB data
   const groupMap = {};
   matchData.filter(m => m.phase === 'group').forEach(m => {
@@ -874,6 +902,7 @@ async function loadFromSupabase() {
     const esTime = kickoff.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/Madrid' });
     const etTime = kickoff.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'America/New_York' });
     const timeLabel = `${usDate} · ${etTime} (Costa Este EE.UU.)<br>${esDate!==usDate ? esDate+' · ' : ''}${esTime} (España)`;
+    const inPlay = (m.real_home == null) && kickoff.getTime() <= Date.now() && Date.now() < kickoff.getTime() + 180*60000;
     const jIdx    = groupMap[g].matches.filter(x => x.jornada).length;
     const jornada = jIdx < 2 ? 'J1' : jIdx < 4 ? 'J2' : 'J3';
     groupMap[g].matches.push({
@@ -889,6 +918,7 @@ async function loadFromSupabase() {
       venue:     (m.venue || '') + (m.city ? ', ' + m.city : ''),
       matchId:   m.id,
       bonus:     m.bonus || 1,
+      inPlay,
     });
   });
 
