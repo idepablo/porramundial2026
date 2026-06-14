@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Porra Mundial 2026 — Groups</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="ball.png">
+<link rel="apple-touch-icon" href="ball.png">
+<link rel="stylesheet" href="fonts.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -100,7 +100,7 @@ nav {
 
 /* STANDINGS TABLE */
 .standings-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 .standings-title {
   padding: 10px 14px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
@@ -285,8 +285,19 @@ nav {
 html{overflow-x:clip}
 img,svg,video{max-width:100%;height:auto}
 table{max-width:100%}
+/* Resultados: scroll lateral dentro de cada columna (la página no se rompe) */
+.group-row > div { min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.partidos-table, .standings-table { max-width: none; }
+.partidos-table th, .partidos-table td,
+.standings-table th, .standings-table td { white-space: nowrap; }
+@media (max-width:600px){
+  .partidos-table, .standings-table { font-size: 11px; }
+  .partidos-table th, .partidos-table td { padding: 6px 6px; }
+  .standings-table th, .standings-table td { padding: 6px 6px; }
+}
 @media (max-width:600px){ body{-webkit-text-size-adjust:100%} }
 </style>
+  <link rel="preload" as="script" href="supabase-js.min.js">
 </head>
 <body>
 

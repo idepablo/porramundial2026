@@ -816,9 +816,10 @@ else initSiteState();
         .pm.typing{opacity:.6;font-style:italic}
         #pulpo-form{display:flex;gap:8px;padding:11px;border-top:1px solid var(--border,rgba(255,255,255,.1))}
         #pulpo-in{flex:1;background:var(--bg,#07070f);border:1px solid var(--border,rgba(255,255,255,.14));
-          border-radius:10px;color:var(--text,#eee);padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
+          border-radius:10px;color:var(--text,#eee);padding:10px 12px;font-size:16px;font-family:inherit;outline:none}
         #pulpo-send{background:var(--gold,#FFD700);color:#000;border:none;border-radius:10px;padding:0 15px;font-weight:700;cursor:pointer}
         #pulpo-send:disabled{opacity:.5;cursor:default}
+        #pulpo-remaining{padding:5px 14px;font-size:11px;color:var(--muted,#888);text-align:center;border-top:1px solid var(--border,rgba(255,255,255,.07))}
       `;
       document.head.appendChild(css);
 
@@ -832,6 +833,7 @@ else initSiteState();
         '<div id="pulpo-head"><span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#fff url(\'ball.jpg\') center/cover;border:1px solid rgba(255,255,255,.5)"></span><span class="t">' + BOT_NAME + '</span>'
         + '<button class="x" id="pulpo-x">✕</button></div>'
         + '<div id="pulpo-msgs"></div>'
+        + '<div id="pulpo-remaining"></div>'
         + '<form id="pulpo-form"><input id="pulpo-in" autocomplete="off" placeholder="Pregúntame… si te atreves" maxlength="500">'
         + '<button id="pulpo-send" type="submit">➤</button></form>';
       document.body.appendChild(btn);
@@ -875,6 +877,13 @@ else initSiteState();
           const j = await r.json();
           typing.remove();
           add(j.reply || 'Me he quedado mudo, cosa rara.', 'bot');
+          if (typeof j.remaining === 'number') {
+            const rem = panel.querySelector('#pulpo-remaining');
+            if (rem) {
+              rem.textContent = j.remaining > 0 ? ('Te quedan ' + j.remaining + ' preguntas hoy') : 'Has agotado tus preguntas de hoy';
+              rem.style.color = j.remaining > 0 ? 'var(--muted,#888)' : 'var(--red,#C8102E)';
+            }
+          }
         } catch (err) {
           typing.remove();
           add('No me llega la señal… será la VAR. Prueba otra vez.', 'bot');
