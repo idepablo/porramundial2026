@@ -108,6 +108,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .ev .min{justify-self:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--gold);background:var(--bg3);border-radius:20px;width:42px;text-align:center;padding:2px 0}
 .ev .h{text-align:right}.ev .a{text-align:left}
 .ev .who{font-size:13px;font-weight:600}.ev .what{font-size:11px;color:var(--muted)}
+.ev-div{text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:9px 0;margin:4px 0;background:rgba(255,255,255,.03);border-radius:6px;font-weight:600}
 .stat{margin-bottom:14px}
 .stat .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
 .stat .lab b{font-weight:700}
@@ -232,6 +233,10 @@ function section(label, dotted, rows){
 
 function standingsHtml(groups){
   if(!groups || !groups.length) return '';
+  // El API a veces añade una tabla agregada de 12 equipos ("Group Stage"); nos quedamos
+  // sólo con los grupos reales (4 equipos) y descartamos cualquier agregado.
+  groups = groups.filter(g => Array.isArray(g) && g.length>0 && g.length<=4 && !/stage|fase/i.test((g[0] && g[0].group) || ''));
+  if(!groups.length) return '';
   const cards = groups.map(g=>{
     const rows = g.map((t,i)=>{
       const c = i<2 ? '#22c55e' : (i===2 ? 'var(--gold)' : 'var(--muted)');
@@ -351,15 +356,44 @@ function evLabel(e){
   }
   return {ic:'•', tag:d||''};
 }
-function evHtml(events, homeId){
+function evScoreAt(events, homeId, maxMin){
+  let h=0,a=0;
+  events.forEach(e=>{
+    if(e.type!=='Goal') return; if(/missed|fail/i.test(e.detail||'')) return;
+    const min=(e.time?.elapsed||0)+(e.time?.extra||0); if(maxMin!=null && min>maxMin) return;
+    const own=/own/i.test(e.detail||''); const scoringHome = own ? (e.team?.id!==homeId) : (e.team?.id===homeId);
+    if(scoringHome) h++; else a++;
+  });
+  return [h,a];
+}
+function evRow(e, homeId){
+  const mn=(e.time?.elapsed??'')+(e.time?.extra?'+'+e.time.extra:'')+"'";
+  const home=e.team?.id===homeId; const L=evLabel(e);
+  const who=e.type==='subst'?`${esc(lastName(e.assist?.name))} → ${esc(lastName(e.player?.name))}`:esc(e.player?.name||'');
+  const cell=`<span class="who">${L.ic} ${who}</span><div class="what">${esc(L.tag)}</div>`;
+  return `<div class="ev"><div class="h">${home?cell:''}</div><div class="min">${mn}</div><div class="a">${home?'':cell}</div></div>`;
+}
+function evHtml(events, homeId, f){
   if(!events||!events.length) return '<div class="empty">Sin eventos todavía.</div>';
-  return events.map(e=>{
-    const mn=(e.time?.elapsed??'')+(e.time?.extra?'+'+e.time.extra:'')+"'";
-    const home=e.team?.id===homeId; const L=evLabel(e);
-    const who=e.type==='subst'?`${esc(lastName(e.assist?.name))} → ${esc(lastName(e.player?.name))}`:esc(e.player?.name||'');
-    const cell=`<span class="who">${L.ic} ${who}</span><div class="what">${esc(L.tag)}</div>`;
-    return `<div class="ev"><div class="h">${home?cell:''}</div><div class="min">${mn}</div><div class="a">${home?'':cell}</div></div>`;
-  }).join('');
+  const st=f&&f.fixture&&f.fixture.status&&f.fixture.status.short, finished=FIN_ST.has(st);
+  const min=e=>((e.time?.elapsed||0)+(e.time?.extra||0));
+  const asc=events.slice().sort((x,y)=>min(x)-min(y));
+  const div=(t)=>`<div class="ev-div">${esc(t)}</div>`;
+  const [htH,htA]=evScoreAt(asc,homeId,45);
+  const first=asc.filter(e=>min(e)<=45), second=asc.filter(e=>min(e)>45);
+  const rev=arr=>arr.slice().reverse().map(e=>evRow(e,homeId)).join('');
+  let out='';                         // más reciente arriba
+  if(finished){
+    const gh=f.goals?.home, ga=f.goals?.away;
+    const ex = st==='AET' ? ' (tras prórroga)' : (st==='PEN' && f.score?.penalty ? ` · penaltis ${f.score.penalty.home}-${f.score.penalty.away}` : '');
+    out+=div(`🔴 Final · ${gh}-${ga}${ex}`);
+  }
+  if(second.length) out+=rev(second);
+  if(second.length || finished) out+=div('▶ 2.ª parte');
+  out+=div(`⏸ Descanso · ${htH}-${htA}`);
+  if(first.length) out+=rev(first);
+  out+=div('🟢 Inicio del encuentro');
+  return out;
 }
 function statHtml(stats){
   if(!stats||stats.length<2) return '<div class="empty">Sin estadísticas todavía.</div>';
@@ -441,7 +475,7 @@ function renderDetailBody(){
   const body=document.getElementById('md-body'); if(!body) return;
   const D=DETAIL_DATA; if(!D){ body.innerHTML='<div class="empty">Cargando…</div>'; return; }
   const homeId=D.f&&D.f.teams&&D.f.teams.home&&D.f.teams.home.id;
-  if(DETAIL_TAB==='ev') body.innerHTML=evHtml(D.events, homeId);
+  if(DETAIL_TAB==='ev') body.innerHTML=evHtml(D.events, homeId, D.f);
   else if(DETAIL_TAB==='al') body.innerHTML=lineupHtml(D.lineups);
   else if(DETAIL_TAB==='st') body.innerHTML=statHtml(D.stats);
   else if(DETAIL_TAB==='pl') body.innerHTML=playersHtml(D.players, homeId);

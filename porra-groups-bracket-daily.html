@@ -288,6 +288,7 @@ table{max-width:100%}
 /* Resultados: scroll lateral dentro de cada columna (la página no se rompe) */
 .group-row > div { min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .partidos-table, .standings-table { max-width: none; }
+tr.cut td{border-top:2px solid #22c55e;padding:0;height:0;line-height:0}
 .partidos-table th, .partidos-table td,
 .standings-table th, .standings-table td { white-space: nowrap; }
 @media (max-width:600px){
@@ -319,6 +320,7 @@ table{max-width:100%}
 <div class="page-tabs">
   <div class="page-tab active" onclick="showPage('grupos', this)">Grupos y Clasificación</div>
   <div class="page-tab" onclick="showPage('bracket', this)">Eliminatorias</div>
+  <div class="page-tab" onclick="showPage('terceros', this)">Mejores terceros</div>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -360,6 +362,15 @@ table{max-width:100%}
 <div class="bracket-wrap" style="padding:0 24px 32px;">
   <div class="bracket" id="bracket-container"></div>
 </div>
+</div>
+
+<!-- PAGE: MEJORES TERCEROS -->
+<div class="page" id="page-terceros">
+  <div style="padding:20px 24px 8px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;">Mejores terceros</div>
+    <div style="font-size:13px;color:var(--muted)">Los <b>8 mejores terceros</b> de grupo avanzan a dieciseisavos · orden FIFA: Pts → Dif. de goles → Goles a favor</div>
+  </div>
+  <div style="padding:0 24px 32px;" id="terceros-container"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -569,6 +580,34 @@ function getResult(m, side) {
   if (m.homeGoals === null) return 'pending';
   if (side==='home') return m.homeGoals > m.awayGoals ? 'win' : m.homeGoals===m.awayGoals ? 'draw' : 'loss';
   return m.awayGoals > m.homeGoals ? 'win' : m.homeGoals===m.awayGoals ? 'draw' : 'loss';
+}
+
+function buildTerceros() {
+  const cont = document.getElementById('terceros-container'); if(!cont) return;
+  const thirds = [];
+  GROUPS.forEach(group => {
+    const st = calcStandings(group);
+    if (st.length >= 3) { const t = st[2]; thirds.push({ ...t, group: group.id, gd: t.gf - t.gc }); }
+  });
+  thirds.sort((a,b) => (b.pts-a.pts) || (b.gd-a.gd) || (b.gf-a.gf) || a.name.localeCompare(b.name));
+  const rows = thirds.map((t,i) => {
+    const q = i < 8;
+    const col = q ? '#22c55e' : 'var(--muted)';
+    const cut = (i===7) ? '<tr class="cut"><td colspan="7"></td></tr>' : '';
+    return `<tr>
+      <td style="font-weight:700;color:${col}">${i+1}</td>
+      <td><div class="team-standings">${flagImg(t.flag,'sm')}${t.name} <span style="color:var(--muted);font-size:11px">(Gr. ${t.group})</span></div></td>
+      <td>${t.pj}</td>
+      <td>${t.gd>0?'+':''}${t.gd}</td>
+      <td>${t.gf}</td>
+      <td style="font-weight:700">${t.pts}</td>
+      <td style="font-size:11px;color:${col};white-space:nowrap">${q?'Clasificado':'Eliminado'}</td>
+    </tr>${cut}`;
+  }).join('');
+  cont.innerHTML = `<div class="standings-card"><table class="standings-table">
+    <thead><tr><th>#</th><th style="text-align:left">3.º de grupo</th><th>PJ</th><th>DG</th><th>GF</th><th>Pts</th><th>Estado</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="7" style="color:var(--muted);padding:16px">Aún no hay datos suficientes.</td></tr>'}</tbody></table></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.55">Clasificación provisional según los partidos jugados. El orden sigue las reglas FIFA (puntos, diferencia de goles, goles a favor). Si el empate persiste, FIFA aplica el juego limpio (tarjetas) y, por último, sorteo — criterios aún no reflejados aquí.</div>`;
 }
 
 function buildGroups() {
@@ -947,6 +986,7 @@ async function loadFromSupabase() {
   });
 
   buildGroups();
+  buildTerceros();
 
   // 3. Build bracket from knockout partidos
   buildBracketFromDB(matchData.filter(m => m.phase !== 'group'));
