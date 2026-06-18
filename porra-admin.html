@@ -572,6 +572,12 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         <div class="stat-card gold"><div class="stat-label">Puntos restantes</div><div class="stat-value gold" id="hd-remaining" style="font-size:20px;padding-top:8px">—</div></div>
       </div>
 
+      <div class="section-hd" style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="section-title">Estado del sistema</div></div>
+        <button class="hd-tab" onclick="forceRecalc(this)" style="cursor:pointer">Forzar recálculo</button>
+      </div>
+      <div class="card" style="margin-bottom:20px"><div id="hd-health" style="padding:14px;font-size:13px;color:var(--muted)">Comprobando…</div></div>
+
       <div class="section-hd"><div><div class="section-title">Partidos de hoy</div></div></div>
       <div class="card" style="margin-bottom:20px"><div id="hd-today-games" style="padding:14px;font-size:13px;color:var(--muted)">Cargando…</div></div>
 
@@ -2179,9 +2185,58 @@ function hdGlobalPlenos(){
 function hdMode(arr){ const c={}; arr.filter(Boolean).forEach(v=>c[v]=(c[v]||0)+1); let best=null,bn=0; Object.entries(c).forEach(([k,n])=>{ if(n>bn){best=k;bn=n;} }); return best?{v:best,n:bn}:null; }
 function hdAvatar(a,name){ return a?`<img src="${a}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px">${(name||'?')[0]}</div>`; }
 
+function hdAgo(iso){
+  if(!iso) return '—';
+  const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
+  if(s<90) return 'hace '+Math.round(s)+'s';
+  if(s<5400) return 'hace '+Math.round(s/60)+' min';
+  if(s<172800) return 'hace '+Math.round(s/3600)+' h';
+  return 'hace '+Math.round(s/86400)+' d';
+}
+async function loadHealth(){
+  const box=document.getElementById('hd-health'); if(!box) return;
+  const sb=getSB();
+  const dot=c=>`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};margin-right:8px;vertical-align:middle"></span>`;
+  const G='#36d399',Y='#e8b84b',R='#f87272',M='var(--muted)';
+  const row=(d,label,val)=>`<div class="hd-row" style="display:flex;align-items:center;gap:6px"><span style="flex:1">${dot(d)}${label}</span><span style="color:var(--muted);text-align:right">${val}</span></div>`;
+  try{
+    const [dirtyR,mR,scR]=await Promise.all([
+      sb.from('settings').select('value').eq('key','scores_dirty').maybeSingle(),
+      sb.from('matches').select('id,home_team,away_team,real_home,result_locked,kickoff,auto_imported_at'),
+      sb.from('scores').select('updated_at').order('updated_at',{ascending:false}).limit(1),
+    ]);
+    const dirty = (dirtyR.data&&dirtyR.data.value==='true');
+    const ms = mR.data||[];
+    const lastImport = ms.map(m=>m.auto_imported_at).filter(Boolean).sort().pop()||null;
+    const lastRecalc = (scR.data&&scR.data[0])?scR.data[0].updated_at:null;
+    const now=Date.now();
+    const overdue = ms.filter(m=>m.real_home==null && !m.result_locked && m.kickoff && (new Date(m.kickoff).getTime() < now-2.5*3600*1000))
+                      .sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    let html='';
+    html+=row(dirty?R:G,'Puntuaciones', dirty?'pendientes de recalcular':'al día');
+    html+=row(lastRecalc?M:Y,'Último recálculo', hdAgo(lastRecalc));
+    html+=row(lastImport?M:Y,'Última importación', hdAgo(lastImport));
+    html+=row(overdue.length?R:G,'Partidos vencidos sin resultado', overdue.length);
+    if(overdue.length){
+      html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">'+
+        overdue.slice(0,6).map(m=>`· ${m.home_team} vs ${m.away_team} <span style="opacity:.7">(${new Date(m.kickoff).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'})})</span>`).join('<br>')+
+        (overdue.length>6?`<br>… y ${overdue.length-6} más`:'')+'</div>';
+    }
+    box.innerHTML=html;
+  }catch(e){ box.innerHTML='<span style="color:#f87272">No se pudo cargar el estado: '+(e.message||e)+'</span>'; }
+}
+async function forceRecalc(btn){
+  const orig=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='Recalculando…';}
+  const err=await Promise.resolve(getSB().rpc('recalculate_all_scores')).then(()=>null).catch(e=>e);
+  if(!err){ try{ await getSB().from('settings').upsert({key:'scores_dirty',value:'false'},{onConflict:'key'}); }catch(_){} }
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+  loadHealth();
+  if(err) alert('Error al recalcular: '+(err.message||err));
+}
 async function loadHomeDashboard(profile){
   // welcome
   const w=document.getElementById('admin-welcome'); if(w) w.textContent='Bienvenido, '+((profile&&(profile.alias||profile.first_name))||'admin');
+  loadHealth();
   const sb=getSB();
   try{
     const [u,sc,m,p,ko,ho]=await Promise.all([

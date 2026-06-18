@@ -925,6 +925,7 @@ else initLiveBanner();
       const input = panel.querySelector('#pulpo-in');
       const sendBtn = panel.querySelector('#pulpo-send');
       let greeted = false;
+      let convo = [];
 
       function add(text, who) {
         const d = document.createElement('div');
@@ -953,11 +954,14 @@ else initLiveBanner();
           const r = await fetch(FN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON, 'apikey': SUPABASE_ANON },
-            body: JSON.stringify({ question: q, user_id: user.id })
+            body: JSON.stringify({ question: q, user_id: user.id, history: convo.slice(-6) })
           });
           const j = await r.json();
           typing.remove();
-          add(j.reply || 'Me he quedado mudo, cosa rara.', 'bot');
+          const replyText = j.reply || 'Me he quedado mudo, cosa rara.';
+          add(replyText, 'bot');
+          convo.push({ role:'user', content:q }, { role:'assistant', content:replyText });
+          if (convo.length > 12) convo = convo.slice(-12);
           if (typeof j.remaining === 'number') {
             const rem = panel.querySelector('#pulpo-remaining');
             if (rem) {
