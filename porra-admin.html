@@ -1266,7 +1266,7 @@ async function loadUpcomingMatches(){
   }catch(e){ UPCOMING=[]; }
   const sel=document.getElementById('upcoming-date');
   if(sel){
-    const days=[...new Set(UPCOMING.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})))].sort();
+    const days=[...new Set(UPCOMING.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'})))].sort();
     sel.innerHTML = days.length ? days.map((d,i)=>{ const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); return `<option value="${d}" ${i===0?'selected':''}>${lbl}</option>`; }).join('') : '<option value="">Sin próximos partidos</option>';
   }
   renderUpcoming();
@@ -1303,7 +1303,7 @@ async function loadPastGames(){
   }catch(e){ console.warn('loadPastGames', e); PAST_MATCHES=[]; }
   const psel=document.getElementById('past-date');
   if(psel){
-    const days=[...new Set(PAST_MATCHES.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})))].sort((a,b)=>b.localeCompare(a));
+    const days=[...new Set(PAST_MATCHES.map(m=>new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'})))].sort((a,b)=>b.localeCompare(a));
     psel.innerHTML='<option value="">Todos los días</option>'+days.map(d=>{ const lbl=new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); return `<option value="${d}">${lbl}</option>`; }).join('');
   }
   renderPastGames();
@@ -1321,11 +1321,11 @@ function renderPastGames(){
     return;
   }
   const byDay={};
-  list.forEach(m=>{ const k=new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'}); (byDay[k]=byDay[k]||[]).push(m); });
+  list.forEach(m=>{ const k=new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'}); (byDay[k]=byDay[k]||[]).push(m); });
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a)); // newest day first
   cont.innerHTML=days.map(k=>{
     const games=byDay[k].sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
-    const dayName=new Date(games[0].kickoff).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'America/New_York'});
+    const dayName=new Date(games[0].kickoff).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Los_Angeles'});
     const missingN=games.filter(m=>m.real_home==null).length;
     const rows=games.map(m=>{
       const t=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'});
@@ -2128,7 +2128,7 @@ loadSettings();
 
 
 // ════════════════ HOME DASHBOARD (daily engine + render) ════════════════
-const HD_TZ = 'America/New_York'; // tournament day = US Eastern (keeps a match-day's games together)
+const HD_TZ = 'America/Los_Angeles'; // jornada = día del Pacífico (mantiene juntos los partidos de un día, incluso los que acaban pasada la medianoche ET)
 // ── Central scoring config: single source of truth. Change a value here and the
 //    tournament maximum (today 1480) recomputes automatically everywhere. ──
 const SCORING = {

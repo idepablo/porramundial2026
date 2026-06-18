@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logros — Porra Mundial 2026</title>
+<link rel="icon" type="image/png" href="ball.png">
+<link rel="apple-touch-icon" href="ball.png">
+<link rel="preload" as="script" href="supabase-js.min.js">
+<link rel="stylesheet" href="fonts.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070f;--bg2:#0e0e1c;--bg3:#151523;
+  --text:#eeeef8;--muted:rgba(238,238,248,0.45);--border:rgba(255,255,255,0.08);
+  --gold:#FFD700;--exact:#22c55e;--wrong:#ef4444;
+  --t-bronce:#cd7f32;--t-plata:#c7c7d2;--t-oro:#e8b84b;--t-platino:#5fe3e0;--t-rojo:#ef4444;
+}
+html{overflow-x:clip}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.5;min-height:100vh}
+img,svg{max-width:100%}
+a{color:inherit}
+nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;text-decoration:none;color:var(--text)}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap}
+.nav-tab{font-size:13px;color:var(--muted);text-decoration:none;padding:6px 11px;border-radius:7px}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-tab.active{color:var(--text);background:rgba(255,255,255,.09)}
+.wrap{max-width:920px;margin:0 auto;padding:22px 18px 60px}
+.head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:.5px}
+.sel{margin-left:auto;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit}
+.prog-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:15px 17px;margin-bottom:16px}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline}
+.prog-n{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold)}
+.prog-bar{height:9px;background:var(--bg3);border-radius:6px;margin-top:10px;overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);border-radius:6px;transition:width .4s}
+.tierlabels{display:flex;gap:13px;flex-wrap:wrap;margin-top:11px;font-size:11px;color:var(--muted)}
+.tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.filters{display:flex;gap:8px;margin:6px 0 18px;flex-wrap:wrap}
+.fpill{background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.fpill.on{background:var(--gold);border-color:var(--gold);color:#1a1405}
+.tier-h{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px;margin:22px 0 11px;display:flex;align-items:center;gap:9px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+.bcard{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:13px;position:relative;overflow:hidden}
+.bcard.locked{opacity:.62}
+.bicon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:9px;background:var(--bg3);border:1.5px solid var(--border)}
+.bicon svg{width:21px;height:21px;stroke-width:1.8}
+.bname{font-weight:600;font-size:13.5px;color:var(--text)}
+.bdesc{color:var(--muted);font-size:11.5px;line-height:1.4;margin:2px 0 10px;min-height:30px}
+.bfoot{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+.rar{position:absolute;top:11px;right:11px;font-size:10.5px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:2px 7px}
+.rar.raro{color:var(--t-platino);border-color:rgba(95,227,224,.4)}
+.pbar{height:6px;background:var(--bg3);border-radius:5px;overflow:hidden}
+.pbar>div{height:100%;border-radius:5px}
+.empty{color:var(--muted);font-size:13px;padding:30px;text-align:center}
+.locktxt{color:var(--muted)}
+@media(max-width:600px){.title{font-size:28px}.wrap{padding:16px 12px 50px}.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="porra-home.html">Porra Mundial 2026</a>
+  <div class="nav-links">
+    <a class="nav-tab" href="porra-home.html">Inicio</a>
+    <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
+    <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
+    <a class="nav-tab active" href="porra-logros.html">Logros</a>
+    <a class="nav-tab" href="porra-live.html">En directo</a>
+  </div>
+<div id="nav-auth"></div>
+</nav>
+
+<div class="wrap">
+  <div class="head">
+    <div class="title">Logros</div>
+    <select id="player-sel" class="sel"></select>
+  </div>
+
+  <div class="prog-card">
+    <div class="prog-top">
+      <span style="color:var(--muted);font-size:13px" id="prog-name">Conseguidos</span>
+      <span class="prog-n" id="prog-count">— / —</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="tierlabels">
+      <span><span class="tdot" style="background:var(--t-bronce)"></span>Bronce</span>
+      <span><span class="tdot" style="background:var(--t-plata)"></span>Plata</span>
+      <span><span class="tdot" style="background:var(--t-oro)"></span>Oro</span>
+      <span><span class="tdot" style="background:var(--t-platino)"></span>Platino</span>
+      <span><span class="tdot" style="background:var(--t-rojo)"></span>Salón de la vergüenza</span>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="fpill on" data-f="all">Todos</button>
+    <button class="fpill" data-f="got">Conseguidos</button>
+    <button class="fpill" data-f="lock">Bloqueados</button>
+  </div>
+
+  <div id="content"><div class="empty">Cargando logros…</div></div>
+</div>
+
+<script src="supabase-js.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+(function(){
+  const ICON={
+    medal:'<path d="M8 2l3 5"/><path d="M16 2l-3 5"/><circle cx="12" cy="15" r="5"/><path d="M12 13.5l.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.8-1.4.8.3-1.5-1.1-1 1.5-.2z"/>',
+    target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+    flame:'<path d="M12 3c2 3 5 4 5 8a5 5 0 11-10 0c0-2 1-3 2-4 0 1 .5 2 1.5 2C12 9 10 6 12 3z"/>',
+    crown:'<path d="M4 8l3 9h10l3-9-5 4-3-6-3 6-5-4z"/>',
+    star:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/>',
+    bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+    flag:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+    moon:'<path d="M20 15a8 8 0 11-8.9-11 6 6 0 008.9 11z"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/>',
+    eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    skull:'<path d="M12 3a8 8 0 00-5 14v3h10v-3a8 8 0 00-5-14z"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/>',
+    dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/>',
+    trophy:'<path d="M7 4h10v4a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/><path d="M9 14h6M12 14v4M9 21h6"/>',
+    paper:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+    sheep:'<circle cx="12" cy="13" r="6"/><circle cx="8" cy="9" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="12" cy="8" r="2.5"/>',
+    wolf:'<path d="M4 4l3 4 5-2 5 2 3-4-1 7a7 7 0 01-14 0z"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>',
+    up:'<path d="M5 15l7-7 7 7"/>',
+    down:'<path d="M5 9l7 7 7-7"/>',
+    clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    calendar:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/>',
+    check2:'<path d="M4 12l5 5L20 6"/>',
+    ghost:'<path d="M6 20V11a6 6 0 0112 0v9l-3-2-3 2-3-2z"/><circle cx="9.5" cy="11" r="1"/><circle cx="14.5" cy="11" r="1"/>',
+    boot:'<path d="M4 6h6v6l8 2v4H4z"/>',
+    ball:'<circle cx="12" cy="12" r="8"/><path d="M12 8l3 2-1 3.5h-4L9 10z"/>',
+    bird:'<path d="M16 7a3 3 0 10-6 0c0 4-6 3-6 8 3 0 5-1 7-1 3 0 5-2 5-5l3-1-2-1z"/>'
+  };
+  function svg(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'+(ICON[name]||ICON.medal)+'</svg>';}
+
+  const TIERS=[
+    {k:'bronce',label:'Bronce',col:'var(--t-bronce)'},
+    {k:'plata', label:'Plata', col:'var(--t-plata)'},
+    {k:'oro',   label:'Oro',   col:'var(--t-oro)'},
+    {k:'platino',label:'Platino',col:'var(--t-platino)'},
+    {k:'rojo',  label:'Salón de la vergüenza', col:'var(--t-rojo)'}
+  ];
+
+  // ── helpers ────────────────────────────────────────────────
+  const mp=(ph,pa,rh,ra)=>window.matchPoints('group',ph,pa,rh,ra);
+  const sign=(a,b)=>a>b?1:(a<b?-1:0);
+  function buildTable(rows){ // rows: {team,gf,ga,pts}
+    const agg={};
+    rows.forEach(r=>{const t=agg[r.team]=agg[r.team]||{team:r.team,pts:0,gf:0,ga:0};t.pts+=r.pts;t.gf+=r.gf;t.ga+=r.ga;});
+    return Object.values(agg).sort((a,b)=> b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf || a.team.localeCompare(b.team)).map(x=>x.team);
+  }
+
+  // ── badge catalog (ev returns {u:bool, p:[cur,total]|null}) ──
+  const B=[
+    // BRONCE
+    {id:'primer_dia',t:'bronce',n:'Primer día',d:'Entraste a la porra por primera vez',ic:'calendar',ev:(u,C)=>({u:(C.visits[u]||[]).length>0})},
+    {id:'deberes',t:'bronce',n:'Deberes hechos',d:'Enviaste todos tus pronósticos de grupos',ic:'paper',ev:(u,C)=>{const n=Object.keys(C.predU[u]||{}).filter(mid=>C.groupIds.has(mid)).length;return {u:n>=C.nGroup,p:[n,C.nGroup]};}},
+    {id:'curioso',t:'bronce',n:'Curioso',d:'Le preguntaste al Oráculo por primera vez',ic:'chat',ev:(u,C)=>({u:(C.bot[u]||0)>=1})},
+    {id:'estreno',t:'bronce',n:'Estreno',d:'Sumaste tus primeros puntos',ic:'check2',ev:(u,C)=>({u:(C.sc[u]?.total||0)>0})},
+    {id:'primer_pleno',t:'bronce',n:'Primer pleno',d:'Tu primer marcador exacto',ic:'target',ev:(u,C)=>({u:(C.sc[u]?.exact_scores||0)>=1})},
+    // PLATA
+    {id:'madrugador',t:'plata',n:'Madrugador',d:'Entraste antes de las 9:00 (hora local)',ic:'sun',ev:(u,C)=>({u:(C.visits[u]||[]).some(v=>v.first_hour!=null&&v.first_hour<9)})},
+    {id:'buho',t:'plata',n:'Búho',d:'Entraste después de las 23:00 (hora local)',ic:'moon',ev:(u,C)=>({u:(C.visits[u]||[]).some(v=>v.first_hour!=null&&v.first_hour>=23)})},
+    {id:'fiel',t:'plata',n:'Fiel',d:'Entraste 7 días seguidos',ic:'calendar',ev:(u,C)=>{const r=maxRun((C.visits[u]||[]).map(v=>v.day));return {u:r>=7,p:[r,7]};}},
+    {id:'manita',t:'plata',n:'Manita',d:'5+ puntos en una sola jornada',ic:'star',ev:(u,C)=>{const m=maxDay(C,u,'pts');return {u:m>=5,p:[m,5]};}},
+    {id:'rey_dia',t:'plata',n:'Rey del día',d:'Máximo anotador de una jornada',ic:'crown',ev:(u,C)=>({u:C.kingDays.has(u)})},
+    {id:'remontada',t:'plata',n:'Remontada',d:'Subiste 5+ puestos en un día',ic:'up',ev:(u,C)=>({u:(C.bestClimb[u]||0)>=5})},
+    {id:'vidente',t:'plata',n:'Vidente',d:'Acertaste el ganador de un grupo',ic:'eye',ev:(u,C)=>({u:groupHits(C,u).winner>0})},
+    {id:'doblete',t:'plata',n:'Doblete',d:'2 plenos en el torneo',ic:'target',ev:(u,C)=>{const e=C.sc[u]?.exact_scores||0;return {u:e>=2,p:[e,2]};}},
+    // ORO
+    {id:'hat_trick',t:'oro',n:'Hat-Trick',d:'3 plenos en el mismo día',ic:'flame',ev:(u,C)=>{const m=maxDay(C,u,'exact');return {u:m>=3,p:[m,3]};}},
+    {id:'pleno_plenos',t:'oro',n:'Pleno de plenos',d:'Clavaste todos los partidos de una jornada',ic:'trophy',ev:(u,C)=>({u:C.perfectDay.has(u)})},
+    {id:'francotirador',t:'oro',n:'Francotirador',d:'10 plenos en el torneo',ic:'target',ev:(u,C)=>{const e=C.sc[u]?.exact_scores||0;return {u:e>=10,p:[e,10]};}},
+    {id:'en_racha',t:'oro',n:'En racha',d:'Pleno en 3 jornadas seguidas',ic:'flame',ev:(u,C)=>{const r=plenoStreak(C,u);return {u:r>=3,p:[r,3]};}},
+    {id:'profeta_grupo',t:'oro',n:'Profeta del grupo',d:'Clavaste la clasificación completa de un grupo',ic:'eye',ev:(u,C)=>({u:groupHits(C,u).full>0})},
+    {id:'rebano',t:'oro',n:'Parte del rebaño',d:'Acertaste 15 partidos, igual que la mayoría del grupo',ic:'sheep',ev:(u,C)=>{const n=herd(C,u);return {u:n>=15,p:[n,15]};}},
+    {id:'lobo',t:'oro',n:'Lobo solitario',d:'Acertaste 5 marcadores que casi nadie predijo',ic:'wolf',ev:(u,C)=>{const n=lone(C,u);return {u:n>=5,p:[n,5]};}},
+    {id:'oraculo_humano',t:'oro',n:'Oráculo humano',d:'80%+ de tus equipos elegidos llegan a eliminatorias',ic:'eye',ev:(u,C)=>oracleHuman(C,u)},
+    {id:'incondicional',t:'oro',n:'Incondicional',d:'Entraste todos los días del torneo, sin fallar uno',ic:'calendar',ev:(u,C)=>{const got=C.tournamentOver&&C.gameDays.every(d=>(C.visitDays[u]||new Set()).has(d));return {u:got,p:[(C.gameDays.filter(d=>(C.visitDays[u]||new Set()).has(d))).length,C.gameDays.length]};}},
+    {id:'profeta',t:'oro',n:'Profeta',d:'Acertaste el campeón del Mundial',ic:'star',ev:(u,C)=>({u:!!C.set.champion && C.champPick[u]===C.set.champion})},
+    {id:'bota',t:'oro',n:'Bota de Oro',d:'Acertaste el máximo goleador del torneo',ic:'boot',ev:(u,C)=>({u:!!C.set.bota && C.hon[u]?.boot_1===C.set.bota})},
+    {id:'balon',t:'oro',n:'Balón de Oro',d:'Acertaste el mejor jugador del torneo',ic:'ball',ev:(u,C)=>({u:!!C.set.balon && C.hon[u]?.ball_1===C.set.balon})},
+    // PLATINO
+    {id:'goat',t:'platino',n:'G.O.A.T.',d:'Ganas la Porra Mundial 2026',ic:'trophy',ev:(u,C)=>({u:C.tournamentOver && C.sc[u]?.rank===1})},
+    // ROJO
+    {id:'cenizo',t:'rojo',n:'Cenizo',d:'0 puntos en una jornada entera',ic:'skull',ev:(u,C)=>({u:C.cenizo.has(u)})},
+    {id:'optimista',t:'rojo',n:'Optimista',d:'Te pasaste 3+ goles en un pronóstico',ic:'flame',ev:(u,C)=>({u:C.optimista.has(u)})},
+    {id:'tiro_palo',t:'rojo',n:'Tiro al palo',d:'Fallaste el ganador en 5 partidos seguidos',ic:'flag',ev:(u,C)=>{const r=missStreak(C,u);return {u:r>=5,p:[r,5]};}},
+    {id:'farolillo',t:'rojo',n:'Farolillo rojo',d:'Acabaste último en una jornada',ic:'flag',ev:(u,C)=>({u:C.lastDays.has(u)})},
+    {id:'volare',t:'rojo',n:'Volaré',d:'Caíste 5+ puestos en un día',ic:'down',ev:(u,C)=>({u:(C.worstFall[u]||0)>=5})},
+    {id:'roasted',t:'rojo',n:'Roasted',d:'El Oráculo te dio caña 5 veces o más',ic:'chat',ev:(u,C)=>{const n=C.bot[u]||0;return {u:n>=5,p:[Math.min(n,5),5]};}},
+    {id:'ultimo_clase',t:'rojo',n:'El último de la clase',d:'Acabaste el torneo en última posición',ic:'down',ev:(u,C)=>({u:C.tournamentOver && C.sc[u]?.rank===C.maxRank})},
+    {id:'espejismo',t:'rojo',n:'Espejismo',d:'Fuiste líder y acabaste fuera del podio',ic:'ghost',secret:true,ev:(u,C)=>({u:C.tournamentOver && (C.everFirst.has(u)) && (C.sc[u]?.rank||99)>=4})}
+  ];
+
+  // ── per-context computations ────────────────────────────────
+  function maxRun(days){ // longest consecutive-day run
+    const ds=[...new Set(days)].filter(Boolean).sort();
+    let best=0,run=0,prev=null;
+    ds.forEach(d=>{ if(prev && (new Date(d)-new Date(prev))===86400000) run++; else run=1; best=Math.max(best,run); prev=d; });
+    return best;
+  }
+  function maxDay(C,u,key){ let m=0; for(const d in C.dayStat){ const s=C.dayStat[d][u]; if(s) m=Math.max(m, key==='exact'?s.exact:s.pts);} return m; }
+  function plenoStreak(C,u){ let best=0,run=0,prev=null; C.gameDays.forEach(d=>{ const s=C.dayStat[d]?.[u]; const had=s&&s.exact>0; if(had){ if(prev&&(new Date(d)-new Date(prev))===86400000) run++; else run=1; best=Math.max(best,run);} else run=0; prev=had?d:prev; }); return best; }
+  function missStreak(C,u){ // consecutive predicted played matches with wrong winner
+    let best=0,run=0;
+    C.playedSorted.forEach(m=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null) return; if(sign(pd.ph,pd.pa)!==sign(m.real_home,m.real_away)){run++;best=Math.max(best,run);} else run=0; });
+    return best;
+  }
+  function herd(C,u){ let n=0; C.playedSorted.forEach(m=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null) return; if(mp(pd.ph,pd.pa,m.real_home,m.real_away)>0 && C.matchMaj[m.id]) n++; }); return n; }
+  function lone(C,u){ let n=0; C.playedSorted.forEach(m=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null) return; const exact=pd.ph===m.real_home&&pd.pa===m.real_away; if(!exact) return; const k=m.real_home+'-'+m.real_away; const c=(C.scoreCount[m.id]||{})[k]||0; if(c<=2) n++; }); return n; }
+  function groupHits(C,u){ // winner: predicted pos1==real pos1 in any group; full: whole order
+    let winner=0,full=0;
+    for(const g in C.realTbl){ const real=C.realTbl[g]; const pred=C.predTbl[u]?.[g]; if(!pred) continue; if(pred[0]===real[0]) winner++; if(pred.length===real.length && pred.every((t,i)=>t===real[i])) full++; }
+    return {winner,full};
+  }
+  function oracleHuman(C,u){ // % of predicted top-2 teams that reached KO
+    if(!C.qualified || C.qualified.size===0) return {u:false,p:null};
+    const mine=new Set();
+    for(const g in C.predTbl[u]){ const pr=C.predTbl[u][g]; if(pr[0])mine.add(pr[0]); if(pr[1])mine.add(pr[1]); }
+    if(mine.size===0) return {u:false,p:null};
+    let hit=0; mine.forEach(t=>{ if(C.qualified.has(t)) hit++; });
+    const pct=Math.round(hit/mine.size*100);
+    return {u:pct>=80,p:[pct,100]};
+  }
+
+  function buildContext(D){
+    const C={};
+    C.players=D.users.filter(u=>!u.blocked).map(u=>u.id);
+    C.nameOf={}; D.users.forEach(u=>C.nameOf[u.id]=u.alias||u.first_name||'Anónimo');
+    C.sc={}; D.scores.forEach(s=>C.sc[s.user_id]=s);
+    C.hon={}; (D.honours||[]).forEach(h=>C.hon[h.user_id]=h);
+    C.bot={}; (D.bot||[]).forEach(b=>{C.bot[b.user_id]=(C.bot[b.user_id]||0)+(b.n||0);});
+    C.set={champion:D.set.real_champion||null,bota:D.set.real_bota||null,balon:D.set.real_balon||null};
+    C.visits={}; C.visitDays={}; (D.visits||[]).forEach(v=>{(C.visits[v.user_id]=C.visits[v.user_id]||[]).push(v); (C.visitDays[v.user_id]=C.visitDays[v.user_id]||new Set()).add(v.day);});
+    C.dranks={}; (D.dranks||[]).forEach(r=>{(C.dranks[r.user_id]=C.dranks[r.user_id]||[]).push(r);});
+    Object.values(C.dranks).forEach(a=>a.sort((x,y)=>x.day<y.day?-1:1));
+    C.matches=D.matches;
+    C.groupIds=new Set(D.matches.filter(m=>m.phase==='group').map(m=>m.id));
+    C.nGroup=C.groupIds.size;
+    C.predU={}; D.preds.forEach(p=>{(C.predU[p.user_id]=C.predU[p.user_id]||{})[p.match_id]={ph:p.predicted_home,pa:p.predicted_away};});
+    C.champPick={}; (D.kos||[]).forEach(k=>{ if(String(k.slot_id).startsWith('final')&&k.advanced) C.champPick[k.user_id]=k.advanced; });
+    C.tournamentOver = D.matches.length>0 && D.matches.every(m=>m.real_home!=null);
+    C.maxRank = Math.max(...D.scores.map(s=>s.rank||0),0);
+    C.everFirst=new Set(); Object.entries(C.dranks).forEach(([u,a])=>{ if(a.some(r=>r.rank===1)) C.everFirst.add(u); });
+    Object.entries(C.sc).forEach(([u,s])=>{ if(s.rank===1) C.everFirst.add(u); });
+
+    // scoreline counts per match (for herd / lone) + most-voted
+    C.scoreCount={}; C.topScore={};
+    D.preds.forEach(p=>{ if(p.predicted_home==null)return; const k=p.predicted_home+'-'+p.predicted_away; (C.scoreCount[p.match_id]=C.scoreCount[p.match_id]||{})[k]=((C.scoreCount[p.match_id]||{})[k]||0)+1; });
+    for(const mid in C.scoreCount){ let bk=null,bn=0; for(const k in C.scoreCount[mid]){ if(C.scoreCount[mid][k]>bn){bn=C.scoreCount[mid][k];bk=k;} } C.topScore[mid]={key:bk,n:bn}; }
+
+    // mayoría que acertó (puntuó) por partido jugado — para 'Parte del rebaño'
+    C.matchMaj={};
+    D.matches.filter(m=>m.real_home!=null).forEach(m=>{ let pred=0,scored=0; C.players.forEach(u=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null) return; pred++; if(mp(pd.ph,pd.pa,m.real_home,m.real_away)>0) scored++; }); C.matchMaj[m.id]= pred>0 && (scored/pred)>0.5; });
+
+    // per-day per-user stats (Pacific day) over played group matches
+    const groupPlayed=D.matches.filter(m=>m.phase==='group'&&m.real_home!=null);
+    C.playedSorted=D.matches.filter(m=>m.real_home!=null).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    C.dayStat={}; const dayPlayedCount={};
+    groupPlayed.forEach(m=>{ const d=window.matchDateKey(m.kickoff); dayPlayedCount[d]=(dayPlayedCount[d]||0)+1; });
+    groupPlayed.forEach(m=>{ const d=window.matchDateKey(m.kickoff);
+      C.players.forEach(u=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null) return;
+        const s=(C.dayStat[d]=C.dayStat[d]||{})[u]=(C.dayStat[d]||{})[u]||{pts:0,exact:0,picks:0};
+        s.pts+=mp(pd.ph,pd.pa,m.real_home,m.real_away);
+        if(pd.ph===m.real_home&&pd.pa===m.real_away) s.exact++;
+        s.picks++;
+      });
+    });
+    C.gameDays=[...new Set(groupPlayed.map(m=>window.matchDateKey(m.kickoff)))].filter(Boolean).sort();
+
+    // relative day awards: king (max pts>0), last (min pts among pickers), perfect day, cenizo
+    C.kingDays=new Set(); C.lastDays=new Set(); C.perfectDay=new Set(); C.cenizo=new Set();
+    C.gameDays.forEach(d=>{ const st=C.dayStat[d]||{}; const entries=Object.entries(st); if(!entries.length) return;
+      const max=Math.max(...entries.map(([,s])=>s.pts));
+      const min=Math.min(...entries.map(([,s])=>s.pts));
+      const dayComplete = dayPlayedCount[d]>0; // all listed are played by construction
+      entries.forEach(([u,s])=>{
+        if(s.pts===max && max>0) C.kingDays.add(u);
+        if(s.pts===min) C.lastDays.add(u);
+        if(s.picks>=2 && s.exact===s.picks) C.perfectDay.add(u);
+        if(s.picks>=1 && s.picks>=dayPlayedCount[d] && s.pts===0) C.cenizo.add(u); // tenían pronóstico para toda la jornada y 0 puntos
+      });
+    });
+
+    // optimista: any played match where predicted total exceeds real by 3+
+    C.optimista=new Set();
+    C.playedSorted.forEach(m=>{ C.players.forEach(u=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null)return; if((pd.ph+pd.pa)-(m.real_home+m.real_away)>=3) C.optimista.add(u); }); });
+
+    // rank movement once-per-day from daily_ranks snapshots (+ today vs latest snapshot)
+    C.bestClimb={}; C.worstFall={};
+    C.players.forEach(u=>{ const a=C.dranks[u]||[]; let climb=0,fall=0;
+      for(let i=1;i<a.length;i++){ const delta=a[i-1].rank-a[i].rank; climb=Math.max(climb,delta); fall=Math.max(fall,-delta); }
+      if(a.length){ const today=(C.sc[u]?.rank); if(today!=null){ const delta=a[a.length-1].rank-today; climb=Math.max(climb,delta); fall=Math.max(fall,-delta); } }
+      C.bestClimb[u]=climb; C.worstFall[u]=fall;
+    });
+
+    // group tables (real + predicted) for complete groups — mirrors scoring engine
+    const groups=[...new Set(D.matches.filter(m=>m.phase==='group').map(m=>m.group_letter))].filter(Boolean);
+    C.realTbl={}; C.predTbl={};
+    groups.forEach(g=>{ const gm=D.matches.filter(m=>m.phase==='group'&&m.group_letter===g);
+      if(!gm.length || !gm.every(m=>m.real_home!=null)) return; // only complete groups
+      const realRows=[]; gm.forEach(m=>{ realRows.push({team:m.home_team,gf:m.real_home,ga:m.real_away,pts:m.real_home>m.real_away?3:(m.real_home===m.real_away?1:0)}); realRows.push({team:m.away_team,gf:m.real_away,ga:m.real_home,pts:m.real_away>m.real_home?3:(m.real_home===m.real_away?1:0)}); });
+      C.realTbl[g]=buildTable(realRows);
+      C.players.forEach(u=>{ const rows=[]; let ok=true; gm.forEach(m=>{ const pd=C.predU[u]?.[m.id]; if(!pd||pd.ph==null){ok=false;return;} rows.push({team:m.home_team,gf:pd.ph,ga:pd.pa,pts:pd.ph>pd.pa?3:(pd.ph===pd.pa?1:0)}); rows.push({team:m.away_team,gf:pd.pa,ga:pd.ph,pts:pd.pa>pd.ph?3:(pd.ph===pd.pa?1:0)}); });
+        if(ok){ (C.predTbl[u]=C.predTbl[u]||{})[g]=buildTable(rows); }
+      });
+    });
+
+    // qualified teams (for Oráculo humano): teams that appear in any r32 match
+    const r32=D.matches.filter(m=>m.phase==='r32' && m.home_team && m.away_team);
+    C.qualified=new Set(); r32.forEach(m=>{C.qualified.add(m.home_team);C.qualified.add(m.away_team);});
+
+    return C;
+  }
+
+  // ── data load ──────────────────────────────────────────────
+  async function fetchAll(sb,table,cols){ let all=[],from=0; const size=1000; while(true){ const {data,error}=await sb.from(table).select(cols).range(from,from+size-1); if(error||!data||!data.length)break; all=all.concat(data); if(data.length<size)break; from+=size; } return all; }
+
+  let CTX=null, ALLBADGES=null, RARITY=null, CURRENT=null, FILTER='all';
+
+  async function load(){
+    const sb=getSB(); const me=await getCurrentUser();
+    const [sc,us,mt,st,ho,vi,dr,bo]=await Promise.all([
+      sb.from('scores').select('user_id,total,rank,prev_rank,exact_scores,group_match_pts'),
+      sb.from('users').select('id,first_name,alias,blocked'),
+      sb.from('matches').select('id,home_team,away_team,real_home,real_away,kickoff,phase,group_letter'),
+      sb.from('settings').select('key,value'),
+      sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
+      sb.from('visits').select('user_id,day,first_hour'),
+      sb.from('daily_ranks').select('user_id,day,rank,total'),
+      sb.from('bot_usage').select('user_id,n')
+    ]);
+    const preds=await fetchAll(sb,'predictions','user_id,match_id,predicted_home,predicted_away');
+    const kos=await fetchAll(sb,'ko_predictions','user_id,slot_id,advanced');
+    const set={}; (st.data||[]).forEach(r=>set[r.key]=r.value);
+    const D={scores:sc.data||[],users:us.data||[],matches:mt.data||[],set,honours:ho.data||[],visits:vi.data||[],dranks:dr.data||[],bot:bo.data||[],preds,kos};
+    CTX=buildContext(D);
+
+    // compute every badge for every player (for rarity) + cache per-user results
+    ALLBADGES={}; RARITY={};
+    B.forEach(b=>{ let holders=0; CTX.players.forEach(u=>{ const r=safeEv(b,u); (ALLBADGES[u]=ALLBADGES[u]||{})[b.id]=r; if(r.u) holders++; }); RARITY[b.id]=CTX.players.length?Math.round(holders/CTX.players.length*100):0; });
+
+    // player selector
+    const sel=document.getElementById('player-sel');
+    const ordered=CTX.players.slice().sort((a,b)=>CTX.nameOf[a].localeCompare(CTX.nameOf[b]));
+    sel.innerHTML=ordered.map(u=>`<option value="${u}">${CTX.nameOf[u]}</option>`).join('');
+    CURRENT = (me && CTX.players.includes(me.id)) ? me.id : ordered[0];
+    sel.value=CURRENT;
+    sel.addEventListener('change',()=>{CURRENT=sel.value;render();});
+    document.querySelectorAll('.fpill').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.fpill').forEach(x=>x.classList.remove('on'));p.classList.add('on');FILTER=p.dataset.f;render();}));
+
+    render();
+    if(me && CURRENT===me.id) toastNew(me.id);
+  }
+  function safeEv(b,u){ try{ const r=b.ev(u,CTX)||{}; return {u:!!r.u, p:r.p||null}; }catch(e){ return {u:false,p:null}; } }
+
+  function render(){
+    const my=ALLBADGES[CURRENT]||{};
+    const got=B.filter(b=>my[b.id]?.u).length;
+    document.getElementById('prog-count').textContent=got+' / '+B.length;
+    document.getElementById('prog-fill').style.width=Math.round(got/B.length*100)+'%';
+    document.getElementById('prog-name').textContent = CURRENT===null?'Conseguidos':('Logros de '+CTX.nameOf[CURRENT]);
+
+    let html='';
+    TIERS.forEach(T=>{
+      const list=B.filter(b=>b.t===T.k).filter(b=>{ const u=my[b.id]?.u; return FILTER==='all'||(FILTER==='got'&&u)||(FILTER==='lock'&&!u); });
+      if(!list.length) return;
+      html+=`<div class="tier-h"><span class="tdot" style="background:${T.col};width:11px;height:11px"></span>${T.label}</div><div class="grid">`;
+      list.forEach(b=>{
+        const r=my[b.id]||{u:false,p:null}; const u=r.u;
+        const hidden=b.secret&&!u;
+        const name=hidden?'???':b.n; const desc=hidden?'Logro secreto':b.d;
+        const rar=RARITY[b.id]; const raroCls=(rar<=10&&rar>0)?' raro':'';
+        let foot;
+        if(u){ foot=`<div class="bfoot" style="color:${T.k==='rojo'?'var(--wrong)':'var(--exact)'}">${svgMini('check')}Conseguido</div>`; }
+        else if(r.p){ const pc=Math.max(0,Math.min(100,Math.round(r.p[0]/r.p[1]*100))); foot=`<div class="pbar"><div style="width:${pc}%;background:${T.col}"></div></div><div class="bfoot locktxt" style="margin-top:5px">${r.p[0]} / ${r.p[1]}</div>`; }
+        else { foot=`<div class="bfoot locktxt">${svgMini('lock')}Bloqueado</div>`; }
+        html+=`<div class="bcard ${u?'':'locked'}" style="${u?`border-color:${T.col}`:''}">`
+          +`<div class="rar${raroCls}">${rar}%</div>`
+          +`<div class="bicon" style="${u?`border-color:${T.col};color:${T.col}`:'color:var(--muted)'}">${hidden?svg('ghost'):svg(b.ic)}</div>`
+          +`<div class="bname">${name}</div><div class="bdesc">${desc}</div>${foot}</div>`;
+      });
+      html+='</div>';
+    });
+    document.getElementById('content').innerHTML=html||'<div class="empty">Nada por aquí.</div>';
+  }
+  function svgMini(n){ const p=n==='check'?'<path d="M4 12l5 5L20 6"/>':'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'; return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'; }
+
+  function toastNew(uid){
+    try{
+      const key='porra_seen_badges_'+uid;
+      const seen=new Set(JSON.parse(localStorage.getItem(key)||'[]'));
+      const now=B.filter(b=>ALLBADGES[uid]?.[b.id]?.u).map(b=>b.id);
+      const fresh=now.filter(id=>!seen.has(id));
+      if(seen.size>0 && fresh.length && window.porraToast){
+        fresh.slice(0,3).forEach((id,i)=>{ const b=B.find(x=>x.id===id); setTimeout(()=>window.porraToast('Logro desbloqueado: '+b.n, b.t==='rojo'?'bad':'good'), i*900); });
+      }
+      localStorage.setItem(key,JSON.stringify(now));
+    }catch(e){}
+  }
+
+  function boot(){ if(typeof getSB!=='function'){ setTimeout(boot,60); return; } load().catch(e=>{ document.getElementById('content').innerHTML='<div class="empty">No se pudieron cargar los logros: '+(e.message||e)+'</div>'; }); }
+  document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+</body>
+</html>

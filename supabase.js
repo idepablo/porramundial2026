@@ -849,6 +849,57 @@ async function initLiveBanner(){
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLiveBanner);
 else initLiveBanner();
 
+// ── TOASTS (banner que aparece y se va) + presencia/visitas + aviso de puntos ──
+window.porraToast = function(msg, kind){
+  try{
+    if(!document.getElementById('porra-toast-css')){
+      const st=document.createElement('style'); st.id='porra-toast-css';
+      st.textContent='#porra-toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10050;display:flex;flex-direction:column;gap:8px;width:min(420px,calc(100vw - 24px));pointer-events:none}'+
+        '.porra-toast{pointer-events:auto;background:var(--bg2,#0e0e1c);border:1px solid var(--border,rgba(255,255,255,.12));border-left:4px solid var(--gold,#FFD700);border-radius:11px;padding:11px 14px;color:var(--text,#eee);font-family:\'DM Sans\',sans-serif;font-size:13.5px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:0;transform:translateY(-10px);transition:opacity .25s,transform .25s;display:flex;align-items:center;gap:9px}'+
+        '.porra-toast.show{opacity:1;transform:translateY(0)}'+
+        '.porra-toast.good{border-left-color:#22c55e}.porra-toast.bad{border-left-color:#ef4444}'+
+        '.porra-toast .pt-ic{font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:var(--gold,#FFD700);line-height:1}'+
+        '.porra-toast.good .pt-ic{color:#22c55e}.porra-toast.bad .pt-ic{color:#ef4444}';
+      document.head.appendChild(st);
+    }
+    let box=document.getElementById('porra-toasts');
+    if(!box){ box=document.createElement('div'); box.id='porra-toasts'; document.body.appendChild(box); }
+    const t=document.createElement('div'); t.className='porra-toast'+(kind?(' '+kind):'');
+    const mark=kind==='bad'?'✗':(kind==='good'?'★':'!');
+    t.innerHTML='<span class="pt-ic">'+mark+'</span><span>'+msg+'</span>';
+    box.appendChild(t);
+    requestAnimationFrame(()=>t.classList.add('show'));
+    setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 5000);
+  }catch(e){}
+};
+
+async function initPresenceAndPoints(){
+  try{
+    const path=(location.pathname.split('/').pop()||'').toLowerCase();
+    if(/login|register|mantenimiento|admin|index/.test(path)) return;
+    await (window.sbReady ? window.sbReady(6000) : Promise.resolve());
+    const user = await getCurrentUser(); if(!user) return;
+    const sb=getSB();
+    // 1) registrar visita (día del Pacífico + hora local de la PRIMERA visita del día)
+    try{
+      const day = window.matchDateKey ? window.matchDateKey(new Date().toISOString()) : new Date().toISOString().slice(0,10);
+      const first_hour = new Date().getHours();
+      await sb.from('visits').upsert({ user_id:user.id, day, first_hour }, { onConflict:'user_id,day', ignoreDuplicates:true });
+    }catch(_){}
+    // 2) aviso de puntos ganados desde la última vez (por dispositivo)
+    try{
+      const { data } = await sb.from('scores').select('total').eq('user_id', user.id).maybeSingle();
+      const total = data ? (data.total||0) : 0;
+      const key='porra_pts_'+user.id;
+      const prevRaw=localStorage.getItem(key);
+      if(prevRaw!=null){ const prev=parseInt(prevRaw,10); if(!isNaN(prev) && total>prev){ window.porraToast('+'+(total-prev)+' puntos desde tu última visita', 'good'); } }
+      localStorage.setItem(key, String(total));
+    }catch(_){}
+  }catch(e){}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPresenceAndPoints);
+else initPresenceAndPoints();
+
 
 /* ═══════════════════════════════════════════════════════════════
    EL ORÁCULO · chat-bot con caña (se inyecta en todas las páginas)
@@ -1003,5 +1054,5 @@ window.matchPoints = function(phase, ph, pa, rh, ra){
 // zona Este), que es como se organizan las jornadas del Mundial — así un partido
 // nocturno en EE.UU. no se cuenta en el día siguiente (hora de España).
 window.matchDateKey = function(iso, tz){
-  try{ return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz||'America/New_York'}); }catch(e){ return ''; }
+  try{ return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz||'America/Los_Angeles'}); }catch(e){ return ''; }
 };

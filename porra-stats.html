@@ -100,6 +100,7 @@ select { background:var(--bg3); border:1px solid var(--border); border-radius:8p
     <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
     <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
     <a class="nav-tab active" href="porra-stats.html">Estadísticas</a>
+    <a class="nav-tab" href="porra-logros.html">Logros</a>
     <a class="nav-tab" href="porra-live.html">En directo</a>
   </div>
   <div id="nav-auth"></div>
@@ -451,8 +452,8 @@ async function loadQuiniela(){
       <tbody>${teamRows.map(r=>`<tr><td class="team">${esc(r.t)}</td>${heatCell(r.grupos)}${heatCell(r.r32)}${heatCell(r.r16)}${heatCell(r.qf)}${heatCell(r.sf)}${heatCell(r.sub)}${heatCell(r.champ)}</tr>`).join('')}</tbody>
     </table></div><div class="note">Cada fila suma ${nKo} (los que han rellenado el cuadro). El número es cuánta gente predice que esa selección queda eliminada en esa ronda (o gana, en la última columna).</div>`;
     const predByMatch={}; preds.forEach(p=>{ (predByMatch[p.match_id]=predByMatch[p.match_id]||[]).push(p); });
-    const todayK=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
-    const todays=matches.filter(m=>m.phase==='group' && new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/New_York'})===todayK).sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
+    const todayK=new Date().toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'});
+    const todays=matches.filter(m=>m.phase==='group' && new Date(m.kickoff).toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'})===todayK).sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
     const matchHtml = todays.length ? todays.map(m=>{ const ps=predByMatch[m.id]||[]; const tot=ps.length;
       let one=0,x=0,two=0; const sc={};
       ps.forEach(p=>{ const h=p.predicted_home, a=p.predicted_away; if(h==null||a==null) return; if(h>a) one++; else if(h<a) two++; else x++; const key=h+'-'+a; sc[key]=(sc[key]||0)+1; });
