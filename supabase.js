@@ -1,3 +1,20 @@
+// ── Google Analytics (GA4) — porradelmundial.com ─────────────────────────────
+// Carga en TODAS las páginas que incluyen este archivo. Cada carga de página
+// (sitio multipágina) envía un page_view automáticamente.
+(function(){
+  try{
+    var GA_ID='G-Y3E9CY1L6B';
+    if(window.__gaLoaded) return; window.__gaLoaded=true;
+    var s=document.createElement('script'); s.async=true;
+    s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){window.dataLayer.push(arguments);};
+    window.gtag('js', new Date());
+    window.gtag('config', GA_ID);
+  }catch(e){}
+})();
+
 // ════════════════════════════════════════════════════════════════════════════
 // PORRA MUNDIAL 2026 — SHARED CONFIG & HELPERS
 // Loaded by every page (AFTER the supabase-js CDN script, BEFORE page scripts).
