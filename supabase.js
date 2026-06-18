@@ -3,7 +3,7 @@
 // (sitio multipágina) envía un page_view automáticamente.
 (function(){
   try{
-    var GA_ID='G-Y3E9CY1L6B';
+    var GA_ID='G-2GD36XKRWV';
     if(window.__gaLoaded) return; window.__gaLoaded=true;
     var s=document.createElement('script'); s.async=true;
     s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;
