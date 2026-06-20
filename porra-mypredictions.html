@@ -340,6 +340,11 @@ table{max-width:100%}
     #pday-matrix tbody tr:hover{background:rgba(255,255,255,.03)}
     #pday-matrix tr.me-row td{background:rgba(255,215,0,.12)}
     #pday-matrix tr.hl-row td{background:rgba(255,215,0,.24)}
+    /* columna 'Jugador' fija al hacer scroll lateral */
+    #pday-matrix table td:first-child,#pday-matrix table th:first-child{position:sticky;left:0;z-index:3;background:var(--bg);box-shadow:1px 0 0 var(--border)}
+    #pday-matrix table thead th:first-child{z-index:4}
+    #pday-matrix tr.me-row td:first-child{background:linear-gradient(rgba(255,215,0,.12),rgba(255,215,0,.12)),var(--bg)}
+    #pday-matrix tr.hl-row td:first-child{background:linear-gradient(rgba(255,215,0,.24),rgba(255,215,0,.24)),var(--bg)}
     .mp-subtab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:14px;font-weight:600;padding:10px 6px;cursor:pointer}
     .mp-subtab.active{color:var(--text);border-bottom-color:var(--gold)}
   </style>

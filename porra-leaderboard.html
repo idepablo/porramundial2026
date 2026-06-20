@@ -172,6 +172,10 @@ nav {
 
 /* ── MAIN TABLE ── */
 .lb-table { width: 100%; border-collapse: collapse; }
+/* columnas '#' y 'Jugador' fijas al hacer scroll lateral en la diaria */
+#daily-matrix table th:nth-child(1),#daily-matrix table td:nth-child(1){position:sticky;left:0;z-index:3;background:var(--bg);width:34px;min-width:34px;max-width:34px}
+#daily-matrix table th:nth-child(2),#daily-matrix table td:nth-child(2){position:sticky;left:34px;z-index:3;background:var(--bg);box-shadow:1px 0 0 var(--border)}
+#daily-matrix table thead th:nth-child(1),#daily-matrix table thead th:nth-child(2){z-index:4}
 .lb-table-scroll { width: 100%; }
 @media(max-width:560px){
   .lb-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
