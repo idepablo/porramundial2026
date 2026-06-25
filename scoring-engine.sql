@@ -119,11 +119,45 @@ begin
     select coalesce(sum(case when r.team=pp.team then 5 else 0 end),0) into v_stand
       from real_tbl r join pred_tbl pp on pp.group_letter=r.group_letter and pp.pos=r.pos;
 
-    select coalesce(count(*),0)*4 into v_r32 from (
-      select distinct t from (select home_team t from matches where phase='r32' and home_team is not null
-        union select away_team from matches where phase='r32' and away_team is not null) rt
-      where t in (select home_team from ko_predictions where user_id=u.id and slot_id like 'r32%'
-                  union select away_team from ko_predictions where user_id=u.id and slot_id like 'r32%')) x;
+    -- R32 qualified team +4 — AUTOMÁTICO al cerrarse cada grupo (no espera al sorteo
+    -- oficial del cuadro). Un equipo está clasificado a dieciseisavos si: queda 1.º/2.º
+    -- en un grupo ya terminado, o es uno de los 8 mejores terceros (cuando los 12 grupos
+    -- han terminado), o ya figura en una fila r32 de la BD (tras el sorteo).
+    with gc as (
+      select group_letter from matches where phase='group'
+      group by group_letter having count(*)=count(real_home)
+    ),
+    gr as (
+      select group_letter, home_team team, real_home gf, real_away ga,
+             case when real_home>real_away then 3 when real_home=real_away then 1 else 0 end pts
+        from matches where phase='group' and group_letter in (select group_letter from gc)
+      union all
+      select group_letter, away_team, real_away, real_home,
+             case when real_away>real_home then 3 when real_home=real_away then 1 else 0 end
+        from matches where phase='group' and group_letter in (select group_letter from gc)
+    ),
+    gt as (
+      select group_letter, team,
+             row_number() over (partition by group_letter order by sum(pts) desc, sum(gf-ga) desc, sum(gf) desc, team) pos,
+             sum(pts) tpts, sum(gf-ga) tgd, sum(gf) tgf
+        from gr group by group_letter, team
+    ),
+    top2 as (select team from gt where pos<=2),
+    thirds as (
+      select team from (
+        select team, row_number() over (order by tpts desc, tgd desc, tgf desc, team) tr
+          from gt where pos=3
+      ) z where (select count(*) from gc) >= 12 and tr<=8
+    ),
+    r32rows as (
+      select home_team team from matches where phase='r32' and home_team is not null
+      union select away_team from matches where phase='r32' and away_team is not null
+    ),
+    qualified as (select team from top2 union select team from thirds union select team from r32rows)
+    select coalesce(count(distinct q.team),0)*4 into v_r32
+      from qualified q
+     where q.team in (select home_team from ko_predictions where user_id=u.id and slot_id like 'r32%'
+                      union select away_team from ko_predictions where user_id=u.id and slot_id like 'r32%');
     select v_r16 + coalesce(count(*),0)*6 into v_r16 from (
       select distinct t from (select home_team t from matches where phase='r16' and home_team is not null
         union select away_team from matches where phase='r16' and away_team is not null) rt

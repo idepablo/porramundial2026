@@ -254,12 +254,29 @@ async function getSetting(key) {
 
 // Trae TODAS las filas de una tabla en páginas de 1000 (Supabase devuelve como
 // máximo 1000 por petición; sin esto, tablas grandes como "predictions" se cortan).
-async function fetchAll(table, columns, pageSize) {
+async function fetchAll(table, columns, pageSize, orderBy) {
   pageSize = pageSize || 1000;
   const sb = getSB();
+  // Orden ESTABLE obligatorio: sin .order(), la paginación por .range() puede
+  // saltarse o duplicar filas entre páginas (PostgREST no garantiza el orden),
+  // y entonces a algunos jugadores les faltarían predicciones (puntos que no se
+  // muestran aunque el total sí esté bien). Ordenamos por la clave primaria.
+  if (!orderBy) {
+    if (table === 'predictions') orderBy = ['user_id','match_id'];
+    else if (table === 'ko_predictions') orderBy = ['user_id','slot_id'];
+    else orderBy = ['id'];
+  } else if (typeof orderBy === 'string') {
+    orderBy = orderBy.split(',').map(s => s.trim()).filter(Boolean);
+  }
   let all = [], from = 0;
   for (;;) {
-    const { data, error } = await sb.from(table).select(columns).range(from, from + pageSize - 1);
+    const run = async (withOrder) => {
+      let q = sb.from(table).select(columns);
+      if (withOrder) orderBy.forEach(col => { q = q.order(col, { ascending: true }); });
+      return await q.range(from, from + pageSize - 1);
+    };
+    let { data, error } = await run(true);
+    if (error) { ({ data, error } = await run(false)); } // fallback si la columna de orden no existe
     if (error || !data || !data.length) break;
     all = all.concat(data);
     if (data.length < pageSize) break;

@@ -855,15 +855,19 @@ function buildGroupStandings() {
 // ── BUILD KNOCKOUT BRACKET (predicción + real, dos líneas) ─────────────────
 const KO_SCHEDULE = {
   r32: [
-    {m:73,h:'1E',a:'3-ABCDF'},{m:74,h:'1I',a:'3-CDFGH'},{m:75,h:'2A',a:'2B'},{m:76,h:'1F',a:'2C'},
-    {m:77,h:'2K',a:'2L'},{m:78,h:'1H',a:'2J'},{m:79,h:'1D',a:'3-BEFIJ'},{m:80,h:'1G',a:'3-AEHIJ'},
-    {m:81,h:'1C',a:'2F'},{m:82,h:'2E',a:'2I'},{m:83,h:'1A',a:'3-CEFHI'},{m:84,h:'1L',a:'3-EHIJK'},
-    {m:85,h:'1J',a:'2H'},{m:86,h:'2D',a:'2G'},{m:87,h:'1B',a:'3-EFGIJ'},{m:88,h:'1K',a:'3-DEIJL'},
+    {m:74,h:'1E',a:'3-ABCDF',ko:'2026-06-29T20:00:00Z'},{m:77,h:'1I',a:'3-CDFGH',ko:'2026-06-30T21:00:00Z'},
+    {m:73,h:'2A',a:'2B',ko:'2026-06-28T19:00:00Z'},{m:75,h:'1F',a:'2C',ko:'2026-06-30T01:00:00Z'},
+    {m:83,h:'2K',a:'2L',ko:'2026-07-03T01:00:00Z'},{m:84,h:'1H',a:'2J',ko:'2026-07-02T19:00:00Z'},
+    {m:81,h:'1D',a:'3-BEFIJ',ko:'2026-07-02T00:00:00Z'},{m:82,h:'1G',a:'3-AEHIJ',ko:'2026-07-01T20:00:00Z'},
+    {m:76,h:'1C',a:'2F',ko:'2026-06-29T17:00:00Z'},{m:78,h:'2E',a:'2I',ko:'2026-06-30T17:00:00Z'},
+    {m:79,h:'1A',a:'3-CEFHI',ko:'2026-07-01T01:00:00Z'},{m:80,h:'1L',a:'3-EHIJK',ko:'2026-07-01T16:00:00Z'},
+    {m:86,h:'1J',a:'2H',ko:'2026-07-03T22:00:00Z'},{m:88,h:'2D',a:'2G',ko:'2026-07-03T18:00:00Z'},
+    {m:85,h:'1B',a:'3-EFGIJ',ko:'2026-07-02T23:00:00Z'},{m:87,h:'1K',a:'3-DEIJL',ko:'2026-07-04T01:30:00Z'},
   ],
-  r16:[{m:89},{m:90},{m:91},{m:92},{m:93},{m:94},{m:95},{m:96}],
-  qf:[{m:97},{m:98},{m:99},{m:100}],
-  sf:[{m:101},{m:102}],
-  final:[{m:104}],
+  r16:[{m:89,ko:'2026-07-04T21:00:00Z'},{m:90,ko:'2026-07-04T17:00:00Z'},{m:93,ko:'2026-07-06T19:00:00Z'},{m:94,ko:'2026-07-07T00:00:00Z'},{m:91,ko:'2026-07-05T20:00:00Z'},{m:92,ko:'2026-07-06T00:00:00Z'},{m:95,ko:'2026-07-07T16:00:00Z'},{m:96,ko:'2026-07-07T20:00:00Z'}],
+  qf:[{m:97,ko:'2026-07-09T20:00:00Z'},{m:98,ko:'2026-07-10T19:00:00Z'},{m:99,ko:'2026-07-11T21:00:00Z'},{m:100,ko:'2026-07-12T01:00:00Z'}],
+  sf:[{m:101,ko:'2026-07-14T19:00:00Z'},{m:102,ko:'2026-07-15T19:00:00Z'}],
+  final:[{m:104,ko:'2026-07-19T19:00:00Z'}],
 };
 const KO_SHORT = { r32:'16avos', r16:'Octavos', qf:'Cuartos', sf:'Semis', final:'Final' };
 const KO_LONG  = { r32:'Dieciseisavos', r16:'Octavos', qf:'Cuartos', sf:'Semifinales', final:'Final' };
@@ -901,6 +905,13 @@ function koLine(home, away, score, kind){
   return `<div class="kob-row">${koTeamCell(home,'home')}<span class="${scCls}">${sc}</span>${koTeamCell(away,'away')}</div>`;
 }
 
+function koMatchFor(list, koISO){
+  if(!koISO || !list || !list.length) return null;
+  const t = new Date(koISO).getTime();
+  let best=null, bd=Infinity;
+  list.forEach(m=>{ if(!m.kickoff) return; const d=Math.abs(new Date(m.kickoff).getTime()-t); if(d<bd){bd=d;best=m;} });
+  return (best && bd < 6*3600*1000) ? best : null;
+}
 function buildKO() {
   const container = document.getElementById('ko-container');
   if (!container) return;
@@ -912,7 +923,7 @@ function buildKO() {
   rounds.forEach((rk, ri) => {
     const predRound = KO_ROUNDS.find(r=>r.key===rk);
     const sched = KO_SCHEDULE[rk] || [];
-    const realMatches = ALL_MATCHES.filter(m=>m.phase===rk).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    const realMatches = ALL_MATCHES.filter(m=>m.phase===rk);
 
     const col = document.createElement('div'); col.className = 'kob-round';
     col.innerHTML = `<div class="kob-title">${KO_LONG[rk]}</div>`;
@@ -924,7 +935,7 @@ function buildKO() {
       const predAway = pm && pm.away && pm.away.name ? pm.away : null;
       const predScore = pm && pm.pred && pm.pred.h!=null && pm.pred.h!=='' ? pm.pred : null;
 
-      const rmatch = realMatches[i] || null;
+      const rmatch = koMatchFor(realMatches, sl.ko);
       const realHome = (rmatch && rmatch.home_team) ? {name:rmatch.home_team, flag:rmatch.home_flag} : resolveReal(sl.h);
       const realAway = (rmatch && rmatch.away_team) ? {name:rmatch.away_team, flag:rmatch.away_flag} : resolveReal(sl.a);
       const realScore = (rmatch && rmatch.real_home!=null && rmatch.real_away!=null) ? {h:rmatch.real_home,a:rmatch.real_away} : null;
