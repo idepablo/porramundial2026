@@ -160,22 +160,48 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
     html+=section('clasif','Clasificación de grupos','+5 por cada equipo en su posición correcta', S.standings_pts||0, sLines||'<div class="empty">Ningún grupo ha terminado todavía.</div>', false);
 
     // ── 3) Knockouts ──
+    // 3a) Clasificación a dieciseisavos: +4 por cada equipo TUYO que ya esté dentro
+    //     (1.º/2.º de grupo cerrado, u 8 mejores terceros cuando los 12 grupos terminan).
+    const r32Pred=new Set();
+    (ko.data||[]).filter(k=>String(k.slot_id||'').startsWith('r32')).forEach(k=>{ if(k.home_team)r32Pred.add(k.home_team); if(k.away_team)r32Pred.add(k.away_team); });
+    const qualified={}; const thirds=[]; let groupsDone=0;
+    groups.forEach(g=>{ const gm=matches.filter(m=>m.phase==='group'&&m.group_letter===g);
+      const real=table(gm,true); if(!real.complete) return; groupsDone++;
+      if(real.order[0]) qualified[real.order[0].name]={g,pos:1};
+      if(real.order[1]) qualified[real.order[1].name]={g,pos:2};
+      if(real.order[2]){ const t=real.order[2]; thirds.push({name:t.name,g,pts:t.pts,gd:t.gf-t.gc,gf:t.gf}); }
+    });
+    if(groupsDone>=12){ thirds.sort((a,b)=>(b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.name.localeCompare(b.name)); thirds.slice(0,8).forEach(t=>{ qualified[t.name]={g:t.g,pos:3}; }); }
+    let qLines=''; let qCount=0;
+    Object.keys(qualified).forEach(name=>{ if(!r32Pred.has(name)) return; qCount++; const q=qualified[name];
+      qLines+=`<div class="line"><div class="line-main">
+        <div class="line-t">${T(name)} — clasificado a dieciseisavos</div>
+        <div class="line-d">${q.pos}.º Grupo ${q.g}${q.pos===3?' · mejor tercero':''} · lo tenías en tu cuadro</div>
+        </div><div class="line-pts pos">+4</div></div>`;
+    });
+    const qPts=qCount*4;
+
+    // 3b) Partidos de eliminatoria ya jugados (puntos por marcador)
     const koMatches=matches.filter(m=>m.phase!=='group'&&m.real_home!=null);
+    let mLines=''; const koList=ko.data||[];
+    koMatches.sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).forEach(m=>{
+      const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team);
+      if(!k) return; const pts=window.matchPoints(m.phase,k.pred_home,k.pred_away,m.real_home,m.real_away);
+      mLines+=`<div class="line"><div class="line-main">
+        <div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div>
+        <div class="line-d">Tu pronóstico: ${k.pred_home}-${k.pred_away}${k.advanced?' · pasabas a '+T(k.advanced):''}</div>
+        </div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`;
+    });
+
     let kLines='';
-    if(koMatches.length===0){ kLines='<div class="empty">Las eliminatorias aún no han empezado.</div>'; }
-    else {
-      const koList=ko.data||[];
-      koMatches.sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).forEach(m=>{
-        const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team);
-        if(!k) return; const pts=window.matchPoints(m.phase,k.pred_home,k.pred_away,m.real_home,m.real_away);
-        kLines+=`<div class="line"><div class="line-main">
-          <div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div>
-          <div class="line-d">Tu pronóstico: ${k.pred_home}-${k.pred_away}${k.advanced?' · pasabas a '+T(k.advanced):''}</div>
-          </div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`;
-      });
-      if(!kLines) kLines='<div class="empty">Sin puntos de eliminatorias todavía.</div>';
+    if(qCount>0) kLines+=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 0 2px">Clasificados a dieciseisavos · +4 c/u</div>`+qLines;
+    if(mLines) kLines+=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 0 2px">Partidos de eliminatoria</div>`+mLines;
+    // Aviso si el servidor aún no ha recalculado con el motor nuevo
+    if(qPts>0 && (S.r32_pts||0) < qPts){
+      kLines=`<div class="line"><div class="line-main"><div class="line-d" style="color:var(--warn)">⏳ Estos +${qPts} por clasificación se sumarán a tu total cuando se recalculen las puntuaciones en el servidor.</div></div></div>`+kLines;
     }
-    html+=section('ko','Eliminatorias','Dieciseisavos → Final', koTot, kLines, false);
+    if(!kLines) kLines='<div class="empty">Las eliminatorias aún no han empezado.</div>';
+    html+=section('ko','Eliminatorias','Clasificación +4 · marcador KO', koTot, kLines, qCount>0);
 
     // ── 4) Honours ──
     const H=hon.data||{}; let hLines='';
