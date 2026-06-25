@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis Puntos — Porra Mundial 2026</title>
+<link rel="icon" type="image/png" href="ball.png">
+<link rel="preload" as="script" href="supabase-js.min.js">
+<link rel="stylesheet" href="fonts.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07070f;--bg2:#0e0e1c;--bg3:#151523;--text:#eeeef8;--muted:rgba(238,238,248,0.45);--border:rgba(255,255,255,0.08);--gold:#FFD700;--exact:#22c55e;--wrong:#ef4444;--warn:#fbbf24}
+html{overflow-x:clip}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.5;min-height:100vh}
+nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;text-decoration:none;color:var(--text)}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap}
+.nav-tab{font-size:13px;color:var(--muted);text-decoration:none;padding:6px 11px;border-radius:7px}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-tab.active{color:var(--text);background:rgba(255,255,255,.09)}
+.wrap{max-width:760px;margin:0 auto;padding:22px 18px 60px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:.5px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.totcard{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.tot-n{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--gold);line-height:1}
+.tot-l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:7px 11px;text-align:center;min-width:74px}
+.chip b{display:block;font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text)}
+.chip span{font-size:10px;color:var(--muted)}
+.sec{margin-bottom:18px;border:1px solid var(--border);border-radius:13px;overflow:hidden;background:var(--bg2)}
+.sec-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none}
+.sec-h h3{font-size:15px;font-weight:700}
+.sec-h .sub2{font-size:11.5px;color:var(--muted);font-weight:400}
+.sec-pts{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold)}
+.sec-body{padding:0 16px 8px;display:none}
+.sec.open .sec-body{display:block}
+.sec.open .caret{transform:rotate(90deg)}
+.caret{color:var(--muted);transition:transform .2s;margin-left:8px}
+.line{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border);font-size:13px}
+.line:first-child{border-top:none}
+.line-main{flex:1;min-width:0}
+.line-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.line-d{font-size:11.5px;color:var(--muted)}
+.line-pts{font-family:'Bebas Neue',sans-serif;font-size:17px;min-width:38px;text-align:right}
+.pos{color:var(--exact)}.zero{color:var(--muted)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:5px}
+.tag.signo{background:rgba(255,255,255,.08);color:var(--muted)}
+.tag.dif{background:rgba(255,215,0,.13);color:var(--gold)}
+.tag.exacto{background:rgba(34,197,94,.15);color:var(--exact)}
+.empty{color:var(--muted);font-size:12.5px;padding:10px 0}
+@media(max-width:600px){.title{font-size:28px}.wrap{padding:16px 12px 50px}.tot-n{font-size:36px}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="porra-home.html">Porra Mundial 2026</a>
+  <div class="nav-links">
+    <a class="nav-tab" href="porra-home.html">Inicio</a>
+    <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
+    <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
+    <a class="nav-tab" href="porra-logros.html">Logros</a>
+    <a class="nav-tab active" href="porra-desglose.html">Mis Puntos</a>
+    <a class="nav-tab" href="porra-live.html">En directo</a>
+  </div>
+<div id="nav-auth"></div>
+</nav>
+
+<div class="wrap">
+  <div class="title">Mis Puntos</div>
+  <div class="sub">De dónde sale cada punto que tienes.</div>
+  <div id="content"><div class="empty">Cargando…</div></div>
+</div>
+
+<script src="supabase-js.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+(function(){
+  const mp=(ph,pa,rh,ra)=>window.matchPoints('group',ph,pa,rh,ra);
+  function comps(ph,pa,rh,ra){
+    const out=[]; const sp=Math.sign(ph-pa), sr=Math.sign(rh-ra);
+    if(sp===sr) out.push(['signo',1]);
+    if((ph-pa)===(rh-ra)) out.push(['dif',2]);
+    if(ph===rh&&pa===ra) out.push(['exacto',3]);
+    return out;
+  }
+  function table(matches, useReal){
+    const teams={};
+    matches.forEach(m=>{ [m.home_team,m.away_team].forEach(n=>{ if(!teams[n]) teams[n]={name:n,pts:0,gf:0,gc:0}; }); });
+    let complete=true;
+    matches.forEach(m=>{ const h=useReal?m.real_home:(m._ph), a=useReal?m.real_away:(m._pa); if(h==null||a==null){complete=false;return;}
+      const H=teams[m.home_team],A=teams[m.away_team]; H.gf+=h;H.gc+=a;A.gf+=a;A.gc+=h;
+      if(h>a)H.pts+=3; else if(h===a){H.pts++;A.pts++;} else A.pts+=3; });
+    const order=Object.values(teams).sort((x,y)=>(y.pts-x.pts)||((y.gf-y.gc)-(x.gf-x.gc))||(y.gf-x.gf)||x.name.localeCompare(y.name));
+    return {order,complete};
+  }
+
+  async function load(){
+    let tries=0; while(typeof getSB!=='function' && tries<60){ await new Promise(r=>setTimeout(r,80)); tries++; }
+    const me=await getCurrentUser();
+    if(!me){ document.getElementById('content').innerHTML='<div class="empty">Inicia sesión para ver tus puntos.</div>'; return; }
+    const sb=getSB();
+    const [mt,pr,ko,hon,sc,stt]=await Promise.all([
+      sb.from('matches').select('id,phase,group_letter,home_team,away_team,real_home,real_away,kickoff'),
+      sb.from('predictions').select('match_id,predicted_home,predicted_away').eq('user_id',me.id),
+      sb.from('ko_predictions').select('slot_id,home_team,away_team,pred_home,pred_away,advanced').eq('user_id',me.id),
+      sb.from('honours_predictions').select('boot_1,ball_1').eq('user_id',me.id).maybeSingle(),
+      sb.from('scores').select('*').eq('user_id',me.id).maybeSingle(),
+      sb.from('settings').select('key,value')
+    ]);
+    const matches=mt.data||[]; const predBy={}; (pr.data||[]).forEach(p=>predBy[p.match_id]={ph:p.predicted_home,pa:p.predicted_away});
+    const S=sc.data||{}; const set={}; (stt.data||[]).forEach(r=>set[r.key]=r.value);
+    const T=window.teamES||((x)=>x);
+
+    // ── Header ──
+    const total=S.total||0, plenos=S.exact_scores||0;
+    const koTot=(S.r32_pts||0)+(S.r16_pts||0)+(S.qf_pts||0)+(S.sf_pts||0)+(S.final_pts||0);
+    let html=`<div class="totcard">
+      <div><div class="tot-n">${total}</div><div class="tot-l">Puntos totales</div></div>
+      <div class="chips">
+        <div class="chip"><b>${S.group_match_pts||0}</b><span>Partidos</span></div>
+        <div class="chip"><b>${S.standings_pts||0}</b><span>Clasif.</span></div>
+        <div class="chip"><b>${koTot}</b><span>Eliminat.</span></div>
+        <div class="chip"><b>${S.honours_pts||0}</b><span>Honores</span></div>
+        <div class="chip"><b>${plenos}</b><span>Plenos</span></div>
+      </div></div>`;
+
+    // ── 1) Group matches ──
+    const gPlayed=matches.filter(m=>m.phase==='group'&&m.real_home!=null).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+    let gLines='';
+    gPlayed.forEach(m=>{ const pd=predBy[m.id]; if(!pd||pd.ph==null) return;
+      const pts=mp(pd.ph,pd.pa,m.real_home,m.real_away);
+      const cs=comps(pd.ph,pd.pa,m.real_home,m.real_away);
+      const tags=cs.map(([k,v])=>`<span class="tag ${k}">+${v} ${k}</span>`).join('');
+      gLines+=`<div class="line"><div class="line-main">
+        <div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div>
+        <div class="line-d">Tu pronóstico: ${pd.ph}-${pd.pa}${pts>0?tags:' <span class="tag signo">sin acierto</span>'}</div>
+        </div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`;
+    });
+    html+=section('grupos','Fase de grupos — partidos','+1 signo · +2 diferencia · +3 exacto', S.group_match_pts||0, gLines||'<div class="empty">Aún no hay partidos puntuados.</div>', true);
+
+    // ── 2) Group standings ──
+    const groups=[...new Set(matches.filter(m=>m.phase==='group').map(m=>m.group_letter))].filter(Boolean).sort();
+    let sLines='';
+    groups.forEach(g=>{ const gm=matches.filter(m=>m.phase==='group'&&m.group_letter===g);
+      gm.forEach(m=>{ const pd=predBy[m.id]; m._ph=pd?pd.ph:null; m._pa=pd?pd.pa:null; });
+      const real=table(gm,true); if(!real.complete) return; // sólo grupos cerrados
+      const pred=table(gm,false); if(!pred.order.length) return;
+      let hits=0; const detail=[];
+      real.order.forEach((rt,i)=>{ const pt=pred.complete?pred.order[i]:null; const ok=pt&&pt.name===rt.name; if(ok)hits++;
+        detail.push(`${i+1}.º ${T(rt.name)}${ok?' <span style="color:var(--exact)">✓</span>':''}`); });
+      sLines+=`<div class="line"><div class="line-main">
+        <div class="line-t">Grupo ${g} — acertaste ${hits}/4</div>
+        <div class="line-d">${detail.join(' · ')}</div>
+        </div><div class="line-pts ${hits>0?'pos':'zero'}">${hits>0?'+'+(hits*5):'0'}</div></div>`;
+    });
+    html+=section('clasif','Clasificación de grupos','+5 por cada equipo en su posición correcta', S.standings_pts||0, sLines||'<div class="empty">Ningún grupo ha terminado todavía.</div>', false);
+
+    // ── 3) Knockouts ──
+    const koMatches=matches.filter(m=>m.phase!=='group'&&m.real_home!=null);
+    let kLines='';
+    if(koMatches.length===0){ kLines='<div class="empty">Las eliminatorias aún no han empezado.</div>'; }
+    else {
+      const koList=ko.data||[];
+      koMatches.sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).forEach(m=>{
+        const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team);
+        if(!k) return; const pts=window.matchPoints(m.phase,k.pred_home,k.pred_away,m.real_home,m.real_away);
+        kLines+=`<div class="line"><div class="line-main">
+          <div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div>
+          <div class="line-d">Tu pronóstico: ${k.pred_home}-${k.pred_away}${k.advanced?' · pasabas a '+T(k.advanced):''}</div>
+          </div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`;
+      });
+      if(!kLines) kLines='<div class="empty">Sin puntos de eliminatorias todavía.</div>';
+    }
+    html+=section('ko','Eliminatorias','Dieciseisavos → Final', koTot, kLines, false);
+
+    // ── 4) Honours ──
+    const H=hon.data||{}; let hLines='';
+    const hrow=(label,pick,real,pts)=>{
+      const resolved=real!=null&&real!=='';
+      const ok=resolved&&pick===real;
+      return `<div class="line"><div class="line-main">
+        <div class="line-t">${label}</div>
+        <div class="line-d">Tu pick: ${pick||'—'}${resolved?(' · real: '+real+(ok?' <span style="color:var(--exact)">✓</span>':'')):' · se resuelve al final'}</div>
+        </div><div class="line-pts ${ok?'pos':'zero'}">${ok?'+'+pts:(resolved?'0':'·')}</div></div>`;
+    };
+    hLines+=hrow('Campeón del Mundial', null, set.real_champion, 35).replace('Tu pick: —','Tu pick: (en eliminatorias)');
+    hLines+=hrow('Bota de Oro — Máximo goleador', H.boot_1, set.real_bota, 10);
+    hLines+=hrow('Balón de Oro — Mejor jugador', H.ball_1, set.real_balon, 10);
+    html+=section('hon','Honores','Campeón +35 · Bota +10 · Balón +10', S.honours_pts||0, hLines, false);
+
+    document.getElementById('content').innerHTML=html;
+    document.querySelectorAll('.sec-h').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('open')));
+  }
+
+  function section(id,title,sub,pts,body,open){
+    return `<div class="sec ${open?'open':''}" id="sec-${id}">
+      <div class="sec-h"><div><h3>${title} <span class="caret">▸</span></h3><div class="sub2">${sub}</div></div>
+      <div class="sec-pts">+${pts}</div></div>
+      <div class="sec-body">${body}</div></div>`;
+  }
+
+  function boot(){ if(typeof getSB!=='function'){ setTimeout(boot,60); return; } load().catch(e=>{ document.getElementById('content').innerHTML='<div class="empty">No se pudo cargar: '+(e.message||e)+'</div>'; }); }
+  document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+</body>
+</html>

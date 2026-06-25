@@ -311,6 +311,7 @@ tr.cut td{border-top:2px solid #22c55e;padding:0;height:0;line-height:0}
     <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
     <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
     <a class="nav-tab" href="porra-logros.html">Logros</a>
+    <a class="nav-tab" href="porra-desglose.html">Mis Puntos</a>
     <a class="nav-tab" href="porra-live.html">En directo</a>
   </div>
 <div id="nav-auth"></div>
@@ -575,6 +576,33 @@ function calcStandings(group) {
     if (gdB !== gdA) return gdB - gdA;
     return b.gf - a.gf;
   });
+}
+
+// ── Resolver huecos del bracket (1E, 2A, 3-ABCDF) a equipos reales ──────────
+// Un grupo "está cerrado" cuando se han jugado sus 6 partidos (todos con resultado).
+// Solo entonces el 1.º y 2.º son definitivos.
+function groupComplete(gid){
+  const g = GROUPS.find(x => x.id === gid);
+  return !!(g && g.matches && g.matches.length >= 6 && g.matches.every(m => m.homeGoals != null && m.awayGoals != null));
+}
+function prettySlot(code){
+  let m = /^([12])([A-L])$/.exec(code); if (m) return m[1] + '.º ' + m[2];
+  let t = /^3-([A-L]+)$/.exec(code);    if (t) return '3.º (' + t[1].split('').join('/') + ')';
+  return code;
+}
+// Devuelve {name, flag} si el hueco ya se puede resolver, o null si aún no.
+function resolveSlotTeam(code){
+  const m = /^([12])([A-L])$/.exec(code);
+  if (m) {
+    const pos = +m[1], gid = m[2];
+    if (!groupComplete(gid)) return null;
+    const g = GROUPS.find(x => x.id === gid); if (!g) return null;
+    const st = calcStandings(g); const t = st[pos - 1];
+    return t ? { name: t.name, flag: t.flag } : null;
+  }
+  // Los mejores terceros (3-XXXXX) se asignan cuando TODOS los grupos terminan,
+  // según la tabla oficial de combinaciones de la FIFA (pendiente de añadir).
+  return null;
 }
 
 function getResult(m, side) {
@@ -1089,8 +1117,12 @@ function buildBracketFromDB(koMatches) {
     wrap.style.justifyContent = 'space-around';
     sched.forEach((sl, idx) => {
       const m = partidos[idx];
-      const homeLabel = (m && m.home_team) ? m.home_team : sl.h;
-      const awayLabel = (m && m.away_team) ? m.away_team : sl.a;
+      const hRes = (m && m.home_team) ? { name: teamES(m.home_team), flag: m.home_flag } : resolveSlotTeam(sl.h);
+      const aRes = (m && m.away_team) ? { name: teamES(m.away_team), flag: m.away_flag } : resolveSlotTeam(sl.a);
+      const homeLabel = hRes ? hRes.name : prettySlot(sl.h);
+      const awayLabel = aRes ? aRes.name : prettySlot(sl.a);
+      const homeFlag = (hRes && hRes.flag) ? hRes.flag : null;
+      const awayFlag = (aRes && aRes.flag) ? aRes.flag : null;
       const hasH = m && m.real_home !== null && m.real_home !== undefined;
       const hasA = m && m.real_away !== null && m.real_away !== undefined;
       const homeWin = hasH && hasA && m.real_home > m.real_away;
@@ -1100,11 +1132,11 @@ function buildBracketFromDB(koMatches) {
       card.innerHTML = `
         <div style="padding:3px 10px;font-size:9px;color:var(--gold);letter-spacing:1px;border-bottom:1px solid var(--border)">M${sl.m}</div>
         <div class="bracket-team ${homeWin?'winner':''} ${awayWin?'eliminated':''}">
-          <div class="bracket-team-left">${m&&m.home_flag?flagImg(m.home_flag,'lg'):''}<span style="font-size:12px;font-weight:500">${homeLabel}</span></div>
+          <div class="bracket-team-left">${homeFlag?flagImg(homeFlag,'lg'):''}<span style="font-size:12px;font-weight:500">${homeLabel}</span></div>
           <span class="bracket-score ${hasH?'':'pending'}">${hasH?m.real_home:'–'}</span>
         </div>
         <div class="bracket-team ${awayWin?'winner':''} ${homeWin?'eliminated':''}">
-          <div class="bracket-team-left">${m&&m.away_flag?flagImg(m.away_flag,'lg'):''}<span style="font-size:12px;font-weight:500">${awayLabel}</span></div>
+          <div class="bracket-team-left">${awayFlag?flagImg(awayFlag,'lg'):''}<span style="font-size:12px;font-weight:500">${awayLabel}</span></div>
           <span class="bracket-score ${hasA?'':'pending'}">${hasA?m.real_away:'–'}</span>
         </div>
         <div style="padding:4px 10px;font-size:9.5px;color:var(--muted);border-top:1px solid var(--border);line-height:1.45">${koTimeLabel(sl)}</div>`;
