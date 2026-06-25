@@ -356,6 +356,36 @@ table{max-width:100%}
     .clasif-team{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .clasif-mark{text-align:center;font-weight:800}
     .clasif-real{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .kob-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;margin-top:6px}
+    .kob{display:flex;align-items:stretch;gap:0;min-width:min-content}
+    .kob-round{display:flex;flex-direction:column;min-width:250px;flex:0 0 250px}
+    .kob-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;color:var(--muted);text-align:center;padding:4px 0 10px}
+    .kob-cards{display:flex;flex-direction:column;justify-content:space-around;gap:12px;flex:1;padding:0 8px}
+    .kob-card{background:var(--bg2,#0e0e1c);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+    .kob-tag{padding:4px 11px;font-size:9px;color:var(--gold);letter-spacing:1px;border-bottom:1px solid var(--border)}
+    .kob-blk{padding:8px 11px}
+    .kob-blk.real{border-top:1px dashed var(--border)}
+    .kob-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
+    .kob-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+    .kob-team{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;min-width:0}
+    .kob-team.r{justify-content:flex-end}
+    .kob-nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .kob-flag{flex-shrink:0;display:inline-flex;align-items:center}
+    .kob-flag img{width:20px;height:14px;border-radius:2px;object-fit:cover;display:block}
+    .kob-score{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;color:var(--text);text-align:center;white-space:nowrap;min-width:30px}
+    .kob-score.pred{color:var(--gold)}
+    .kob-tbd{text-align:center;font-size:11px;color:var(--muted);font-style:italic;padding:4px 0}
+    .kob-rail{width:22px;flex:0 0 22px;display:flex;flex-direction:column;justify-content:center}
+    .kob-rail-line{flex:1;border-right:1px solid var(--border);margin:46px 0}
+    .kob-champ{margin-top:14px;text-align:center;font-size:13px;color:var(--text)}
+    @media(max-width:760px){
+      .kob-wrap{overflow-x:visible}
+      .kob{flex-direction:column;gap:0;min-width:0}
+      .kob-round{min-width:0;flex:1 1 auto;margin-bottom:20px}
+      .kob-title{text-align:left;padding:0 2px 8px;font-size:18px;border-bottom:1px solid var(--border);margin-bottom:10px}
+      .kob-cards{justify-content:flex-start;gap:10px;padding:0}
+      .kob-rail{display:none}
+    }
   </style>
   <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:18px">
     <button class="mp-subtab active" id="psub-diarias" onclick="predTab('diarias')">Diarias</button>
@@ -437,6 +467,7 @@ let GROUP_MATCHES = [];
 let GROUP_STANDINGS = [];
 let KO_ROUNDS = [];
 let HONOURS = [];
+let ALL_MATCHES = [];
 
 // ── LOAD MY PREDICTIONS FROM SUPABASE ─────────────────────────────────────
 async function loadMyPredictions() {
@@ -493,6 +524,7 @@ async function loadMyPredictions() {
 
   // Load all matches with results
   const { data: matches } = await sb.from("matches").select("*").order("kickoff");
+  ALL_MATCHES = matches || [];
 
   // Load user predictions
   const { data: preds } = await sb.from("predictions").select("*").eq("user_id", targetId);
@@ -820,64 +852,111 @@ function buildGroupStandings() {
   });
 }
 
-// ── BUILD KNOCKOUT ROUNDS ─────────────────────────────────────────────────
+// ── BUILD KNOCKOUT BRACKET (predicción + real, dos líneas) ─────────────────
+const KO_SCHEDULE = {
+  r32: [
+    {m:73,h:'1E',a:'3-ABCDF'},{m:74,h:'1I',a:'3-CDFGH'},{m:75,h:'2A',a:'2B'},{m:76,h:'1F',a:'2C'},
+    {m:77,h:'2K',a:'2L'},{m:78,h:'1H',a:'2J'},{m:79,h:'1D',a:'3-BEFIJ'},{m:80,h:'1G',a:'3-AEHIJ'},
+    {m:81,h:'1C',a:'2F'},{m:82,h:'2E',a:'2I'},{m:83,h:'1A',a:'3-CEFHI'},{m:84,h:'1L',a:'3-EHIJK'},
+    {m:85,h:'1J',a:'2H'},{m:86,h:'2D',a:'2G'},{m:87,h:'1B',a:'3-EFGIJ'},{m:88,h:'1K',a:'3-DEIJL'},
+  ],
+  r16:[{m:89},{m:90},{m:91},{m:92},{m:93},{m:94},{m:95},{m:96}],
+  qf:[{m:97},{m:98},{m:99},{m:100}],
+  sf:[{m:101},{m:102}],
+  final:[{m:104}],
+};
+const KO_SHORT = { r32:'16avos', r16:'Octavos', qf:'Cuartos', sf:'Semis', final:'Final' };
+const KO_LONG  = { r32:'Dieciseisavos', r16:'Octavos', qf:'Cuartos', sf:'Semifinales', final:'Final' };
+
+// Clasificación real de un grupo (para resolver 1.º/2.º en cuanto el grupo termina)
+function realGroupComplete(gid){
+  const gm = ALL_MATCHES.filter(m=>m.phase==='group'&&m.group_letter===gid);
+  return gm.length>=6 && gm.every(m=>m.real_home!=null&&m.real_away!=null);
+}
+function realStandings(gid){
+  const gm = ALL_MATCHES.filter(m=>m.phase==='group'&&m.group_letter===gid);
+  const st={};
+  gm.forEach(m=>{ if(m.home_team&&!st[m.home_team]) st[m.home_team]={name:m.home_team,flag:m.home_flag,pts:0,gf:0,gc:0};
+                  if(m.away_team&&!st[m.away_team]) st[m.away_team]={name:m.away_team,flag:m.away_flag,pts:0,gf:0,gc:0}; });
+  gm.forEach(m=>{ if(m.real_home==null||m.real_away==null)return; const H=st[m.home_team],A=st[m.away_team]; if(!H||!A)return;
+    H.gf+=m.real_home;H.gc+=m.real_away;A.gf+=m.real_away;A.gc+=m.real_home;
+    if(m.real_home>m.real_away)H.pts+=3; else if(m.real_home===m.real_away){H.pts++;A.pts++;} else A.pts+=3; });
+  return Object.values(st).sort((a,b)=>(b.pts-a.pts)||((b.gf-b.gc)-(a.gf-a.gc))||(b.gf-a.gf)||a.name.localeCompare(b.name));
+}
+function resolveReal(code){
+  const m=/^([12])([A-L])$/.exec(code||'');
+  if(m){ const pos=+m[1],gid=m[2]; if(!realGroupComplete(gid))return null; const t=realStandings(gid)[pos-1]; return t?{name:t.name,flag:t.flag}:null; }
+  return null; // terceros se resuelven cuando se rellenan los partidos KO en la BD
+}
+function koTeamCell(t, side){
+  const flag = t && t.flag ? `<span class="kob-flag">${flagImg(t.flag,'sm')}</span>` : '<span class="kob-flag"></span>';
+  const nm = t ? `<span class="kob-nm">${teamES(t.name)}</span>` : '<span class="kob-nm" style="color:var(--muted);font-style:italic">—</span>';
+  return side==='home'
+    ? `<span class="kob-team">${flag}${nm}</span>`
+    : `<span class="kob-team r">${nm}${flag}</span>`;
+}
+function koLine(home, away, score, kind){
+  const sc = score ? `${score.h}-${score.a}` : `<span style="color:var(--muted);font-size:11px">vs</span>`;
+  const scCls = kind==='pred' ? 'kob-score pred' : 'kob-score';
+  return `<div class="kob-row">${koTeamCell(home,'home')}<span class="${scCls}">${sc}</span>${koTeamCell(away,'away')}</div>`;
+}
+
 function buildKO() {
   const container = document.getElementById('ko-container');
-  KO_ROUNDS.forEach(round => {
-    const section = document.createElement('div');
-    section.className = 'ko-round';
-    section.innerHTML = `<div class="ko-round-title">${round.label}</div>`;
+  if (!container) return;
+  container.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className = 'kob-wrap';
+  const bracket = document.createElement('div'); bracket.className = 'kob';
+  const rounds = ['r32','r16','qf','sf','final'];
 
-    const matchesDiv = document.createElement('div');
-    matchesDiv.className = 'ko-matches';
+  rounds.forEach((rk, ri) => {
+    const predRound = KO_ROUNDS.find(r=>r.key===rk);
+    const sched = KO_SCHEDULE[rk] || [];
+    const realMatches = ALL_MATCHES.filter(m=>m.phase===rk).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
 
-    round.matches.forEach(m => {
-      const res = getMatchResult(m.real, m.pred);
-      const rClass = resultClass(res);
-      const isFinal = round.key === 'final';
+    const col = document.createElement('div'); col.className = 'kob-round';
+    col.innerHTML = `<div class="kob-title">${KO_LONG[rk]}</div>`;
+    const cards = document.createElement('div'); cards.className = 'kob-cards';
 
-      const row = document.createElement('div');
-      row.className = `ko-match-row ${rClass}`;
-      row.innerHTML = `
-        <div class="team-left">
-          <span class="flag" style="font-size:16px">${flagImg(m.home.flag,"sm")}</span>
-          <span class="team-name" style="color:var(--muted);font-style:italic;font-size:12px">${teamES(m.home.name)}</span>
-        </div>
-        <div class="score-block">
-          <div class="score-label" style="font-size:8px">Tu predicción</div>
-          <div class="score-pair">
-            <div class="score-box pred-pending">${m.pred.h}</div>
-            <span class="score-sep">:</span>
-            <div class="score-box pred-pending">${m.pred.a}</div>
-          </div>
-        </div>
-        <div class="score-block">
-          <div class="score-label" style="font-size:8px">Real</div>
-          <div class="score-pair">
-            <div class="score-box pred-pending" style="width:52px">?</div>
-          </div>
-        </div>
-        <div class="team-right">
-          <span class="team-name" style="color:var(--muted);font-style:italic;font-size:12px">${teamES(m.away.name)}</span>
-          <span class="flag" style="font-size:16px">${flagImg(m.away.flag,"sm")}</span>
-        </div>
-        <div class="result-cell">
-          <div class="result-icon"></div>
-          <div class="result-pts pending-pts">—</div>
-        </div>
-        ${isFinal ? `
-        <div style="grid-column:1/-1;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:12px">
-          <div><span style="color:var(--muted)">🏆 Mi campeón:</span> <strong>${teamES(m.champion)}</strong></div>
-          <div><span style="color:var(--muted)">🥈 Mi subcampeón:</span> <strong>${teamES(m.runnerUp)}</strong></div>
-        </div>` : ''}
-        ${m.predTeam && !isFinal ? `<div style="grid-column:1/-1;font-size:11px;color:var(--muted);padding-top:4px;border-top:1px solid var(--border)">Mi pase a la siguiente ronda: <strong style="color:var(--text)">${teamES(m.predTeam)}</strong></div>` : ''}`;
+    sched.forEach((sl, i) => {
+      const pm = predRound && predRound.matches[i] ? predRound.matches[i] : null;
+      const predHome = pm && pm.home && pm.home.name ? pm.home : null;
+      const predAway = pm && pm.away && pm.away.name ? pm.away : null;
+      const predScore = pm && pm.pred && pm.pred.h!=null && pm.pred.h!=='' ? pm.pred : null;
 
-      matchesDiv.appendChild(row);
+      const rmatch = realMatches[i] || null;
+      const realHome = (rmatch && rmatch.home_team) ? {name:rmatch.home_team, flag:rmatch.home_flag} : resolveReal(sl.h);
+      const realAway = (rmatch && rmatch.away_team) ? {name:rmatch.away_team, flag:rmatch.away_flag} : resolveReal(sl.a);
+      const realScore = (rmatch && rmatch.real_home!=null && rmatch.real_away!=null) ? {h:rmatch.real_home,a:rmatch.real_away} : null;
+
+      let realBlock;
+      if (realHome && realAway && realScore) realBlock = koLine(realHome, realAway, realScore, 'real');
+      else if (realHome && realAway)         realBlock = koLine(realHome, realAway, null, 'real');
+      else realBlock = `<div class="kob-tbd">${rk==='r32' ? 'Aún sin definir' : 'Pendiente de rondas previas'}</div>`;
+
+      const card = document.createElement('div'); card.className = 'kob-card';
+      card.innerHTML = `
+        <div class="kob-tag">M${sl.m} · ${KO_SHORT[rk]}</div>
+        <div class="kob-blk"><div class="kob-lbl">Tu predicción</div>${koLine(predHome, predAway, predScore, 'pred')}</div>
+        <div class="kob-blk real"><div class="kob-lbl">Real</div>${realBlock}</div>`;
+      cards.appendChild(card);
     });
 
-    section.appendChild(matchesDiv);
-    container.appendChild(section);
+    col.appendChild(cards); bracket.appendChild(col);
+    if (ri < rounds.length-1) {
+      const rail = document.createElement('div'); rail.className = 'kob-rail';
+      rail.innerHTML = '<div class="kob-rail-line"></div>'; bracket.appendChild(rail);
+    }
   });
+
+  wrap.appendChild(bracket); container.appendChild(wrap);
+
+  const fin = KO_ROUNDS.find(r=>r.key==='final');
+  if (fin && fin.matches[0] && fin.matches[0].champion) {
+    const note = document.createElement('div'); note.className = 'kob-champ';
+    note.innerHTML = `🏆 Tu campeón: <strong>${teamES(fin.matches[0].champion)}</strong>`;
+    container.appendChild(note);
+  }
 }
 
 // ── EXPORT PICKS (Excel/CSV) ───────────────────────────────────────────────
