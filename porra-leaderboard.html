@@ -652,6 +652,17 @@ async function loadClasificación() {
 
   if (error) { console.error('Clasificación load error:', error); return; }
 
+  // Movimiento estable del día: comparar el puesto ACTUAL con la "foto" del inicio
+  // de la jornada (snapshot de la mañana, día del Pacífico). Así "subí/bajé N" se
+  // mide contra cómo empezaste el día, no contra el partido anterior (no parpadea).
+  let baseRank = {};
+  try {
+    const dayK = (window.matchDateKey ? window.matchDateKey(new Date().toISOString())
+                                      : new Date().toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'}));
+    const { data: dr } = await sb.from('daily_ranks').select('user_id,rank').eq('day', dayK);
+    (dr || []).forEach(r => { baseRank[r.user_id] = r.rank; });
+  } catch(e) { /* sin foto del día -> sin movimiento */ }
+
   // Map to JUGADORS format, sorted by total points
   JUGADORS.length = 0;
   (data || []).forEach((u) => {
@@ -666,7 +677,8 @@ async function loadClasificación() {
       total:   s.total || 0,
       today:   0,
       exact:   s.exact_scores || 0,
-      move:    (s.rank && s.prev_rank) ? (s.prev_rank - s.rank) : 0,
+      move:    (baseRank[u.id] != null && s.rank) ? (baseRank[u.id] - s.rank)
+               : ((s.rank && s.prev_rank) ? (s.prev_rank - s.rank) : 0),
       isMe:    u.id === currentUserId,
       phases: {
         groups:    s.group_match_pts || 0,

@@ -126,7 +126,8 @@ table{max-width:100%}
     <div class="hero-card"><div class="hero-n gold" id="my-rank">—</div><div class="hero-l">Tu posición</div></div>
     <div class="hero-card">
       <div class="pts-tabs"><button id="ptab-tot" class="pts-tab active" onclick="ptsTab('tot')">Totales</button><button id="ptab-hoy" class="pts-tab" onclick="ptsTab('hoy')">Hoy</button></div>
-      <div class="hero-n" id="my-pts" onclick="ptsClick()">0</div><div class="hero-l" id="my-pts-l">Tus puntos</div>
+      <div class="hero-n" id="my-pts" onclick="ptsClick()" style="cursor:pointer">0</div><div class="hero-l" id="my-pts-l">Tus puntos</div>
+      <div id="pts-hint" onclick="ptsClick()" style="cursor:pointer;font-size:10px;color:var(--gold);margin-top:3px;letter-spacing:.3px">ver desglose de puntos ›</div>
     </div>
     <div class="hero-card"><div class="hero-n" id="my-remaining">—</div><div class="hero-l">Puntos posibles restantes</div></div>
   </div>
@@ -254,9 +255,13 @@ function ptsTab(t){
   document.getElementById('ptab-hoy').classList.toggle('active',t==='hoy');
   document.getElementById('my-pts').textContent = t==='hoy' ? ('+'+MY_TODAY) : MY_TOTAL;
   document.getElementById('my-pts-l').textContent = t==='hoy' ? 'Puntos hoy' : 'Tus puntos';
-  const mp=document.getElementById('my-pts'); if(mp) mp.style.cursor = t==='hoy' ? 'pointer' : 'default';
+  const mp=document.getElementById('my-pts'); if(mp) mp.style.cursor='pointer';
+  const hint=document.getElementById('pts-hint'); if(hint) hint.textContent = t==='hoy' ? 'ver resumen del día ›' : 'ver desglose de puntos ›';
 }
-function ptsClick(){ if(PTS_MODE==='hoy'){ const el=document.getElementById('recap-box'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); } }
+function ptsClick(){
+  if(PTS_MODE==='hoy'){ const el=document.getElementById('recap-box'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+  else { window.location.href='porra-desglose.html'; }
+}
 // ── Próximos partidos: la siguiente jornada (día EST con partidos sin jugar) ──
 async function loadNextMatches(){
   const box=document.getElementById('next-box'); if(!box) return;

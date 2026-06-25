@@ -360,7 +360,6 @@ table{max-width:100%}
   <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:18px">
     <button class="mp-subtab active" id="psub-diarias" onclick="predTab('diarias')">Diarias</button>
     <button class="mp-subtab" id="psub-globales" onclick="predTab('globales')">Globales</button>
-    <button class="mp-subtab" id="psub-clasif" onclick="predTab('clasif')">Clasificaciones</button>
   </div>
 
   <div id="ptab-diarias">
@@ -375,13 +374,14 @@ table{max-width:100%}
   <div id="ptab-globales" style="display:none">
     <div class="phase-header"><div class="phase-title">Predicciones totales</div></div>
     <div class="mp-tabs">
-      <button class="mp-tab" onclick="scrollToSec('sec-grupos')">Grupos</button>
+      <button class="mp-tab" onclick="scrollToSec('sec-grupos')">Resultados (Grupos)</button>
+      <button class="mp-tab" onclick="scrollToSec('sec-clasif')">Clasificaciones (Grupos)</button>
       <button class="mp-tab" onclick="scrollToSec('sec-eliminatorias')">Eliminatorias</button>
       <button class="mp-tab" onclick="scrollToSec('sec-honor')">Cuadro de Honor</button>
     </div>
 
   <div class="phase-header" id="sec-grupos">
-    <div class="phase-title">Fase de Grupos</div>
+    <div class="phase-title">Resultados (Grupos)</div>
     <div class="phase-pts"><span class="phase-pts-n">—</span><span class="phase-pts-l">/ 432 pts posibles</span></div>
   </div>
 
@@ -396,8 +396,8 @@ table{max-width:100%}
   <!-- ════════════════════════════════ -->
   <!-- GROUP STAGE STANDINGS           -->
   <!-- ════════════════════════════════ -->
-  <div class="phase-header">
-    <div class="phase-title">Fase de Grupos — Clasificación</div>
+  <div class="phase-header" id="sec-clasif">
+    <div class="phase-title">Clasificaciones (Grupos)</div>
     <div class="phase-pts"><span class="phase-pts-n">—</span><span class="phase-pts-l">/ 240 pts posibles</span></div>
   </div>
 
@@ -424,12 +424,6 @@ table{max-width:100%}
   <div class="honours-grid" id="honours-container"></div>
 
 </div><!-- /ptab-globales -->
-
-  <div id="ptab-clasif" style="display:none">
-    <div class="phase-header"><div class="phase-title">Clasificaciones de grupo</div></div>
-    <div style="color:var(--muted);font-size:12.5px;margin:-4px 0 14px">Las posiciones que saldrían de tus marcadores, comparadas con la realidad. <span style="color:var(--exact)">✓</span> = posición acertada (+5 pts cada una).</div>
-    <div id="clasif-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px"><div style="color:var(--muted);padding:16px;font-size:13px">Cargando…</div></div>
-  </div>
 
 </div><!-- /content -->
 
@@ -600,7 +594,7 @@ async function loadMyPredictions() {
 
   // Build UI
   buildGroupMatches();
-  buildGroupStandings();
+  buildClasificaciones();
   buildKO();
   buildHonours();
 }
@@ -890,11 +884,8 @@ function buildKO() {
 function predTab(t){
   document.getElementById('ptab-diarias').style.display = t==='diarias'?'':'none';
   document.getElementById('ptab-globales').style.display = t==='globales'?'':'none';
-  document.getElementById('ptab-clasif').style.display = t==='clasif'?'':'none';
   document.getElementById('psub-diarias').classList.toggle('active', t==='diarias');
   document.getElementById('psub-globales').classList.toggle('active', t==='globales');
-  document.getElementById('psub-clasif').classList.toggle('active', t==='clasif');
-  if(t==='clasif') buildClasificaciones();
 }
 // Tabla de un grupo a partir de marcadores (pred o real). Mismo desempate que el motor: Pts→DG→GF→nombre.
 function clasifTable(group, useReal){
@@ -910,9 +901,11 @@ function clasifTable(group, useReal){
   return {order,complete,any};
 }
 function buildClasificaciones(){
-  const grid=document.getElementById('clasif-grid'); if(!grid) return;
+  const grid=document.getElementById('group-standings-container'); if(!grid) return;
+  grid.style.display='';
+  const hdr=grid.previousElementSibling; if(hdr) hdr.style.display='';
   if(!GROUP_MATCHES.length){ grid.innerHTML='<div style="color:var(--muted);padding:16px">No hay datos.</div>'; return; }
-  grid.innerHTML = GROUP_MATCHES.map(group=>{
+  grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px">' + GROUP_MATCHES.map(group=>{
     const pred=clasifTable(group,false), real=clasifTable(group,true);
     if(!pred.any) return `<div class="clasif-card"><div class="clasif-h">Grupo ${group.id}</div><div style="color:var(--muted);font-size:12px;padding:6px 2px">Sin pronósticos en este grupo.</div></div>`;
     const rows=pred.order.map((t,i)=>{
@@ -936,7 +929,7 @@ function buildClasificaciones(){
       <div class="clasif-sub"><span>#</span><span>Tu predicción</span><span></span><span>Real</span></div>
       ${rows}
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 }
 function scrollToSec(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
 function toggleDl(e){ e.stopPropagation(); const m=document.getElementById('dl-menu'); if(m) m.style.display = m.style.display==='none'?'block':'none'; }
