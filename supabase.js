@@ -296,7 +296,7 @@ async function initNav() {
   navRight.style.display = 'flex';
   navRight.style.alignItems = 'center';
   navRight.style.gap = '10px';
-  const help = `<button class="navhelp-btn" onclick="openFaqModal()">FAQ</button><button class="navhelp-btn" onclick="openContactModal()">Contacto</button>`;
+  const help = `<button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema (claro/oscuro)" aria-label="Cambiar tema">☀️</button><button class="navhelp-btn" onclick="openFaqModal()">FAQ</button><button class="navhelp-btn" onclick="openContactModal()">Contacto</button>`;
   if (user) {
     const profile = await getUserProfile(user.id);
     const name = profile?.alias || profile?.first_name || 'Cuenta';
@@ -311,6 +311,55 @@ async function initNav() {
   } else {
     navRight.innerHTML = help + `<a href="porra-login.html" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:8px 16px">Login</a>`;
   }
+  _updateThemeIcon();
+}
+
+// ── TEMA · Auto / Claro / Oscuro ─────────────────────────────────────────────
+// El tema se fija antes del primer pintado mediante un script en el <head> de
+// cada página (misma lógica que aquí). 'auto' sigue al sistema operativo y se
+// actualiza en vivo si el dispositivo cambia. Preferencia en localStorage
+// 'pm-theme' = 'auto' | 'light' | 'dark'. Predeterminado: 'auto'.
+const _THEME_ORDER = ['auto', 'light', 'dark'];
+const _THEME_ICON  = { auto: '🌗', light: '☀️', dark: '🌙' };
+const _THEME_LABEL = { auto: 'Auto', light: 'Claro', dark: 'Oscuro' };
+
+function _getThemePref() {
+  try { return localStorage.getItem('pm-theme') || 'auto'; } catch (e) { return 'auto'; }
+}
+function _systemPrefersLight() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+}
+function _applyTheme(pref) {
+  const light = pref === 'light' || (pref === 'auto' && _systemPrefersLight());
+  if (light) document.documentElement.setAttribute('data-theme', 'light');
+  else       document.documentElement.removeAttribute('data-theme');
+}
+function _updateThemeIcon() {
+  const pref = _getThemePref();
+  document.querySelectorAll('.theme-toggle').forEach(b => {
+    b.textContent = _THEME_ICON[pref];
+    b.title = 'Tema: ' + _THEME_LABEL[pref] + ' · toca para cambiar';
+    b.setAttribute('aria-label', 'Tema: ' + _THEME_LABEL[pref]);
+  });
+}
+function toggleTheme() {
+  const next = _THEME_ORDER[(_THEME_ORDER.indexOf(_getThemePref()) + 1) % _THEME_ORDER.length];
+  try { localStorage.setItem('pm-theme', next); } catch (e) {}
+  _applyTheme(next);
+  _updateThemeIcon();
+  if (typeof porraToast === 'function') porraToast('Tema: ' + _THEME_LABEL[next]);
+}
+// En modo Auto, reaccionar a los cambios del sistema en tiempo real.
+if (typeof window !== 'undefined' && window.matchMedia) {
+  try {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if (_getThemePref() === 'auto') { _applyTheme('auto'); _updateThemeIcon(); }
+    });
+  } catch (e) {}
+}
+if (typeof window !== 'undefined') {
+  window.toggleTheme = toggleTheme;
+  window._updateThemeIcon = _updateThemeIcon;
 }
 
 // ── LANGUAGE ─────────────────────────────────────────────────────────────────

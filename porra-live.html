@@ -5,6 +5,8 @@
   <link rel="preconnect" href="https://v3.football.api-sports.io" crossorigin>
   <link rel="preconnect" href="https://media.api-sports.io" crossorigin>
 <meta charset="UTF-8">
+  <script>(function(){try{var p=localStorage.getItem("pm-theme")||"auto";if(p==="light"||(p==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches))document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+  <link rel="stylesheet" href="theme-light.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resultados en directo — Porra Mundial 2026</title>
 <link rel="icon" type="image/png" href="ball.png">
@@ -61,6 +63,66 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .grp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
 .grp-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:10px 14px; }
 .grp-card h3 { font-family:'Bebas Neue',sans-serif; font-size:15px; color:var(--gold); letter-spacing:1px; font-weight:400; margin-bottom:4px; }
+/* ── Bota de Oro / Goleadores ── */
+.bota-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:13px 15px; background:linear-gradient(120deg, rgba(255,215,0,.10), rgba(200,16,46,.06)); border-bottom:1px solid var(--border); }
+.bota-head .bh-t { font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:1px; color:var(--text); display:flex; align-items:center; gap:8px; }
+.bota-head .bh-sub { font-size:11.5px; color:var(--muted); }
+.bota-mine { font-size:12.5px; color:var(--text); background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.3); border-radius:10px; padding:8px 12px; margin:11px 13px 2px; line-height:1.45; }
+.bota-mine b { color:var(--gold); }
+.brow { display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid var(--border); position:relative; }
+.brow:first-child { border-top:0; }
+.brow.mine { background:rgba(255,215,0,.07); }
+.brk { width:26px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:19px; color:var(--muted); flex-shrink:0; }
+.brow.top1 .brk { color:var(--gold); }
+.bphoto { width:42px; height:42px; border-radius:50%; object-fit:cover; background:var(--bg3); flex-shrink:0; border:1px solid var(--border); }
+.brow.top1 .bphoto { border:2px solid var(--gold); }
+.bmid { flex:1; min-width:0; }
+.bname { font-weight:700; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bteam { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; margin-top:1px; }
+.bteam img { width:15px; height:15px; object-fit:contain; }
+.bnums { text-align:right; flex-shrink:0; display:flex; align-items:baseline; gap:8px; }
+.bgoals { font-family:'Bebas Neue',sans-serif; font-size:25px; color:var(--gold); line-height:1; }
+.bgoals span { font-size:11px; color:var(--muted); margin-left:2px; font-family:'DM Sans',sans-serif; }
+.bast { font-size:11px; color:var(--muted); }
+.bpick { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--gold); background:rgba(255,215,0,.13); border:1px solid rgba(255,215,0,.3); border-radius:20px; padding:2px 8px; margin-top:3px; }
+.bpick.you { color:#fff; background:var(--red); border-color:var(--red); }
+@media (max-width:600px){ .bphoto{width:36px;height:36px} .bgoals{font-size:21px} .bname{font-size:13px} }
+/* ── Integración de pronósticos (tu pick + la porra + puntos en juego) ── */
+.pstrip { padding:8px 14px 11px; border-top:1px solid var(--border); background:rgba(255,255,255,0.015); display:flex; flex-direction:column; gap:7px; }
+.pstrip-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.pmine { font-size:12.5px; color:var(--text); }
+.pmine b { color:var(--gold); font-weight:700; }
+.pmine.none { color:var(--muted); }
+.pmine.none a { color:var(--gold); font-weight:700; }
+.pplay { font-size:11.5px; font-weight:700; border-radius:20px; padding:3px 10px; white-space:nowrap; }
+.pplay.win { color:#bbf7d0; background:rgba(34,197,94,.16); border:1px solid rgba(34,197,94,.35); }
+.pplay.zero{ color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--border); }
+.pcons { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.pcons-bar { display:flex; height:7px; flex:1; min-width:120px; border-radius:5px; overflow:hidden; background:var(--bg3); }
+.pcons-bar i { display:block; height:100%; }
+.pcons-bar .s1 { background:#22c55e; } .pcons-bar .sx { background:rgba(255,255,255,.28); } .pcons-bar .s2 { background:var(--red); }
+.pcons-lbl { font-size:10.5px; color:var(--muted); white-space:nowrap; }
+.pcons-lbl b { color:var(--text); }
+.pcons-top { font-size:10.5px; color:var(--muted); }
+.pcons-top b { color:var(--gold); }
+.pcons-head { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+/* ── Pulso del torneo (stats calculadas de los fixtures) ── */
+.pulse-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+.ptile { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:12px 10px; text-align:center; }
+.ptile .pv { font-family:'Bebas Neue',sans-serif; font-size:27px; color:var(--text); line-height:1; }
+.ptile .pl { font-size:10.5px; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.4px; }
+.ptile.acc .pv { color:var(--gold); }
+.ptile .pmini { font-size:10px; color:var(--muted); margin-top:2px; }
+@media (max-width:600px){ .pulse-grid{ grid-template-columns:repeat(2,1fr);} .ptile .pv{font-size:23px} }
+/* ── Tabs Goleadores / Asistentes en la tarjeta Bota ── */
+.bota-tabs { display:flex; gap:6px; }
+.bota-tabs button { font-family:inherit; font-size:11.5px; font-weight:700; color:var(--muted); background:transparent; border:1px solid var(--border); border-radius:20px; padding:4px 12px; cursor:pointer; }
+.bota-tabs button.on { color:var(--text); background:rgba(255,215,0,.14); border-color:rgba(255,215,0,.35); }
+/* ── Pulso "en directo" ── */
+@keyframes livePulse { 0%,100%{ opacity:1; box-shadow:0 0 0 0 rgba(200,16,46,.5);} 50%{ opacity:.55; box-shadow:0 0 0 5px rgba(200,16,46,0);} }
+.live-dot { animation: livePulse 1.6s ease-in-out infinite; }
+.m.livenow { background:linear-gradient(90deg, rgba(200,16,46,.06), transparent 60%); }
+.m.livenow .st.min { color:#fda4af; font-weight:700; }
 @media (max-width:600px){
   nav { padding:0 12px; height:auto; min-height:56px; flex-wrap:wrap; padding-bottom:8px; }
   .wrap { padding:18px 12px 60px; }
@@ -258,6 +320,183 @@ function standingsHtml(groups){
   return `<div class="sect"><div class="sect-label">Clasificación de grupos</div><div class="grp-grid">${cards}</div></div>`;
 }
 
+// ── BOTA DE ORO · goleadores en vivo, ligado a los picks de Honores ──────────
+let BOTA_CACHE=null, HON_ROWS=null, MY_UID=null, MY_BOOT='', REAL_HON=null, ASSIST_CACHE=null, BOTA_VIEW='goals';
+function _norm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z\s.]/g,' ').replace(/\s+/g,' ').trim(); }
+function _samePlayer(a,b){
+  a=_norm(a); b=_norm(b); if(!a||!b) return false;
+  if(a===b) return true;
+  const A=a.split(' '), B=b.split(' ');
+  const lastA=A[A.length-1], lastB=B[B.length-1];
+  if(lastA!==lastB || lastA.length<3) return false;     // mismo apellido
+  return A[0][0]===B[0][0];                               // misma inicial de nombre
+}
+async function botaSection(manual){
+  try{
+    const sb=(typeof getSB==='function')?getSB():null;
+    if(BOTA_CACHE===null || manual){
+      try{ BOTA_CACHE = await apiGet(`/players/topscorers?league=${LEAGUE}&season=${SEASON}`); }
+      catch(e){ BOTA_CACHE = BOTA_CACHE||[]; }
+    }
+    if(ASSIST_CACHE===null || manual){
+      try{ ASSIST_CACHE = await apiGet(`/players/topassists?league=${LEAGUE}&season=${SEASON}`); }
+      catch(e){ ASSIST_CACHE = ASSIST_CACHE||[]; }
+    }
+    const top=(BOTA_CACHE||[]).slice(0,15);
+    if(!top.length) return '';
+    if(HON_ROWS===null || manual){
+      HON_ROWS=[]; REAL_HON={};
+      if(sb){
+        try{ const {data}=await sb.from('honours_predictions').select('user_id,boot_1'); HON_ROWS=data||[]; }catch(e){}
+        try{ const {data}=await sb.from('settings').select('key,value').in('key',['real_bota']); (data||[]).forEach(r=>REAL_HON[r.key]=r.value); }catch(e){}
+        try{ const u=(typeof getCurrentUser==='function')?await getCurrentUser():null; MY_UID=(u&&u.id)||null; }catch(e){}
+      }
+      MY_BOOT = MY_UID ? ((HON_ROWS.find(r=>r.user_id===MY_UID)||{}).boot_1||'') : '';
+    }
+    const realBota = REAL_HON&&REAL_HON.real_bota;
+    const goalsRows = _botaRows(BOTA_CACHE, 'goals');
+    const astRows   = _botaRows(ASSIST_CACHE, 'assists');
+    let mine;
+    if(MY_BOOT){
+      const idx=top.findIndex(e=>_samePlayer((e.player||{}).name,MY_BOOT));
+      if(idx>=0){ const g=((top[idx].statistics||[])[0]||{}).goals; mine=`Tu Bota de Oro: <b>${esc(MY_BOOT)}</b> — ahora Nº${idx+1} con ${(g&&g.total)||0} goles.`; }
+      else mine=`Tu Bota de Oro: <b>${esc(MY_BOOT)}</b> — aún no figura entre los líderes.`;
+    } else mine=`No has elegido Bota de Oro. <a href="porra-predict.html" style="color:var(--gold);font-weight:700">Elige tu goleador ›</a>`;
+    const sub = realBota ? `Ganador: ${esc(realBota)}` : 'Provisional · en juego';
+    const gHide = BOTA_VIEW==='assists' ? 'display:none' : '';
+    const aHide = BOTA_VIEW==='goals'   ? 'display:none' : '';
+    return `<div class="sect"><div class="card">
+      <div class="bota-head">
+        <div><div class="bh-t">👟 Bota de Oro</div><div class="bh-sub" id="bota-sub" style="${gHide}">${sub}</div></div>
+        <div class="bota-tabs">
+          <button data-v="goals" class="${BOTA_VIEW==='goals'?'on':''}" onclick="setBotaView('goals')">Goleadores</button>
+          <button data-v="assists" class="${BOTA_VIEW==='assists'?'on':''}" onclick="setBotaView('assists')">Asistentes</button>
+        </div>
+      </div>
+      <div class="bota-mine" id="bota-mine" style="${gHide}">${mine}</div>
+      <div id="bota-goals" style="${gHide}">${goalsRows}</div>
+      <div id="bota-assists" style="${aHide}">${astRows||'<div class="empty" style="padding:18px">Sin datos de asistencias todavía.</div>'}</div>
+    </div></div>`;
+  }catch(e){ console.error('bota',e); return ''; }
+}
+function _botaRows(list, mode){
+  return (list||[]).slice(0,15).map((e,i)=>{
+    const p=e.player||{}, s=(e.statistics&&e.statistics[0])||{};
+    const goals=(s.goals&&s.goals.total)||0, ast=(s.goals&&s.goals.assists)||0;
+    const teamLogo=(s.team&&s.team.logo)||'', teamName=T((s.team&&s.team.name)||'');
+    const big = mode==='assists' ? ast : goals;
+    const bigLbl = mode==='assists' ? 'A' : 'G';
+    const small = mode==='assists' ? `${goals} goles` : `${ast} asist.`;
+    let chip='', mineCls='';
+    if(mode==='goals'){
+      const nPicks=(HON_ROWS||[]).filter(r=>_samePlayer(r.boot_1,p.name)).length;
+      const isMine=MY_BOOT&&_samePlayer(MY_BOOT,p.name);
+      if(isMine){ chip=`<span class="bpick you">🎯 Tu pick</span>`; mineCls='mine'; }
+      else if(nPicks>0) chip=`<span class="bpick">🎯 ${nPicks} ${nPicks===1?'porra':'porras'}</span>`;
+    }
+    const photo = p.photo ? `<img class="bphoto" src="${esc(p.photo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<div class="bphoto"></div>`;
+    return `<div class="brow ${i===0?'top1':''} ${mineCls}">
+      <div class="brk">${i+1}</div>${photo}
+      <div class="bmid"><div class="bname">${esc(T(p.name)||p.name||'?')}</div>
+        <div class="bteam">${teamLogo?`<img src="${esc(teamLogo)}">`:''}${esc(teamName)}</div>${chip}</div>
+      <div class="bnums"><div class="bgoals">${big}<span>${bigLbl}</span></div><div class="bast">${small}</div></div>
+    </div>`;
+  }).join('');
+}
+window.setBotaView=function(v){
+  BOTA_VIEW=v;
+  const g=document.getElementById('bota-goals'), a=document.getElementById('bota-assists');
+  const mn=document.getElementById('bota-mine'), sb=document.getElementById('bota-sub');
+  if(g) g.style.display = v==='goals'?'':'none';
+  if(a) a.style.display = v==='assists'?'':'none';
+  if(mn) mn.style.display = v==='goals'?'':'none';
+  if(sb) sb.style.display = v==='goals'?'':'none';
+  document.querySelectorAll('.bota-tabs button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+};
+
+// ── INTEGRACIÓN DE PRONÓSTICOS · tu pick + la porra + puntos en juego ────────
+let MATCHES_CACHE=null, MY_PREDS=null, MY_KO=null, KO_ALL=null, GRP_ALL=null, PMAP_FIX={}, PMAP_TEAMS={};
+async function loadPredData(manual){
+  const sb=(typeof getSB==='function')?getSB():null; if(!sb) return;
+  if(!MY_UID){ try{ const u=(typeof getCurrentUser==='function')?await getCurrentUser():null; MY_UID=(u&&u.id)||null; }catch(e){} }
+  if(MATCHES_CACHE===null || manual){
+    try{ const {data}=await sb.from('matches').select('id,phase,home_team,away_team,real_home,real_away,api_fixture_id'); MATCHES_CACHE=data||[]; }
+    catch(e){ MATCHES_CACHE=MATCHES_CACHE||[]; }
+    PMAP_FIX={}; PMAP_TEAMS={};
+    MATCHES_CACHE.forEach(m=>{ if(m.api_fixture_id) PMAP_FIX[m.api_fixture_id]=m; PMAP_TEAMS[(m.home_team||'')+'|'+(m.away_team||'')]=m; });
+  }
+  if(MY_KO===null || manual){
+    if(MY_UID){ try{ const {data}=await sb.from('ko_predictions').select('home_team,away_team,pred_home,pred_away').eq('user_id',MY_UID); MY_KO=data||[]; }catch(e){ MY_KO=[]; } } else MY_KO=[];
+  }
+  if(MY_PREDS===null || manual){
+    if(MY_UID){ try{ const {data}=await sb.from('predictions').select('match_id,predicted_home,predicted_away').eq('user_id',MY_UID); MY_PREDS=data||[]; }catch(e){ MY_PREDS=[]; } } else MY_PREDS=[];
+  }
+  if(KO_ALL===null || manual){
+    try{ KO_ALL=(typeof fetchAll==='function')?await fetchAll('ko_predictions','home_team,away_team,pred_home,pred_away'):[]; }catch(e){ KO_ALL=KO_ALL||[]; }
+  }
+}
+async function ensureGroupConsensus(manual){
+  if(GRP_ALL!==null && !manual) return;
+  try{ GRP_ALL=(typeof fetchAll==='function')?await fetchAll('predictions','match_id,predicted_home,predicted_away'):[]; }catch(e){ GRP_ALL=GRP_ALL||[]; }
+}
+function mapFixture(f){
+  const fid=f.fixture&&f.fixture.id;
+  let m = fid && PMAP_FIX[fid];
+  if(!m){ const h=T(f.teams?.home?.name), a=T(f.teams?.away?.name); m=PMAP_TEAMS[h+'|'+a]||PMAP_TEAMS[a+'|'+h]; }
+  return m||null;
+}
+function predStrip(f, isLive){
+  const m=mapFixture(f); if(!m) return '';
+  let ph=null,pa=null;
+  if(m.phase==='group'){ const p=(MY_PREDS||[]).find(x=>x.match_id===m.id); if(p){ph=p.predicted_home;pa=p.predicted_away;} }
+  else { const k=(MY_KO||[]).find(x=>x.home_team===m.home_team&&x.away_team===m.away_team); if(k){ph=k.pred_home;pa=k.pred_away;} }
+  let pool;
+  if(m.phase==='group') pool=(GRP_ALL||[]).filter(x=>x.match_id===m.id).map(x=>[x.predicted_home,x.predicted_away]);
+  else pool=(KO_ALL||[]).filter(x=>x.home_team===m.home_team&&x.away_team===m.away_team).map(x=>[x.pred_home,x.pred_away]);
+  const mineHtml = (ph!=null&&pa!=null)
+    ? `<div class="pmine">Tu pronóstico: <b>${ph}-${pa}</b></div>`
+    : `<div class="pmine none">Sin pronóstico para este cruce</div>`;
+  let playHtml='';
+  if(isLive && ph!=null && pa!=null){
+    const gh=f.goals?.home, ga=f.goals?.away;
+    if(gh!=null&&ga!=null){ const pts=window.matchPoints(m.phase,ph,pa,gh,ga); playHtml=`<div class="pplay ${pts>0?'win':'zero'}">⚡ ${pts>0?'+'+pts:'0'} en juego</div>`; }
+  }
+  let consHtml='';
+  if(pool.length){
+    let c1=0,cx=0,c2=0; const sc={};
+    pool.forEach(([h,a])=>{ if(h==null||a==null)return; const s=Math.sign(h-a); if(s>0)c1++;else if(s<0)c2++;else cx++; const key=h+'-'+a; sc[key]=(sc[key]||0)+1; });
+    const tot=c1+cx+c2; if(tot){
+      const p1=Math.round(c1/tot*100), px=Math.round(cx/tot*100), p2=Math.round(c2/tot*100);
+      const top=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+      consHtml=`<div class="pcons">
+        <div class="pcons-head">La porra (${tot})</div>
+        <div class="pcons-bar"><i class="s1" style="width:${p1}%"></i><i class="sx" style="width:${px}%"></i><i class="s2" style="width:${p2}%"></i></div>
+        <div class="pcons-lbl"><b>${p1}%</b> 1 · <b>${px}%</b> X · <b>${p2}%</b> 2</div>
+        ${top?`<div class="pcons-top">top <b>${top[0]}</b> (${top[1]})</div>`:''}
+      </div>`;
+    }
+  }
+  return `<div class="pstrip"><div class="pstrip-top">${mineHtml}${playHtml}</div>${consHtml}</div>`;
+}
+
+// ── PULSO DEL TORNEO · stats derivadas de los fixtures (sin coste de API) ─────
+function pulseStrip(fixtures){
+  const fin=(fixtures||[]).filter(f=>FIN_ST.has(f.fixture?.status?.short));
+  if(!fin.length) return '';
+  let goals=0, biggest=null, bigDiff=-1;
+  fin.forEach(f=>{ const gh=f.goals?.home??0, ga=f.goals?.away??0; goals+=gh+ga; const d=Math.abs(gh-ga); if(d>bigDiff){bigDiff=d;biggest=f;} });
+  const played=fin.length, avg=(goals/played).toFixed(2);
+  let big='—';
+  if(biggest){ const gh=biggest.goals?.home??0, ga=biggest.goals?.away??0, hw=gh>=ga; big=`${esc(T(hw?biggest.teams?.home?.name:biggest.teams?.away?.name))} ${Math.max(gh,ga)}-${Math.min(gh,ga)}`; }
+  return `<div class="sect"><div class="sect-label">Pulso del torneo</div>
+    <div class="pulse-grid">
+      <div class="ptile"><div class="pv">${played}</div><div class="pl">Partidos</div></div>
+      <div class="ptile acc"><div class="pv">${goals}</div><div class="pl">Goles</div></div>
+      <div class="ptile"><div class="pv">${avg}</div><div class="pl">Goles/partido</div></div>
+      <div class="ptile"><div class="pv" style="font-size:15px;font-family:'DM Sans',sans-serif;font-weight:800">${big}</div><div class="pl">Mayor goleada</div></div>
+    </div></div>`;
+}
+
 async function loadLive(manual){
   const cont=document.getElementById('content');
   try{
@@ -278,13 +517,18 @@ async function loadLive(manual){
     }
 
     LAST_FIXTURES = fixtures;
+    await loadPredData(manual);
+    if([...live, ...todayUpcoming].some(f=>{ const m=mapFixture(f); return m && m.phase==='group'; })) await ensureGroupConsensus(manual);
     const recentHtml = recentSection(fixtures);
+    const botaHtml = await botaSection(manual);
     let html='';
-    if(live.length) html += section('En directo', true, live.map(matchRow).join(''));
-    if(todayUpcoming.length) html += section('Próximos partidos', false, todayUpcoming.map(matchRow).join(''));
+    if(live.length) html += section('En directo', true, live.map(f=>matchRow(f)+predStrip(f,true)).join(''));
+    if(todayUpcoming.length) html += section('Próximos partidos', false, todayUpcoming.map(f=>matchRow(f)+predStrip(f,false)).join(''));
     if(recentHtml) html += recentHtml;
-    if(!live.length && !todayUpcoming.length && !recentHtml)
+    if(!live.length && !todayUpcoming.length && !recentHtml && !botaHtml)
       html += `<div class="card"><div class="empty">Aún no hay partidos para mostrar. Vuelve cuando arranque la jornada.</div></div>`;
+    if(botaHtml) html += pulseStrip(fixtures) + botaHtml;
+    else html += pulseStrip(fixtures);
     html += standingsHtml(STAND_CACHE);
 
     cont.innerHTML = html;

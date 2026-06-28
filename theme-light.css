@@ -1,0 +1,122 @@
+/* ════════════════════════════════════════════════════════════════
+   MODO CLARO · override global (se aplica con html[data-theme="light"])
+   Cargado en todas las páginas. El interruptor vive en supabase.js.
+   No toca el modo oscuro (que sigue siendo el predeterminado).
+   ════════════════════════════════════════════════════════════════ */
+
+html[data-theme="light"] {
+  --bg:    #eef1f7;
+  --bg2:   #ffffff;
+  --bg3:   #e9edf5;
+  --text:  #14151d;
+  --muted: rgba(20,21,29,0.55);
+  --border:rgba(20,21,29,0.12);
+  /* marca: rojo y verde se leen bien sobre blanco; el dorado se oscurece
+     para que los títulos en var(--gold) sean legibles sobre fondo claro. */
+  --red:  #C8102E;
+  --green:#0a7a44;
+  --gold: #b8860b;
+  color-scheme: light;
+}
+
+/* ── Fondo general + barra de navegación (usan literales oscuros) ── */
+html[data-theme="light"] body { background: var(--bg); color: var(--text); }
+html[data-theme="light"] nav {
+  background: rgba(255,255,255,0.92) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* ── Superficies por clase (lo más visible) ─────────────────────── */
+html[data-theme="light"] .card,
+html[data-theme="light"] .grp-card,
+html[data-theme="light"] .sect,
+html[data-theme="light"] .panel,
+html[data-theme="light"] .modal,
+html[data-theme="light"] .md-inner,
+html[data-theme="light"] .tile,
+html[data-theme="light"] .box {
+  background: var(--bg2);
+  border-color: var(--border);
+}
+
+/* pestañas / botones de navegación */
+html[data-theme="light"] .nav-tab:hover,
+html[data-theme="light"] .nav-tab.active { background: rgba(20,21,29,0.06); }
+html[data-theme="light"] .navhelp-btn { color: var(--muted); border-color: var(--border); }
+
+/* inputs, selects y botones genéricos */
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea,
+html[data-theme="light"] .refresh-btn,
+html[data-theme="light"] .btn {
+  background: var(--bg3) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* tablas */
+html[data-theme="light"] table th,
+html[data-theme="light"] table td { border-color: var(--border) !important; }
+html[data-theme="light"] tr:nth-child(even) { background: rgba(20,21,29,0.025); }
+
+/* ── Flip de superpuestos blancos en estilos inline ─────────────────
+   Muchas tarjetas/botones usan rgba(255,255,255,.0x) como fondo sobre
+   oscuro; sobre claro desaparecen. Los convertimos en un velo oscuro
+   sutil para que conserven su forma. ─────────────────────────────── */
+html[data-theme="light"] [style*="rgba(255,255,255,0.15)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.15)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.12)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.1)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.1)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.08)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.08)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.07)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.06)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.06)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.05)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.05)"] {
+  background-color: rgba(20,21,29,0.05) !important;
+  border-color: rgba(20,21,29,0.12) !important;
+}
+/* velos muy tenues: solo afinar el borde, sin pintar fondo */
+html[data-theme="light"] [style*="rgba(255,255,255,0.04)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.04)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.03)"],
+html[data-theme="light"] [style*="rgba(255,255,255,0.02)"] {
+  border-color: rgba(20,21,29,0.10) !important;
+}
+
+/* ── Texto claro escrito en literal (invisible sobre blanco) ─────── */
+html[data-theme="light"] [style*="#eeeef8"],
+html[data-theme="light"] [style*="#eee"],
+html[data-theme="light"] [style*="rgba(238,238,248"] { color: var(--text) !important; }
+
+/* fondos de página oscuros escritos en literal */
+html[data-theme="light"] [style*="background:#07070f"],
+html[data-theme="light"] [style*="background:#0e0e1c"],
+html[data-theme="light"] [style*="background: #07070f"],
+html[data-theme="light"] [style*="background: #0e0e1c"],
+html[data-theme="light"] [style*="background:#151523"],
+html[data-theme="light"] [style*="background: #151523"] { background: var(--bg2) !important; }
+
+/* la cinta de marca (rojo→dorado→verde) se mantiene; solo aseguramos
+   que el dorado del degradado no quede lavado */
+html[data-theme="light"] .deadline-pill { color: var(--text); }
+
+/* el interruptor de tema en la barra */
+.theme-toggle {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text);
+  border-radius: 20px; width: 34px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; line-height: 1; flex-shrink: 0;
+  font-family: inherit; padding: 0;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.12); }
+html[data-theme="light"] .theme-toggle {
+  background: rgba(20,21,29,0.05);
+  border-color: rgba(20,21,29,0.14);
+}
+html[data-theme="light"] .theme-toggle:hover { background: rgba(20,21,29,0.10); }
