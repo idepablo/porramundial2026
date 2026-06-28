@@ -181,6 +181,8 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .row-line{display:flex;justify-content:space-around;margin:10px 0}
 .pl{display:flex;flex-direction:column;align-items:center;gap:3px;width:54px}
 .pl .num{width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.5)}
+.pl .ph{width:38px;height:38px;border-radius:50%;background-size:cover;background-position:center top;background-color:#0a2e1b;border:2px solid rgba(255,255,255,.6);position:relative;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.pl .ph .nb{position:absolute;bottom:-4px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;line-height:1.4;border-radius:8px;padding:0 4px;border:1px solid rgba(255,255,255,.55)}
 .pl .pn{font-size:9px;text-align:center;color:#fff;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.8)}
 .subs{font-size:12px;color:var(--muted);margin-bottom:14px}
 .subs h4{color:var(--text);font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
@@ -581,7 +583,10 @@ function detHeader(f){
   const gh=f.goals?.home, ga=f.goals?.away; let mid;
   if(live){ const el=f.fixture?.status?.elapsed; mid=`<div class="dscore">${gh??0}–${ga??0}</div><div class="dmin"><span class="dot"></span>${st==='HT'?'Descanso':(el!=null?el+"'":'En juego')}</div>`; }
   else if(fin){ const pen=st==='PEN'&&f.score?.penalty?` · pen ${f.score.penalty.home}-${f.score.penalty.away}`:''; mid=`<div class="dscore">${gh??0}–${ga??0}</div><div class="dmin fin">${st==='AET'?'Tras prórroga':st==='PEN'?'Penaltis':'Final'}${pen}</div>`; }
-  else { const d=new Date(f.fixture?.date); mid=`<div class="dscore" style="font-size:26px">${d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}</div><div class="dmin fin">${d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}</div>`; }
+  else { const d=new Date(f.fixture?.date); const diff=d-Date.now();
+    let cd=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+    if(diff>0 && diff<36*3600*1000){ const h=Math.floor(diff/3600000), mn=Math.floor(diff%3600000/60000); cd=`⏳ Faltan ${h>0?h+'h ':''}${mn}m`; }
+    mid=`<div class="dscore" style="font-size:26px">${d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}</div><div class="dmin fin">${cd}</div>`; }
   const venue=f.fixture?.venue?.name?`📍 ${esc(f.fixture.venue.name)}${f.fixture.venue.city?' · '+esc(f.fixture.venue.city):''}`:'';
   return `<div class="dcomp">${esc(f.league?.round||'')}</div>
     <div class="dscore-row">
@@ -692,21 +697,30 @@ function h2hHtml(list, f){
   }).join('');
   return summ+rows;
 }
-function pitchHtml(lu){
+function photoMapOf(players){ const m={}; (players||[]).forEach(t=>{ (t.players||[]).forEach(p=>{ if(p.player&&p.player.id&&p.player.photo) m[p.player.id]=p.player.photo; }); }); return m; }
+function pitchHtml(lu, pmap){
   if(!lu) return '';
+  pmap=pmap||{};
   const xi=lu.startXI||[]; const rows={};
   xi.forEach(it=>{ const pl=it.player||it; const g=String(pl.grid||'1:1').split(':'); const r=+g[0]||1; (rows[r]=rows[r]||[]).push(pl); });
   const lines=Object.keys(rows).sort((x,y)=>x-y).map(r=>{
     const pls=rows[r].sort((x,y)=>(+String(x.grid||'0:0').split(':')[1])-(+String(y.grid||'0:0').split(':')[1]))
-      .map(pl=>`<div class="pl"><div class="num">${pl.number??''}</div><div class="pn">${esc(lastName(pl.name))}</div></div>`).join('');
+      .map(pl=>{
+        const photo=pmap[pl.id];
+        const bubble = photo
+          ? `<div class="ph" style="background-image:url('${esc(photo)}')"><span class="nb">${pl.number??''}</span></div>`
+          : `<div class="num">${pl.number??''}</div>`;
+        return `<div class="pl">${bubble}<div class="pn">${esc(lastName(pl.name))}</div></div>`;
+      }).join('');
     return `<div class="row-line">${pls}</div>`;
   }).join('');
   const subs=(lu.substitutes||[]).map(it=>{const pl=it.player||it; return `${pl.number??''} ${esc(lastName(pl.name))}`;}).join(' · ');
-  return `<div class="pitch"><div class="formation">${esc(T(lu.team?.name||''))} · ${esc(lu.formation||'')}</div>${lines||'<div style="text-align:center;color:rgba(255,255,255,.7);font-size:12px;padding:8px">Alineación no disponible</div>'}</div><div class="subs"><h4>Suplentes — ${esc(T(lu.team?.name||''))}</h4><div>${subs||'—'}</div></div>`;
+  const coach = lu.coach&&lu.coach.name ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">🧑‍💼 ${esc(lu.coach.name)}</div>` : '';
+  return `<div class="pitch"><div class="formation">${esc(T(lu.team?.name||''))} · ${esc(lu.formation||'')}</div>${lines||'<div style="text-align:center;color:rgba(255,255,255,.7);font-size:12px;padding:8px">Alineación no disponible</div>'}</div><div class="subs"><h4>Suplentes — ${esc(T(lu.team?.name||''))}</h4><div>${subs||'—'}</div>${coach}</div>`;
 }
-function lineupHtml(lineups){
+function lineupHtml(lineups, pmap){
   if(!lineups||!lineups.length) return '<div class="empty">Las alineaciones se publican ~1 h antes del partido.</div>';
-  return pitchHtml(lineups[0])+(lineups[1]?pitchHtml(lineups[1]):'');
+  return pitchHtml(lineups[0], pmap)+(lineups[1]?pitchHtml(lineups[1], pmap):'');
 }
 function infoHtml(f){
   const v=f.fixture?.venue||{}, d=new Date(f.fixture?.date);
@@ -733,7 +747,7 @@ function renderDetailBody(){
   const D=DETAIL_DATA; if(!D){ body.innerHTML='<div class="empty">Cargando…</div>'; return; }
   const homeId=D.f&&D.f.teams&&D.f.teams.home&&D.f.teams.home.id;
   if(DETAIL_TAB==='ev') body.innerHTML=evHtml(D.events, homeId, D.f);
-  else if(DETAIL_TAB==='al') body.innerHTML=lineupHtml(D.lineups);
+  else if(DETAIL_TAB==='al') body.innerHTML=lineupHtml(D.lineups, photoMapOf(D.players));
   else if(DETAIL_TAB==='st') body.innerHTML=statHtml(D.stats);
   else if(DETAIL_TAB==='pl') body.innerHTML=playersHtml(D.players, homeId);
   else if(DETAIL_TAB==='h2h') body.innerHTML=h2hHtml(D.h2h, D.f);
@@ -761,7 +775,7 @@ async function loadDetail(){
     renderDetailShell();
     const live=f&&LIVE_ST.has(f.fixture?.status?.short);
     if(DETAIL_POLL){clearInterval(DETAIL_POLL);DETAIL_POLL=null;}
-    if(live) DETAIL_POLL=setInterval(loadDetail,60000);
+    if(live) DETAIL_POLL=setInterval(loadDetail,30000);
   }catch(e){ console.error('detail',e); }
 }
 function openMatch(id){

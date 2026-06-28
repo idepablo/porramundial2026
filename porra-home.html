@@ -155,7 +155,7 @@ table{max-width:100%}
   </div>
   <div style="margin:-14px 0 26px"><a href="porra-mypredictions.html" style="color:var(--gold);font-size:13px;text-decoration:none">Ver predicciones diarias →</a></div>
 
-  <div class="section-title">Estadística general de hoy</div>
+  <div class="section-title" id="quini-title">Estadística general de hoy</div>
   <div class="lb-box" id="quini-box"><div class="empty">Cargando…</div></div>
 
   <div class="section-title">Puntos del día</div>
@@ -166,6 +166,9 @@ table{max-width:100%}
 
   <div class="section-title">Próximos partidos</div>
   <div class="lb-box" id="next-box"><div class="empty">Cargando…</div></div>
+
+  <div class="section-title" id="pichi-title" style="display:none">👟 Bota de Oro · Pichichi</div>
+  <div class="lb-box" id="pichi-box" style="display:none"></div>
 
   <div class="section-title">Top 3</div>
   <div class="lb-box" id="lb-box"><div class="empty">Cargando…</div></div>
@@ -296,8 +299,41 @@ async function loadNextMatches(){
 }
 
 // ── La quiniela de hoy: consenso del grupo (1·X·2 + marcador más repetido) ──
+// Incluye partidos de grupo Y de eliminatoria. Si hoy no hay partidos, oculta
+// toda la sección (título incluido) en lugar de dejar un bloque vacío arriba.
+function _koPhaseEs(p){ return ({r32:'Dieciseisavos',r16:'Octavos',qf:'Cuartos',sf:'Semifinal',final:'Final'})[p]||'Eliminatorias'; }
+// ── Pichichi (Top-3 goleadores) en el home · se oculta si no hay datos/clave ──
+async function loadHomePichichi(){
+  const box=document.getElementById('pichi-box'), title=document.getElementById('pichi-title');
+  if(!box) return;
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  try{
+    const sb=getSB(); let key='';
+    try{ const {data}=await sb.from('settings').select('value').eq('key','apifootball_key').maybeSingle(); key=(data&&data.value)||''; }catch(e){}
+    if(!key) return;
+    const r=await fetch('https://v3.football.api-sports.io/players/topscorers?league=1&season=2026',{headers:{'x-apisports-key':key}});
+    const j=await r.json(); const top=((j&&j.response)||[]).slice(0,3);
+    if(!top.length) return;
+    const rows=top.map((e,i)=>{
+      const p=e.player||{}, s=(e.statistics&&e.statistics[0])||{};
+      const goals=(s.goals&&s.goals.total)||0;
+      const photo=p.photo?`<div style="width:34px;height:34px;border-radius:50%;background:url('${esc(p.photo)}') center top/cover,var(--bg3);flex-shrink:0;border:1px solid var(--border)"></div>`:'<div style="width:34px;height:34px;flex-shrink:0"></div>';
+      return `<div class="lb-row" style="align-items:center;gap:10px">
+        <span class="lb-rank" style="color:var(--gold)">${i+1}</span>${photo}
+        <span style="flex:1;font-size:14px">${esc(teamES(p.name)||p.name||'?')}<div style="color:var(--muted);font-size:11px">${esc(teamES((s.team&&s.team.name)||''))}</div></span>
+        <span class="lb-pts"><b style="color:var(--gold)">${goals}</b> G</span>
+      </div>`;
+    }).join('');
+    box.innerHTML=`<div style="padding:4px 0">${rows}<div style="font-size:11px;color:var(--muted);padding:9px 16px 2px"><a href="porra-live.html" style="color:var(--gold)">Ver Bota de Oro completa →</a></div></div>`;
+    box.style.display=''; if(title) title.style.display='';
+  }catch(e){ /* se queda oculto */ }
+}
+
 async function loadHomeQuiniela(){
-  const box=document.getElementById('quini-box'); if(!box) return;
+  const box=document.getElementById('quini-box'), title=document.getElementById('quini-title');
+  if(!box) return;
+  const hide=()=>{ box.style.display='none'; if(title) title.style.display='none'; };
+  const show=()=>{ box.style.display=''; if(title) title.style.display=''; };
   try{
     const sb=getSB();
     const [{ data: matches }, allPreds] = await Promise.all([
@@ -305,24 +341,34 @@ async function loadHomeQuiniela(){
       fetchAll('predictions','match_id,predicted_home,predicted_away'),
     ]);
     const todayK=mdk(new Date().toISOString());
-    const todays=(matches||[]).filter(m=>m.phase==='group' && mdk(m.kickoff)===todayK).sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
-    if(!todays.length){ box.innerHTML='<div class="empty">Hoy no hay partidos. Las predicciones del grupo aparecen los días de partido.</div>'; return; }
-    const byMatch={}; (allPreds||[]).forEach(p=>{ (byMatch[p.match_id]=byMatch[p.match_id]||[]).push(p); });
+    const todays=(matches||[]).filter(m=>mdk(m.kickoff)===todayK).sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
+    if(!todays.length){ hide(); return; }
+    let koAll=[];
+    if(todays.some(m=>m.phase!=='group')){
+      try{ koAll=await fetchAll('ko_predictions','home_team,away_team,pred_home,pred_away'); }catch(e){}
+    }
+    const byMatch={}; (allPreds||[]).forEach(p=>{ (byMatch[p.match_id]=byMatch[p.match_id]||[]).push([p.predicted_home,p.predicted_away]); });
     const pct=(n,t)=> t? Math.round(n*100/t):0;
     const rows=todays.map(m=>{
-      const ps=byMatch[m.id]||[]; const tot=ps.length; let one=0,x=0,two=0; const sc={};
-      ps.forEach(p=>{ const h=p.predicted_home,a=p.predicted_away; if(h==null||a==null) return; if(h>a)one++; else if(h<a)two++; else x++; const k=h+'-'+a; sc[k]=(sc[k]||0)+1; });
+      const pool = m.phase==='group'
+        ? (byMatch[m.id]||[])
+        : koAll.filter(k=>k.home_team===m.home_team&&k.away_team===m.away_team).map(k=>[k.pred_home,k.pred_away]);
+      let one=0,x=0,two=0; const sc={};
+      pool.forEach(([h,a])=>{ if(h==null||a==null) return; if(h>a)one++; else if(h<a)two++; else x++; const k=h+'-'+a; sc[k]=(sc[k]||0)+1; });
+      const tot=one+x+two;
       const top=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
       const es=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
       const et=new Date(m.kickoff).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'});
+      const phaseLbl = m.phase==='group' ? ('Grupo '+(m.group_letter||'')) : _koPhaseEs(m.phase);
       return `<div class="match-row">
-        <div><div class="match-teams">${teamES(m.home_team)} <span style="color:var(--muted)">vs</span> ${teamES(m.away_team)}</div><div class="match-time">${es} ES · ${et} ET · Grupo ${m.group_letter||''}</div></div>
+        <div><div class="match-teams">${teamES(m.home_team)} <span style="color:var(--muted)">vs</span> ${teamES(m.away_team)}</div><div class="match-time">${es} ES · ${et} ET · ${phaseLbl}</div></div>
         <div class="sign"><div class="s"><span class="lbl">1</span><span class="v">${pct(one,tot)}%</span></div><div class="s"><span class="lbl">X</span><span class="v">${pct(x,tot)}%</span></div><div class="s"><span class="lbl">2</span><span class="v">${pct(two,tot)}%</span></div></div>
         ${top?`<span class="chip gold">Más repetido: ${top[0]} (${top[1]})</span>`:'<span class="chip">Sin predicciones</span>'}
       </div>`;
     }).join('');
+    show();
     box.innerHTML=`<div style="padding:6px 16px">${rows}<div style="font-size:11px;color:var(--muted);padding:10px 0 2px"><a href="porra-stats.html" style="color:var(--gold)">Ver estadísticas completas →</a></div></div>`;
-  }catch(e){ box.innerHTML='<div class="empty">No se pudo cargar.</div>'; }
+  }catch(e){ hide(); }
 }
 
 async function loadDailyPoints(user){
@@ -436,6 +482,7 @@ async function loadHome() {
   loadDailyRecap();
   loadNextMatches();
   loadHomeQuiniela();
+  loadHomePichichi();
   loadLiveButton();
 
   await initNav();
