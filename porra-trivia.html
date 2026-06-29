@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="preconnect" href="https://hpxqhhgpfadnsikqjnst.supabase.co" crossorigin>
+<meta charset="UTF-8">
+  <script>(function(){try{var p=localStorage.getItem("pm-theme")||"auto";if(p==="light"||(p==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches))document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+  <link rel="stylesheet" href="theme-light.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Mundial — Reto diario</title>
+<link rel="icon" type="image/png" href="ball.png">
+<link rel="apple-touch-icon" href="ball.png">
+<link rel="stylesheet" href="fonts.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07070f; --bg2: #0e0e1c; --bg3: #151523;
+  --text: #eeeef8; --muted: rgba(238,238,248,0.5); --border: rgba(255,255,255,0.08);
+  --red: #C8102E; --gold: #FFD700; --green: #006847;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 56px;
+  background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 10px; }
+.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--red), var(--gold), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all 0.15s; }
+.nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); border-color: var(--border); }
+#nav-auth { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.wrap { max-width: 560px; margin: 0 auto; padding: 22px 16px 60px; }
+.page-head h1 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; font-weight: 400; }
+.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 18px; }
+.empty { padding: 22px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.t-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.t-time { font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px; }
+.t-sc { font-size:13px; color:var(--muted); }
+.t-sc b { color:var(--gold); }
+.t-bar { height:6px; border-radius:3px; background:var(--bg3); overflow:hidden; margin-bottom:16px; }
+.t-bar i { display:block; height:100%; background:var(--green); width:100%; transition:width .1s linear; }
+.t-prog { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.t-q { font-size:18px; font-weight:700; line-height:1.4; margin-bottom:16px; }
+.t-opt { display:block; width:100%; text-align:left; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:13px 14px; font-size:15px; color:var(--text); margin-bottom:9px; cursor:pointer; font-family:inherit; transition:border-color .12s; }
+.t-opt:hover { border-color:rgba(255,255,255,.25); }
+.t-opt.ok { background:rgba(34,197,94,.16); border-color:rgba(34,197,94,.5); color:#bbf7d0; }
+.t-opt.no { background:rgba(200,16,46,.16); border-color:rgba(200,16,46,.55); color:#fda4af; }
+.t-pass { width:100%; background:transparent; border:1px solid var(--border); border-radius:10px; padding:11px; font-size:13px; color:var(--muted); cursor:pointer; margin-top:4px; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:6px; }
+.t-btn { width:100%; background:var(--red); color:#fff; border:none; border-radius:10px; padding:14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; }
+.t-big { text-align:center; margin-bottom:8px; }
+.t-big .v { font-family:'Bebas Neue',sans-serif; font-size:54px; color:var(--gold); line-height:1; }
+.t-big .l { font-size:13px; color:var(--muted); }
+.lb-tabs { display:flex; gap:6px; justify-content:center; margin:16px 0 12px; }
+.lb-tabs button { font-family:inherit; font-size:12.5px; font-weight:700; color:var(--muted); background:transparent; border:1px solid var(--border); border-radius:20px; padding:5px 14px; cursor:pointer; }
+.lb-tabs button.on { color:var(--text); background:rgba(255,215,0,.14); border-color:rgba(255,215,0,.35); }
+.lb-row { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--border); font-size:14px; }
+.lb-row:last-child { border-bottom:none; }
+.lb-row.me { background:rgba(255,215,0,.10); margin:0 -8px; padding:9px 12px; border-radius:8px; border-bottom:none; }
+.lb-row .rk { width:22px; text-align:center; color:var(--muted); font-family:'Bebas Neue',sans-serif; font-size:17px; }
+.lb-row.top1 .rk { color:var(--gold); }
+.lb-row .nm { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-row .pt { font-weight:700; color:var(--gold); }
+@media (max-width:600px){ .nav-tabs{ font-size:12px; gap:2px;} .nav-tab{ padding:6px 9px;} }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="porra-home.html" style="text-decoration:none">Porra Mundial 2026</a>
+  <div class="nav-tabs">
+    <a class="nav-tab" href="porra-home.html">Inicio</a>
+    <a class="nav-tab" href="porra-groups-bracket-daily.html">Resultados</a>
+    <a class="nav-tab" href="porra-leaderboard.html">Clasificación</a>
+    <a class="nav-tab" href="porra-mypredictions.html">Predicciones</a>
+    <a class="nav-tab" href="porra-stats.html">Estadísticas</a>
+    <a class="nav-tab" href="porra-logros.html">Logros</a>
+    <a class="nav-tab" href="porra-desglose.html">Mis Puntos</a>
+    <a class="nav-tab" href="porra-live.html">En directo</a>
+    <a class="nav-tab active" href="porra-trivia.html">Trivia</a>
+  </div>
+  <div id="nav-auth"></div>
+</nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>Trivia Mundial</h1></div>
+  <div class="sub">Reto diario · mismas preguntas para todos · una vez al día</div>
+  <div class="card" id="screen"><div class="empty">Cargando…</div></div>
+</div>
+
+<script src="supabase-js.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+(function(){
+  // ── Banco de preguntas (todas valen 1 punto) ──────────────────────────────
+  var BANK=[
+   ['¿Qué país ganó el Mundial de 2022?','Argentina',['Francia','Brasil','Alemania']],
+   ['¿Qué país ganó el Mundial de 2010?','España',['Países Bajos','Alemania','Brasil']],
+   ['¿Dónde se celebró el Mundial de 2014?','Brasil',['Sudáfrica','Rusia','Argentina']],
+   ['¿Qué selección ha ganado más Mundiales?','Brasil',['Alemania','Italia','Argentina']],
+   ['¿Quién ganó el Mundial de 2018?','Francia',['Croacia','Bélgica','Inglaterra']],
+   ['¿En qué país se jugó el Mundial de 2022?','Catar',['Arabia Saudí','Emiratos Árabes Unidos','Kuwait']],
+   ['¿Cada cuántos años se celebra el Mundial?','4 años',['2 años','3 años','5 años']],
+   ['¿De qué país es Lionel Messi?','Argentina',['Brasil','Uruguay','España']],
+   ['¿De qué país es Cristiano Ronaldo?','Portugal',['España','Brasil','Francia']],
+   ['¿Qué tarjeta significa expulsión?','Roja',['Amarilla','Verde','Azul']],
+   ['¿Cuántos jugadores hay por equipo en el campo?','11',['10','12','9']],
+   ['¿Quién ganó el Mundial de 2006?','Italia',['Francia','Alemania','Brasil']],
+   ['¿Qué país ganó el Mundial de 1998?','Francia',['Brasil','Italia','Argentina']],
+   ['¿En qué continente se jugó el Mundial de 2010?','África',['Europa','Asia','América']],
+   ['¿De qué país es Kylian Mbappé?','Francia',['Bélgica','Argelia','Camerún']],
+   ['¿De qué país es Neymar?','Brasil',['Portugal','Argentina','Colombia']],
+   ['¿En qué país se jugó el Mundial de 2018?','Rusia',['Polonia','Ucrania','Alemania']],
+   ['¿Quién ganó el Balón de Oro (mejor jugador) del Mundial 2022?','Lionel Messi',['Kylian Mbappé','Luka Modrić','Neymar']],
+   ['¿Quién fue la Bota de Oro del Mundial 2022?','Kylian Mbappé',['Lionel Messi','Julián Álvarez','Olivier Giroud']],
+   ['¿Qué país ganó el primer Mundial, en 1930?','Uruguay',['Argentina','Brasil','Italia']],
+   ['¿Dónde se celebró el primer Mundial (1930)?','Uruguay',['Brasil','Italia','Francia']],
+   ['¿Quién marcó la "Mano de Dios"?','Diego Maradona',['Pelé','Lionel Messi','Gabriel Batistuta']],
+   ['¿Contra qué país jugó España la final del Mundial 2010?','Países Bajos',['Alemania','Italia','Brasil']],
+   ['¿Quién marcó el gol de la final del Mundial 2010 para España?','Andrés Iniesta',['David Villa','Xavi','Fernando Torres']],
+   ['¿Qué país fue subcampeón del Mundial 2014?','Argentina',['Alemania','Países Bajos','Brasil']],
+   ['¿Qué país organizó el Mundial de 2006?','Alemania',['Francia','Italia','Suiza']],
+   ['¿Quién ganó la Bota de Oro del Mundial 2018?','Harry Kane',['Kylian Mbappé','Antoine Griezmann','Cristiano Ronaldo']],
+   ['¿De qué país era Pelé?','Brasil',['Argentina','Portugal','Uruguay']],
+   ['¿Cuántos Mundiales ganó Brasil?','5',['4','3','6']],
+   ['¿Qué club ha ganado más Copas de Europa / Champions?','Real Madrid',['Barcelona','Bayern de Múnich','Milan']],
+   ['¿Qué selección ganó la Eurocopa de 2021?','Italia',['Inglaterra','España','Francia']],
+   ['¿Qué país ganó el Mundial de 2002?','Brasil',['Alemania','Corea del Sur','Italia']],
+   ['¿Qué dos países organizaron el Mundial de 2002?','Corea del Sur y Japón',['Japón y China','Corea del Sur y China','Japón y Tailandia']],
+   ['¿En qué año ganó España su único Mundial?','2010',['2008','2012','2006']],
+   ['¿Qué país acabó tercero en el Mundial de 2022?','Croacia',['Marruecos','Francia','Argentina']],
+   ['¿Qué selección africana llegó a semifinales en 2022?','Marruecos',['Senegal','Camerún','Ghana']],
+   ['¿Quién ganó el Mundial de 1986?','Argentina',['Alemania','Brasil','Italia']],
+   ['¿Quién ganó el Mundial de 1994?','Brasil',['Italia','Argentina','Alemania']],
+   ['¿Qué país perdió la final del Mundial 2018?','Croacia',['Bélgica','Inglaterra','Francia']],
+   ['¿Qué jugador ha ganado más Balones de Oro en la historia?','Lionel Messi',['Cristiano Ronaldo','Michel Platini','Johan Cruyff']],
+   ['¿Quién ganó la Bota de Oro del Mundial 2014?','James Rodríguez',['Thomas Müller','Lionel Messi','Neymar']],
+   ['¿Quién es el máximo goleador histórico de los Mundiales?','Miroslav Klose',['Ronaldo Nazário','Gerd Müller','Just Fontaine']],
+   ['¿Cuál fue el resultado de la semifinal Brasil-Alemania en 2014?','7-1',['5-2','4-0','6-1']],
+   ['¿Qué país ganó el Mundial de 1966?','Inglaterra',['Alemania','Brasil','Argentina']],
+   ['¿En qué Mundial se usó por primera vez el VAR?','2018',['2014','2022','2010']],
+   ['¿Quién fue el portero campeón del mundo con Italia en 2006?','Gianluigi Buffon',['Gianluigi Donnarumma','Dino Zoff','Walter Zenga']],
+   ['¿Cuántos goles marcó Just Fontaine en el Mundial de 1958 (récord)?','13',['11','9','15']],
+   ['¿Quién marcó un hat-trick en la final del Mundial de 1966?','Geoff Hurst',['Bobby Charlton','Pelé','Eusébio']],
+   ['¿Qué país ganó el Mundial de 1970?','Brasil',['Italia','Alemania','Uruguay']],
+   ['¿Qué país fue sede del Mundial de 1994?','Estados Unidos',['México','Brasil','Francia']],
+   ['¿Qué jugador italiano falló el último penalti en la final de 1994?','Roberto Baggio',['Franco Baresi','Paolo Maldini','Dino Baggio']],
+   ['¿Quién ganó el premio al mejor jugador joven del Mundial 2018?','Kylian Mbappé',['Luka Modrić','Harry Kane','Eden Hazard']],
+   ['¿En qué Mundial participaron 32 equipos por primera vez?','1998',['1994','2002','1990']],
+   ['¿Quién fue el máximo goleador del Mundial de 1986?','Gary Lineker',['Diego Maradona','Careca','Emilio Butragueño']],
+   ['¿Qué selección eliminó a Brasil en cuartos del Mundial 2022?','Croacia',['Países Bajos','Argentina','Marruecos']],
+   ['¿Qué selección eliminó a España en octavos del Mundial 2022?','Marruecos',['Japón','Croacia','Portugal']],
+   ['¿Quién marcó el gol más rápido en la historia de los Mundiales?','Hakan Şükür',['Pelé','Gerd Müller','Vavá']],
+   ['¿Qué país ganó el Mundial de 1974?','Alemania',['Países Bajos','Brasil','Italia']],
+   ['¿Qué país ganó el Mundial de 1978?','Argentina',['Países Bajos','Brasil','Alemania']],
+   ['¿Qué país ganó el Mundial de 1982?','Italia',['Alemania','Brasil','Polonia']],
+   ['¿Qué país ganó el Mundial de 1990?','Alemania',['Argentina','Italia','Inglaterra']],
+   ['¿En qué país se jugó el Mundial de 1986?','México',['Argentina','Estados Unidos','Colombia']],
+   ['¿En qué país se jugó el Mundial de 1982?','España',['Italia','Francia','Portugal']],
+   ['¿Quién marcó el gol del título para Alemania en la final de 2014?','Mario Götze',['Thomas Müller','Miroslav Klose','André Schürrle']],
+   ['¿Quién ganó el Balón de Oro (mejor jugador) del Mundial 2010?','Diego Forlán',['Andrés Iniesta','Wesley Sneijder','David Villa']],
+   ['¿Quién ganó la Bota de Oro del Mundial 2010?','Thomas Müller',['David Villa','Diego Forlán','Wesley Sneijder']],
+   ['¿Quién ganó el Balón de Oro (mejor jugador) del Mundial 2018?','Luka Modrić',['Kylian Mbappé','Antoine Griezmann','Harry Kane']],
+   ['¿Cuántas veces ha sido campeón del mundo Italia?','4',['3','2','5']],
+   ['¿Cuántas veces ha sido campeón del mundo Alemania?','4',['3','5','2']],
+   ['¿Cuántas veces ha sido campeona del mundo Argentina?','3',['2','4','1']],
+   ['¿Qué selección sorprendió eliminando a Alemania en la fase de grupos de 2018?','Corea del Sur',['México','Suecia','Japón']],
+   ['¿Cómo se apoda a la selección de Italia?','La Azzurra',['Les Bleus','La Celeste','La Albiceleste']],
+   ['¿Cómo se apoda a la selección de Francia?','Les Bleus',['La Azzurra','A Seleção','La Celeste']],
+   ['¿Cómo se apoda a la selección de Uruguay?','La Celeste',['La Albiceleste','La Roja','A Seleção']],
+   ['¿Qué jugador es apodado "El Pibe de Oro"?','Diego Maradona',['Lionel Messi','Pelé','Alfredo Di Stéfano']],
+   ['¿En qué club europeo jugó Messi la mayor parte de su carrera?','Barcelona',['Real Madrid','PSG','Manchester City']],
+   ['¿Con qué club ganó Cristiano Ronaldo cuatro Champions en cinco años?','Real Madrid',['Manchester United','Juventus','Sporting']],
+   ['¿Qué país ganó la Copa América 2021?','Argentina',['Brasil','Uruguay','Chile']],
+   ['¿Cuántas selecciones jugarán el Mundial 2026?','48',['32','40','64']],
+   ['¿Qué tres países organizan el Mundial 2026?','Estados Unidos, México y Canadá',['Estados Unidos y México','México y Canadá','Solo Estados Unidos']],
+   ['¿Qué selección ganó la Eurocopa de 2008 y la de 2012?','España',['Alemania','Italia','Francia']],
+   ['¿Qué país ganó el Mundial femenino de 2023?','España',['Inglaterra','Estados Unidos','Suecia']],
+   ['¿En qué ciudad está el estadio Maracaná?','Río de Janeiro',['São Paulo','Buenos Aires','Lisboa']],
+   ['¿Quién ganó el Guante de Oro (mejor portero) del Mundial 2014?','Manuel Neuer',['Sergio Romero','Keylor Navas','Tim Howard']],
+   ['¿Qué jugador holandés da nombre al regate "Cruyff turn"?','Johan Cruyff',['Marco van Basten','Dennis Bergkamp','Ruud Gullit']],
+   ['¿Qué país albergó el Mundial de 1970?','México',['Brasil','Argentina','Estados Unidos']],
+   ['¿Qué país albergó el Mundial de 1990?','Italia',['España','Alemania','Francia']],
+   ['¿Quién ganó el Balón de Oro de France Football en 2018?','Luka Modrić',['Cristiano Ronaldo','Lionel Messi','Mohamed Salah']]
+  ];
+  var N=12, DUR=60;
+
+  // ── PRNG determinista por día (mismas preguntas para todos) ───────────────
+  function hashStr(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function sShuffle(arr,seed){ var r=mulberry32(seed), a=arr.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);}); }
+  function dayKey(){ try{ return window.matchDateKey ? window.matchDateKey(new Date().toISOString()) : new Date().toISOString().slice(0,10); }catch(e){ return new Date().toISOString().slice(0,10); } }
+  function dailySet(day){
+    var seed=hashStr('porra-trivia-'+day);
+    return sShuffle(BANK, seed).slice(0,N).map(function(item){
+      return { q:item[0], ok:item[1], opts:sShuffle([item[1]].concat(item[2]), seed ^ hashStr(item[0])) };
+    });
+  }
+  function pname(p){ if(!p) return 'Jugador'; return p.alias || [p.first_name,p.last_name].filter(Boolean).join(' ') || 'Jugador'; }
+
+  var screen=document.getElementById('screen');
+  var DAY=dayKey(), QS=dailySet(DAY), ME=null, PROFILE=null;
+  var qi=0, score=0, answered=0, timeLeft=DUR, timer=null, lock=false, startedAt=0, LB_VIEW='hoy';
+
+  async function init(){
+    try{ ME=(typeof getCurrentUser==='function')?await getCurrentUser():null; }catch(e){}
+    if(!ME){
+      screen.innerHTML='<div class="empty">Inicia sesión para jugar la Trivia diaria y aparecer en la clasificación.<br><br><a href="porra-login.html" style="color:var(--gold);font-weight:700">Iniciar sesión →</a></div>';
+      return;
+    }
+    try{ PROFILE=(typeof getUserProfile==='function')?await getUserProfile(ME.id):null; }catch(e){}
+    var existing=null;
+    try{ var r=await getSB().from('trivia_results').select('score,answered').eq('user_id',ME.id).eq('day',DAY).maybeSingle(); existing=r.data; }catch(e){}
+    if(existing){ score=existing.score; answered=existing.answered||0; await showEnd(true); }
+    else showStart();
+  }
+
+  function showStart(){
+    screen.innerHTML=''+
+      '<div style="text-align:center;padding:6px 4px">'+
+        '<div style="font-size:15px;color:var(--muted);margin-bottom:6px">Reto de hoy</div>'+
+        '<div style="font-size:17px;font-weight:700;margin-bottom:4px">'+N+' preguntas · 60 segundos</div>'+
+        '<div style="font-size:13px;color:var(--muted);margin-bottom:16px">Cada acierto suma 1 punto. Solo se juega una vez al día.</div>'+
+        '<button class="t-btn" id="go">Empezar</button>'+
+      '</div>';
+    document.getElementById('go').onclick=begin;
+  }
+
+  function begin(){
+    qi=0; score=0; answered=0; timeLeft=DUR; lock=false; startedAt=Date.now();
+    renderPlay(); render();
+    timer=setInterval(function(){ timeLeft-=0.1; if(timeLeft<=0){ timeLeft=0; tick(); finish(); } else tick(); },100);
+  }
+  function renderPlay(){
+    screen.innerHTML=''+
+      '<div class="t-top"><span class="t-time"><span id="secs">60</span>s</span><span class="t-sc">Aciertos: <b id="pts">0</b></span></div>'+
+      '<div class="t-bar"><i id="bar"></i></div>'+
+      '<div class="t-prog" id="prog"></div>'+
+      '<div class="t-q" id="q"></div>'+
+      '<div id="opts"></div>'+
+      '<button class="t-pass" id="passBtn">Pasar</button>';
+    document.getElementById('passBtn').onclick=pass;
+  }
+  function tick(){
+    var s=document.getElementById('secs'); if(s) s.textContent=Math.ceil(timeLeft);
+    var bar=document.getElementById('bar'); if(bar){ bar.style.width=Math.max(0,timeLeft/DUR*100)+'%'; bar.style.background=timeLeft<10?'var(--red)':'var(--green)'; }
+  }
+  function render(){
+    if(qi>=QS.length){ finish(); return; }
+    lock=false;
+    var item=QS[qi];
+    document.getElementById('prog').textContent='Pregunta '+(qi+1)+' de '+QS.length;
+    document.getElementById('q').textContent=item.q;
+    var box=document.getElementById('opts'); box.innerHTML='';
+    item.opts.forEach(function(o){
+      var b=document.createElement('button'); b.className='t-opt'; b.textContent=o;
+      b.onclick=function(){ answer(b,o,item); };
+      box.appendChild(b);
+    });
+  }
+  function answer(btn,choice,item){
+    if(lock) return; lock=true; answered++;
+    var all=document.querySelectorAll('#opts .t-opt');
+    all.forEach(function(b){ b.disabled=true; if(b.textContent===item.ok) b.classList.add('ok'); });
+    if(choice===item.ok){ score++; document.getElementById('pts').textContent=score; }
+    else btn.classList.add('no');
+    setTimeout(function(){ qi++; if(timeLeft>0 && qi<QS.length) render(); else finish(); },650);
+  }
+  function pass(){ if(lock) return; qi++; if(qi<QS.length) render(); else finish(); }
+
+  var finished=false;
+  async function finish(){
+    if(finished) return; finished=true;
+    clearInterval(timer);
+    try{
+      await getSB().from('trivia_results').upsert(
+        { user_id:ME.id, day:DAY, score:score, answered:answered, duration_ms:(Date.now()-startedAt) },
+        { onConflict:'user_id,day', ignoreDuplicates:true });
+    }catch(e){ console.error('save trivia',e); }
+    await showEnd(false);
+  }
+
+  async function showEnd(already){
+    screen.innerHTML=''+
+      '<div class="t-big"><div class="v">'+score+'</div><div class="l">'+(already?'tu resultado de hoy':'aciertos de '+answered+' respondidas')+'</div></div>'+
+      (already?'<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:6px">Ya jugaste hoy · vuelve mañana para un nuevo reto</div>':'')+
+      '<div class="lb-tabs"><button data-v="hoy" class="on" onclick="__lb(\'hoy\')">Hoy</button><button data-v="gen" onclick="__lb(\'gen\')">General</button></div>'+
+      '<div id="board"><div class="empty">Cargando clasificación…</div></div>';
+    LB_VIEW='hoy'; renderBoard();
+  }
+
+  async function renderBoard(){
+    var board=document.getElementById('board'); if(!board) return;
+    board.innerHTML='<div class="empty">Cargando…</div>';
+    try{
+      var rows;
+      if(LB_VIEW==='hoy'){
+        var r=await getSB().from('trivia_results')
+          .select('user_id,score,answered,created_at,users(first_name,last_name,alias)')
+          .eq('day',DAY).order('score',{ascending:false}).order('created_at',{ascending:true}).limit(50);
+        rows=(r.data||[]).map(function(x){ return { uid:x.user_id, name:pname(x.users), score:x.score }; });
+      } else {
+        var all=(typeof fetchAll==='function') ? await fetchAll('trivia_results','user_id,score') : (await getSB().from('trivia_results').select('user_id,score')).data;
+        var sum={}; (all||[]).forEach(function(x){ sum[x.user_id]=(sum[x.user_id]||0)+(x.score||0); });
+        var us=(await getSB().from('users').select('id,first_name,last_name,alias')).data||[];
+        var nm={}; us.forEach(function(u){ nm[u.id]=pname(u); });
+        rows=Object.keys(sum).map(function(uid){ return { uid:uid, name:nm[uid]||'Jugador', score:sum[uid] }; })
+          .sort(function(a,b){ return b.score-a.score; }).slice(0,50);
+      }
+      if(!rows.length){ board.innerHTML='<div class="empty">Aún no hay resultados. ¡Sé el primero!</div>'; return; }
+      board.innerHTML=rows.map(function(r,i){
+        var me=ME&&r.uid===ME.id;
+        return '<div class="lb-row'+(i===0?' top1':'')+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(r.name)+(me?' (tú)':'')+'</span><span class="pt">'+r.score+'</span></div>';
+      }).join('');
+    }catch(e){ console.error('board',e); board.innerHTML='<div class="empty">No se pudo cargar la clasificación.</div>'; }
+  }
+  window.__lb=function(v){ LB_VIEW=v; document.querySelectorAll('.lb-tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); }); renderBoard(); };
+
+  if(typeof initNav==='function'){ try{ initNav(); }catch(e){} }
+  init();
+})();
+</script>
+</body>
+</html>

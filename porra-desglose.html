@@ -51,6 +51,10 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
 .tag.signo{background:rgba(255,255,255,.08);color:var(--muted)}
 .tag.dif{background:rgba(255,215,0,.13);color:var(--gold)}
 .tag.exacto{background:rgba(34,197,94,.15);color:var(--exact)}
+.ko-round{border:1px solid var(--border);border-radius:10px;margin:10px 0;overflow:hidden}
+.ko-round-h{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:rgba(255,255,255,.03);font-weight:700;font-size:13px}
+.ko-round-pts{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold)}
+.ko-sub{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:9px 12px 3px}
 .empty{color:var(--muted);font-size:12.5px;padding:10px 0}
 @media(max-width:600px){.title{font-size:28px}.wrap{padding:16px 12px 50px}.tot-n{font-size:36px}}
 </style>
@@ -67,6 +71,7 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
     <a class="nav-tab" href="porra-logros.html">Logros</a>
     <a class="nav-tab active" href="porra-desglose.html">Mis Puntos</a>
     <a class="nav-tab" href="porra-live.html">En directo</a>
+    <a class="nav-tab" href="porra-trivia.html">Trivia</a>
   </div>
 <div id="nav-auth"></div>
 </nav>
@@ -174,36 +179,50 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
       if(real.order[2]){ const t=real.order[2]; thirds.push({name:t.name,g,pts:t.pts,gd:t.gf-t.gc,gf:t.gf}); }
     });
     if(groupsDone>=12){ thirds.sort((a,b)=>(b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.name.localeCompare(b.name)); thirds.slice(0,8).forEach(t=>{ qualified[t.name]={g:t.g,pos:3}; }); }
-    let qLines=''; let qCount=0;
-    Object.keys(qualified).forEach(name=>{ if(!r32Pred.has(name)) return; qCount++; const q=qualified[name];
-      qLines+=`<div class="line"><div class="line-main">
-        <div class="line-t">${T(name)} — clasificado a dieciseisavos</div>
-        <div class="line-d">${q.pos}.º Grupo ${q.g}${q.pos===3?' · mejor tercero':''} · lo tenías en tu cuadro</div>
-        </div><div class="line-pts pos">+4</div></div>`;
-    });
-    const qPts=qCount*4;
+    const koList=ko.data||[];
+    const ROUNDS=[
+      {ph:'r32', name:'Dieciseisavos de final', adv:4,  short:'dieciseisavos', bucket:'r32_pts',   prev:null },
+      {ph:'r16', name:'Octavos de final',       adv:6,  short:'octavos',       bucket:'r16_pts',   prev:'r32'},
+      {ph:'qf',  name:'Cuartos de final',       adv:8,  short:'cuartos',       bucket:'qf_pts',    prev:'r16'},
+      {ph:'sf',  name:'Semifinales',            adv:10, short:'semifinales',   bucket:'sf_pts',    prev:'qf' },
+      {ph:'final',name:'Final',                 adv:12, short:'la final',      bucket:'final_pts', prev:'sf' }
+    ];
+    const advancedSet=(prefix)=>{ const s=new Set(); koList.filter(k=>String(k.slot_id||'').startsWith(prefix)).forEach(k=>{ if(k.advanced)s.add(k.advanced); }); return s; };
+    const teamsInRound=(ph)=>{ const s=new Set(); matches.filter(m=>m.phase===ph).forEach(m=>{ if(m.home_team)s.add(m.home_team); if(m.away_team)s.add(m.away_team); }); return s; };
+    const koComps=(ph,a,b,c,d)=>{ const V=(window.PORRA_KOVALS&&window.PORRA_KOVALS[ph])||[1,2,3]; const out=[];
+      if(Math.sign(a-b)===Math.sign(c-d)) out.push(['signo',V[0]]);
+      if((a-b)===(c-d)) out.push(['dif',V[1]]);
+      if(a===c&&b===d) out.push(['exacto',V[2]]); return out; };
 
-    // 3b) Partidos de eliminatoria ya jugados (puntos por marcador)
-    const koMatches=matches.filter(m=>m.phase!=='group'&&m.real_home!=null);
-    let mLines=''; const koList=ko.data||[];
-    koMatches.sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).forEach(m=>{
-      const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team);
-      if(!k) return; const pts=window.matchPoints(m.phase,k.pred_home,k.pred_away,m.real_home,m.real_away);
-      mLines+=`<div class="line"><div class="line-main">
-        <div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div>
-        <div class="line-d">Tu pronóstico: ${k.pred_home}-${k.pred_away}${k.advanced?' · pasabas a '+T(k.advanced):''}</div>
-        </div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`;
+    let koHtml=''; let koClient=0;
+    ROUNDS.forEach(r=>{
+      // (A) Equipos que TÚ clasificaste a esta ronda → +adv c/u
+      let advList=[];
+      if(r.ph==='r32'){ advList=Object.keys(qualified).filter(n=>r32Pred.has(n)).map(n=>({name:n,meta:qualified[n]})); }
+      else { const inR=teamsInRound(r.ph), picks=advancedSet(r.prev); advList=[...inR].filter(n=>picks.has(n)).map(n=>({name:n})); }
+      // (B) Partidos jugados de esta ronda donde acertaste el cruce → marcador
+      const played=matches.filter(m=>m.phase===r.ph&&m.real_home!=null).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+      const mlines=[];
+      played.forEach(m=>{ const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team&&x.pred_home!=null);
+        if(!k) return; const pts=window.matchPoints(r.ph,k.pred_home,k.pred_away,m.real_home,m.real_away); koClient+=pts;
+        const cs=koComps(r.ph,k.pred_home,k.pred_away,m.real_home,m.real_away);
+        const tags=cs.length?cs.map(([kk,vv])=>`<span class="tag ${kk}">+${vv} ${kk}</span>`).join(''):'<span class="tag signo">sin acierto</span>';
+        mlines.push(`<div class="line"><div class="line-main"><div class="line-t">${T(m.home_team)} ${m.real_home}-${m.real_away} ${T(m.away_team)}</div><div class="line-d">Tu pronóstico: ${k.pred_home}-${k.pred_away} ${tags}</div></div><div class="line-pts ${pts>0?'pos':'zero'}">${pts>0?'+'+pts:'0'}</div></div>`);
+      });
+      if(!advList.length && !mlines.length) return;
+      koClient+=advList.length*r.adv;
+      let body='';
+      if(advList.length){
+        body+=`<div class="ko-sub">Clasificados a ${r.short} · +${r.adv} c/u</div>`;
+        advList.forEach(t=>{ const meta=t.meta?`${t.meta.pos}.º Grupo ${t.meta.g}${t.meta.pos===3?', mejor 3.º':''}`:'acertaste que pasaba';
+          body+=`<div class="line"><div class="line-main"><div class="line-t">${T(t.name)}</div><div class="line-d">${meta}</div></div><div class="line-pts pos">+${r.adv}</div></div>`; });
+      }
+      if(mlines.length){ body+=`<div class="ko-sub">Marcadores · signo/dif/exacto</div>`+mlines.join(''); }
+      koHtml+=`<div class="ko-round"><div class="ko-round-h"><span>${r.name}</span><span class="ko-round-pts">+${S[r.bucket]||0}</span></div>${body}</div>`;
     });
-
-    let kLines='';
-    if(qCount>0) kLines+=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 0 2px">Clasificados a dieciseisavos · +4 c/u</div>`+qLines;
-    if(mLines) kLines+=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 0 2px">Partidos de eliminatoria</div>`+mLines;
-    // Aviso si el servidor aún no ha recalculado con el motor nuevo
-    if(qPts>0 && (S.r32_pts||0) < qPts){
-      kLines=`<div class="line"><div class="line-main"><div class="line-d" style="color:var(--warn)">⏳ Estos +${qPts} por clasificación se sumarán a tu total cuando se recalculen las puntuaciones en el servidor.</div></div></div>`+kLines;
-    }
-    if(!kLines) kLines='<div class="empty">Las eliminatorias aún no han empezado.</div>';
-    html+=section('ko','Eliminatorias','Clasificación +4 · marcador KO', koTot, kLines, qCount>0);
+    if(!koHtml) koHtml='<div class="empty">Las eliminatorias aún no han empezado.</div>';
+    else if(koClient>koTot){ koHtml=`<div class="line"><div class="line-main"><div class="line-d" style="color:var(--warn)">⏳ +${koClient-koTot} puntos están recalculándose en el servidor; aparecerán en tu total en breve.</div></div></div>`+koHtml; }
+    html+=section('ko','Eliminatorias — detalle por ronda','Avance: +4 dieciseisavos · +6 octavos · +8 cuartos · +10 semis · +12 final', koTot, koHtml, true);
 
     // ── 4) Honours ──
     const H=hon.data||{}; let hLines='';
