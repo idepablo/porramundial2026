@@ -1139,3 +1139,37 @@ window.matchPoints = function(phase, ph, pa, rh, ra){
 window.matchDateKey = function(iso, tz){
   try{ return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz||'America/Los_Angeles'}); }catch(e){ return ''; }
 };
+
+// ── Promo de la Trivia diaria ─────────────────────────────────────────────
+// Aparece UNA vez al día (por navegador) en las páginas principales, invitando
+// a jugar el reto. No molesta en la propia página de Trivia ni en login/landing,
+// y visitar la Trivia marca el día como "ya avisado".
+function showTriviaPromo(){
+  if(document.getElementById('pm-trivia-promo')) return;
+  var ov=document.createElement('div'); ov.id='pm-trivia-promo';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px';
+  ov.innerHTML='<div style="background:var(--bg2,#0e0e1c);border:1px solid var(--border,rgba(255,255,255,.1));border-radius:16px;max-width:340px;width:100%;padding:24px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">'
+    +'<div style="font-size:36px;margin-bottom:4px">\u26BD</div>'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:25px;letter-spacing:1px;color:var(--text,#fff);margin-bottom:6px">Trivia Mundial diaria</div>'
+    +'<div style="font-size:14px;color:var(--muted,rgba(238,238,248,.6));line-height:1.5;margin-bottom:18px">Juega nuestro quiz diario y demuestra tu conocimiento mundialista. \u00A1Preguntas nuevas cada d\u00EDa!</div>'
+    +'<a href="porra-trivia.html" style="display:block;background:var(--red,#C8102E);color:#fff;text-decoration:none;font-weight:700;font-size:15px;border-radius:10px;padding:12px;margin-bottom:9px">Jugar ahora</a>'
+    +'<button id="pm-trivia-promo-x" style="width:100%;background:transparent;border:none;color:var(--muted,rgba(238,238,248,.5));font-size:13px;cursor:pointer;font-family:inherit;padding:4px">Ahora no</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+  var close=function(){ ov.remove(); };
+  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+  var x=document.getElementById('pm-trivia-promo-x'); if(x) x.addEventListener('click',close);
+}
+function injectTriviaPromo(){
+  try{
+    var path=(location.pathname||'').toLowerCase();
+    var skip=['porra-trivia','porra-login','porra-register','porra-admin','mantenimiento','porra-predict','porra-quiniela','porra-mundial-2026'];
+    if(/(^|\/)index\.html?$/.test(path) || path==='/' || path==='') return;
+    if(skip.some(function(s){ return path.indexOf(s)>=0; })) return;
+    var day=(window.matchDateKey?matchDateKey(new Date().toISOString()):new Date().toISOString().slice(0,10));
+    if(localStorage.getItem('pm-trivia-promo')===day) return;
+    localStorage.setItem('pm-trivia-promo',day); // solo una vez al día
+    setTimeout(showTriviaPromo,1400);
+  }catch(e){}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectTriviaPromo); else injectTriviaPromo();
