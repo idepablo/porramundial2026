@@ -523,7 +523,7 @@ async function loadLive(manual){
     await loadPredData(manual);
     if([...live, ...todayUpcoming].some(f=>{ const m=mapFixture(f); return m && m.phase==='group'; })) await ensureGroupConsensus(manual);
     const recentHtml = recentSection(fixtures);
-    const botaHtml = await botaSection(manual);
+    const botaHtml = await botaSection(manual || live.length>0);
     let html='';
     if(live.length) html += section('En directo', true, live.map(f=>matchRow(f)+predStrip(f,true)).join(''));
     if(todayUpcoming.length) html += section('Próximos partidos', false, todayUpcoming.map(f=>matchRow(f)+predStrip(f,false)).join(''));
@@ -539,10 +539,11 @@ async function loadLive(manual){
     document.getElementById('updated').textContent = `Última actualización: ${hora}` + (live.length?' · en directo':'');
     if(manual) document.getElementById('refresh').textContent='↻ Actualizar';
 
-    // Poll cada 60s solo si hay partidos en directo o próximos pronto
-    const keepPolling = live.length>0 || todayUpcoming.some(f=>new Date(f.fixture.date).getTime()-now < 2*3600000);
+    // Sigue refrescando SIEMPRE: 60s en directo, cada 3 min si no hay nada,
+    // para que un partido que empiece más tarde (y los goleadores) aparezcan
+    // solos, sin tener que recargar la página.
     if(POLL){ clearInterval(POLL); POLL=null; }
-    if(keepPolling) POLL=setInterval(()=>loadLive(false), 60000);
+    POLL=setInterval(()=>loadLive(false), live.length>0 ? 60000 : 180000);
   }catch(e){
     console.error('live', e);
     const dom=/not allowed/i.test(String(e.message));

@@ -377,11 +377,14 @@ async function loadDailyPoints(user){
   const PHASE_MAX = { group:6, r32:13, r16:18, qf:23, sf:28, final:112 };
   try {
     const sb = getSB();
-    const [{ data: matches }, { data: myPreds }] = await Promise.all([
+    const todayK = mdk(new Date().toISOString());
+    const [{ data: matches }, { data: myPreds }, { data: myKo }, scoreRes, snapRes] = await Promise.all([
       sb.from('matches').select('id, home_team, away_team, home_flag, away_flag, kickoff, real_home, real_away, phase'),
       sb.from('predictions').select('match_id, predicted_home, predicted_away').eq('user_id', user.id),
+      sb.from('ko_predictions').select('home_team, away_team, pred_home, pred_away').eq('user_id', user.id),
+      sb.from('scores').select('total').eq('user_id', user.id).maybeSingle(),
+      sb.from('daily_ranks').select('total').eq('user_id', user.id).eq('day', todayK).maybeSingle(),
     ]);
-    const todayK = mdk(new Date().toISOString());
     const isToday = (ts)=> mdk(ts)===todayK;
     const todays = (matches||[]).filter(m=>isToday(m.kickoff))
       .sort((a,b)=> new Date(a.kickoff)-new Date(b.kickoff));
@@ -390,22 +393,32 @@ async function loadDailyPoints(user){
       return;
     }
     const predMap = {}; (myPreds||[]).forEach(p=>predMap[p.match_id]=p);
+    const koMap = {}; (myKo||[]).forEach(k=>koMap[k.home_team+'|'+k.away_team]=k);
+    const hasKP = (typeof window.matchPoints==='function');
     let maxToday = 0, earnedToday = 0;
     const rowsHtml = todays.map(m=>{
       maxToday += PHASE_MAX[m.phase] || 6;
       const played = m.real_home!=null && m.real_away!=null;
-      const p = predMap[m.id];
-      const pts = played ? matchPts(m.real_home,m.real_away, p?p.predicted_home:'', p?p.predicted_away:'') : null;
+      const isG = m.phase==='group';
+      const p = isG ? predMap[m.id] : koMap[m.home_team+'|'+m.away_team];
+      const ph = p ? (isG?p.predicted_home:p.pred_home) : null;
+      const pa = p ? (isG?p.predicted_away:p.pred_away) : null;
+      const pts = (played && ph!=null) ? (hasKP ? window.matchPoints(m.phase, ph, pa, m.real_home, m.real_away) : matchPts(m.real_home,m.real_away,ph,pa)) : null;
       if (pts!=null) earnedToday += pts;
       const score = played ? (m.real_home+'–'+m.real_away) : 'vs';
-      const mine = p ? (' · tu pronóstico '+p.predicted_home+'–'+p.predicted_away) : '';
+      const mine = (ph!=null) ? (' · tu pronóstico '+ph+'–'+pa) : '';
       return `<div class="lb-row">
         <span class="lb-rank">${score}</span>
         <span>${teamES(m.home_team)} <span style="color:var(--muted)">/</span> ${teamES(m.away_team)}<span style="color:var(--muted);font-size:12px">${mine}</span></span>
         <span class="lb-pts">${pts==null?'—':('+'+pts)}</span>
       </div>`;
     }).join('');
-    MY_TODAY = earnedToday;
+    // "Tus puntos hoy" autoritativo: total actual − foto del total al inicio del día.
+    // Así incluye el avance/clasificación de eliminatorias, no solo el marcador.
+    const totalNow = (scoreRes && scoreRes.data) ? scoreRes.data.total : null;
+    const snapTotal = (snapRes && snapRes.data) ? snapRes.data.total : null;
+    const ptsHoy = (totalNow!=null && snapTotal!=null) ? Math.max(0, totalNow - snapTotal) : earnedToday;
+    MY_TODAY = ptsHoy;
     const summary = `<div style="display:flex;gap:10px;margin-bottom:12px">
       <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Máximos hoy</div>
@@ -413,7 +426,7 @@ async function loadDailyPoints(user){
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Tus puntos hoy</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--exact);line-height:1.1">${earnedToday}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--exact);line-height:1.1">+${ptsHoy}</div>
       </div>
     </div>`;
     box.innerHTML = summary + rowsHtml;

@@ -169,7 +169,7 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
     {id:'primer_pleno',t:'bronce',n:'Primer pleno',d:'Tu primer marcador exacto',ic:'target',ev:(u,C)=>({u:(C.sc[u]?.exact_scores||0)>=1})},
     // PLATA
     {id:'madrugador',t:'plata',n:'Madrugador',d:'Entraste antes de las 9:00 (hora local)',ic:'sun',ev:(u,C)=>({u:(C.visits[u]||[]).some(v=>v.first_hour!=null&&v.first_hour<9)})},
-    {id:'buho',t:'plata',n:'Búho',d:'Entraste después de las 23:00 (hora local)',ic:'moon',ev:(u,C)=>({u:(C.visits[u]||[]).some(v=>v.first_hour!=null&&v.first_hour>=23)})},
+    {id:'buho',t:'plata',n:'Búho',d:'Entraste después de las 23:00 (hora local)',ic:'moon',ev:(u,C)=>({u:(C.visits[u]||[]).some(v=>v.late===true||(v.first_hour!=null&&v.first_hour>=23))})},
     {id:'fiel',t:'plata',n:'Fiel',d:'Entraste 7 días seguidos',ic:'calendar',ev:(u,C)=>{const r=maxRun((C.visits[u]||[]).map(v=>v.day));return {u:r>=7,p:[r,7]};}},
     {id:'manita',t:'plata',n:'Manita',d:'5+ puntos en una sola jornada',ic:'star',ev:(u,C)=>{const m=maxDay(C,u,'pts');return {u:m>=5,p:[m,5]};}},
     {id:'rey_dia',t:'plata',n:'Rey del día',d:'Máximo anotador de una jornada',ic:'crown',ev:(u,C)=>({u:C.kingDays.has(u)})},
@@ -336,7 +336,7 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
       sb.from('matches').select('id,home_team,away_team,real_home,real_away,kickoff,phase,group_letter'),
       sb.from('settings').select('key,value'),
       sb.from('honours_predictions').select('user_id,boot_1,ball_1'),
-      sb.from('visits').select('user_id,day,first_hour'),
+      sb.from('visits').select('user_id,day,first_hour,late'),
       sb.from('daily_ranks').select('user_id,day,rank,total'),
       sb.from('bot_usage').select('user_id,n')
     ]);

@@ -967,7 +967,8 @@ async function initPresenceAndPoints(){
     try{
       const day = window.matchDateKey ? window.matchDateKey(new Date().toISOString()) : new Date().toISOString().slice(0,10);
       const first_hour = new Date().getHours();
-      await sb.from('visits').upsert({ user_id:user.id, day, first_hour }, { onConflict:'user_id,day', ignoreDuplicates:true });
+      const { error:_ve } = await sb.rpc('register_visit', { p_user:user.id, p_day:day, p_hour:first_hour });
+      if(_ve){ await sb.from('visits').upsert({ user_id:user.id, day, first_hour }, { onConflict:'user_id,day', ignoreDuplicates:true }); }
     }catch(_){}
     // 2) aviso de puntos ganados desde la última vez (por dispositivo)
     try{

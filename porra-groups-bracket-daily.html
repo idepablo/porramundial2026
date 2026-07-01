@@ -1127,7 +1127,7 @@ function buildBracketFromDB(koMatches) {
     wrap.className = 'bracket-partidos';
     wrap.style.justifyContent = 'space-around';
     sched.forEach((sl, idx) => {
-      const m = koMatchFor(partidos, sl.ko);
+      const m = partidos.find(x => x.id === phase.key + '_' + idx) || koMatchFor(partidos, sl.ko);
       const hRes = (m && m.home_team) ? { name: teamES(m.home_team), flag: m.home_flag } : resolveSlotTeam(sl.h);
       const aRes = (m && m.away_team) ? { name: teamES(m.away_team), flag: m.away_flag } : resolveSlotTeam(sl.a);
       const homeLabel = hRes ? hRes.name : prettySlot(sl.h);
