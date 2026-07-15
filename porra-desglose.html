@@ -203,7 +203,7 @@ nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--
       // (B) Partidos jugados de esta ronda donde acertaste el cruce → marcador
       const played=matches.filter(m=>m.phase===r.ph&&m.real_home!=null).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
       const mlines=[];
-      played.forEach(m=>{ const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team&&x.pred_home!=null);
+      played.forEach(m=>{ const k=koList.find(x=>x.home_team===m.home_team&&x.away_team===m.away_team&&x.pred_home!=null&&String(x.slot_id||'').startsWith(r.ph));
         if(!k) return; const pts=window.matchPoints(r.ph,k.pred_home,k.pred_away,m.real_home,m.real_away); koClient+=pts;
         const cs=koComps(r.ph,k.pred_home,k.pred_away,m.real_home,m.real_away);
         const tags=cs.length?cs.map(([kk,vv])=>`<span class="tag ${kk}">+${vv} ${kk}</span>`).join(''):'<span class="tag signo">sin acierto</span>';

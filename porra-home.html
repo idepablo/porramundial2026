@@ -381,7 +381,7 @@ async function loadDailyPoints(user){
     const [{ data: matches }, { data: myPreds }, { data: myKo }, scoreRes, snapRes] = await Promise.all([
       sb.from('matches').select('id, home_team, away_team, home_flag, away_flag, kickoff, real_home, real_away, phase'),
       sb.from('predictions').select('match_id, predicted_home, predicted_away').eq('user_id', user.id),
-      sb.from('ko_predictions').select('home_team, away_team, pred_home, pred_away').eq('user_id', user.id),
+      sb.from('ko_predictions').select('home_team, away_team, pred_home, pred_away, slot_id').eq('user_id', user.id),
       sb.from('scores').select('total').eq('user_id', user.id).maybeSingle(),
       sb.from('daily_ranks').select('total').eq('user_id', user.id).eq('day', todayK).maybeSingle(),
     ]);
@@ -400,7 +400,8 @@ async function loadDailyPoints(user){
       maxToday += PHASE_MAX[m.phase] || 6;
       const played = m.real_home!=null && m.real_away!=null;
       const isG = m.phase==='group';
-      const p = isG ? predMap[m.id] : koMap[m.home_team+'|'+m.away_team];
+      const kp = isG ? null : koMap[m.home_team+'|'+m.away_team];
+      const p = isG ? predMap[m.id] : ((kp && String(kp.slot_id||'').startsWith(m.phase)) ? kp : null);
       const ph = p ? (isG?p.predicted_home:p.pred_home) : null;
       const pa = p ? (isG?p.predicted_away:p.pred_away) : null;
       const pts = (played && ph!=null) ? (hasKP ? window.matchPoints(m.phase, ph, pa, m.real_home, m.real_away) : matchPts(m.real_home,m.real_away,ph,pa)) : null;
