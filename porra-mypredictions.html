@@ -1083,7 +1083,7 @@ async function initDailyPred(){
     const [us, pr, kr, mr] = await Promise.all([
       sb.from('users').select('id,first_name,last_name,alias'),
       fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
-      fetchAll('ko_predictions','user_id,home_team,away_team,pred_home,pred_away'),
+      fetchAll('ko_predictions','user_id,slot_id,home_team,away_team,pred_home,pred_away'),
       sb.from('matches').select('id,phase,kickoff,real_home,real_away,home_team,away_team'),
     ]);
     PDLY.matches = mr.data || [];
@@ -1125,7 +1125,7 @@ function renderDailyPred(dateKey){
       if(locked) return '<td style="text-align:center;color:rgba(255,255,255,.18)">🔒</td>';
       let txt='—';
       if(m.phase==='group'){ const pd=PDLY.predBy[u.id]&&PDLY.predBy[u.id][m.id]; if(pd) txt=fmtPick(pd.ph,pd.pa); }
-      else { const ko=(PDLY.koBy[u.id]||[]).find(k=>k.home_team===m.home_team&&k.away_team===m.away_team); if(ko) txt=fmtPick(ko.pred_home,ko.pred_away); }
+      else { const ko=(PDLY.koBy[u.id]||[]).find(k=>k.slot_id&&k.slot_id.split('_')[0]===m.phase&&k.home_team===m.home_team&&k.away_team===m.away_team); if(ko) txt=fmtPick(ko.pred_home,ko.pred_away); }
       return `<td style="text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums">${txt}</td>`;
     }).join('');
     const me = u.id===window.MY_UID;

@@ -180,31 +180,31 @@ begin
       + (case when (kp.pred_home-kp.pred_away)=(m.real_home-m.real_away) then 3 else 0 end)
       + (case when kp.pred_home=m.real_home and kp.pred_away=m.real_away then 4 else 0 end))
       from matches m join ko_predictions kp on kp.user_id=u.id and kp.home_team=m.home_team and kp.away_team=m.away_team
-      where m.phase='r32' and m.real_home is not null and kp.pred_home is not null),0);
+      where m.phase='r32' and kp.slot_id like 'r32%' and m.real_home is not null and kp.pred_home is not null),0);
     v_r16 := v_r16 + coalesce((select sum(
         (case when sign(kp.pred_home-kp.pred_away)=sign(m.real_home-m.real_away) then 3 else 0 end)
       + (case when (kp.pred_home-kp.pred_away)=(m.real_home-m.real_away) then 4 else 0 end)
       + (case when kp.pred_home=m.real_home and kp.pred_away=m.real_away then 5 else 0 end))
       from matches m join ko_predictions kp on kp.user_id=u.id and kp.home_team=m.home_team and kp.away_team=m.away_team
-      where m.phase='r16' and m.real_home is not null and kp.pred_home is not null),0);
+      where m.phase='r16' and kp.slot_id like 'r16%' and m.real_home is not null and kp.pred_home is not null),0);
     v_qf := v_qf + coalesce((select sum(
         (case when sign(kp.pred_home-kp.pred_away)=sign(m.real_home-m.real_away) then 4 else 0 end)
       + (case when (kp.pred_home-kp.pred_away)=(m.real_home-m.real_away) then 5 else 0 end)
       + (case when kp.pred_home=m.real_home and kp.pred_away=m.real_away then 6 else 0 end))
       from matches m join ko_predictions kp on kp.user_id=u.id and kp.home_team=m.home_team and kp.away_team=m.away_team
-      where m.phase='qf' and m.real_home is not null and kp.pred_home is not null),0);
+      where m.phase='qf' and kp.slot_id like 'qf%' and m.real_home is not null and kp.pred_home is not null),0);
     v_sf := v_sf + coalesce((select sum(
         (case when sign(kp.pred_home-kp.pred_away)=sign(m.real_home-m.real_away) then 5 else 0 end)
       + (case when (kp.pred_home-kp.pred_away)=(m.real_home-m.real_away) then 6 else 0 end)
       + (case when kp.pred_home=m.real_home and kp.pred_away=m.real_away then 7 else 0 end))
       from matches m join ko_predictions kp on kp.user_id=u.id and kp.home_team=m.home_team and kp.away_team=m.away_team
-      where m.phase='sf' and m.real_home is not null and kp.pred_home is not null),0);
+      where m.phase='sf' and kp.slot_id like 'sf%' and m.real_home is not null and kp.pred_home is not null),0);
     v_fin := v_fin + coalesce((select sum(
         (case when sign(kp.pred_home-kp.pred_away)=sign(m.real_home-m.real_away) then 10 else 0 end)
       + (case when (kp.pred_home-kp.pred_away)=(m.real_home-m.real_away) then 15 else 0 end)
       + (case when kp.pred_home=m.real_home and kp.pred_away=m.real_away then 20 else 0 end))
       from matches m join ko_predictions kp on kp.user_id=u.id and kp.home_team=m.home_team and kp.away_team=m.away_team
-      where m.phase='final' and m.real_home is not null and kp.pred_home is not null),0);
+      where m.phase='final' and kp.slot_id like 'final%' and m.real_home is not null and kp.pred_home is not null),0);
 
     if champ is not null then
       v_fin := v_fin + coalesce((select 35 from ko_predictions where user_id=u.id and slot_id like 'final%' and advanced=champ limit 1),0);

@@ -140,7 +140,7 @@ async function loadStats(){
       sb.from('users').select('id,first_name,alias,blocked'),
       sb.from('scores').select('user_id,total,exact_scores'),
       fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
-      fetchAll('ko_predictions','user_id,home_team,away_team,pred_home,pred_away'),
+      fetchAll('ko_predictions','user_id,slot_id,home_team,away_team,pred_home,pred_away'),
       sb.from('matches').select('id,phase,group_letter,home_team,away_team,kickoff,real_home,real_away'),
     ]);
     const users=(uR.data||[]).filter(u=>!u.blocked);
@@ -176,7 +176,7 @@ function sec(title, desc, html){ return `<div class="sect"><h2>${title}</h2>${ht
 function userMatchPts(uid,m){
   if(m.real_home==null) return null;
   if(m.phase==='group'){ const pd=SD.predBy[uid]&&SD.predBy[uid][m.id]; return pd?matchPoints('group',pd.ph,pd.pa,m.real_home,m.real_away):null; }
-  const k=(SD.koBy[uid]||[]).find(x=>x.home_team===m.home_team&&x.away_team===m.away_team);
+  const k=(SD.koBy[uid]||[]).find(x=>x.slot_id&&x.slot_id.split('_')[0]===m.phase&&x.home_team===m.home_team&&x.away_team===m.away_team);
   return k?matchPoints(m.phase,k.pred_home,k.pred_away,m.real_home,m.real_away):null;
 }
 
@@ -238,7 +238,7 @@ function renderMatchStudy(mid){
   const box=document.getElementById('ms-body'); const m=SD.matches.find(x=>x.id===mid); if(!m||!box) return;
   let list=[];
   if(m.phase==='group') list=(SD.predByMatch[mid]||[]).map(p=>({h:p.predicted_home,a:p.predicted_away}));
-  else list=SD.ko.filter(k=>k.home_team===m.home_team&&k.away_team===m.away_team).map(k=>({h:k.pred_home,a:k.pred_away}));
+  else list=SD.ko.filter(k=>k.slot_id&&k.slot_id.split('_')[0]===m.phase&&k.home_team===m.home_team&&k.away_team===m.away_team).map(k=>({h:k.pred_home,a:k.pred_away}));
   list=list.filter(x=>x.h!=null&&x.a!=null);
   const tot=list.length||1;
   let one=0,x=0,two=0; const sc={};

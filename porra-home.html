@@ -346,14 +346,14 @@ async function loadHomeQuiniela(){
     if(!todays.length){ hide(); return; }
     let koAll=[];
     if(todays.some(m=>m.phase!=='group')){
-      try{ koAll=await fetchAll('ko_predictions','home_team,away_team,pred_home,pred_away'); }catch(e){}
+      try{ koAll=await fetchAll('ko_predictions','slot_id,home_team,away_team,pred_home,pred_away'); }catch(e){}
     }
     const byMatch={}; (allPreds||[]).forEach(p=>{ (byMatch[p.match_id]=byMatch[p.match_id]||[]).push([p.predicted_home,p.predicted_away]); });
     const pct=(n,t)=> t? Math.round(n*100/t):0;
     const rows=todays.map(m=>{
       const pool = m.phase==='group'
         ? (byMatch[m.id]||[])
-        : koAll.filter(k=>k.home_team===m.home_team&&k.away_team===m.away_team).map(k=>[k.pred_home,k.pred_away]);
+        : koAll.filter(k=>k.slot_id&&k.slot_id.split('_')[0]===m.phase&&k.home_team===m.home_team&&k.away_team===m.away_team).map(k=>[k.pred_home,k.pred_away]);
       let one=0,x=0,two=0; const sc={};
       pool.forEach(([h,a])=>{ if(h==null||a==null) return; if(h>a)one++; else if(h<a)two++; else x++; const k=h+'-'+a; sc[k]=(sc[k]||0)+1; });
       const tot=one+x+two;

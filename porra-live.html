@@ -429,13 +429,13 @@ async function loadPredData(manual){
     MATCHES_CACHE.forEach(m=>{ if(m.api_fixture_id) PMAP_FIX[m.api_fixture_id]=m; PMAP_TEAMS[(m.home_team||'')+'|'+(m.away_team||'')]=m; });
   }
   if(MY_KO===null || manual){
-    if(MY_UID){ try{ const {data}=await sb.from('ko_predictions').select('home_team,away_team,pred_home,pred_away').eq('user_id',MY_UID); MY_KO=data||[]; }catch(e){ MY_KO=[]; } } else MY_KO=[];
+    if(MY_UID){ try{ const {data}=await sb.from('ko_predictions').select('slot_id,home_team,away_team,pred_home,pred_away').eq('user_id',MY_UID); MY_KO=data||[]; }catch(e){ MY_KO=[]; } } else MY_KO=[];
   }
   if(MY_PREDS===null || manual){
     if(MY_UID){ try{ const {data}=await sb.from('predictions').select('match_id,predicted_home,predicted_away').eq('user_id',MY_UID); MY_PREDS=data||[]; }catch(e){ MY_PREDS=[]; } } else MY_PREDS=[];
   }
   if(KO_ALL===null || manual){
-    try{ KO_ALL=(typeof fetchAll==='function')?await fetchAll('ko_predictions','home_team,away_team,pred_home,pred_away'):[]; }catch(e){ KO_ALL=KO_ALL||[]; }
+    try{ KO_ALL=(typeof fetchAll==='function')?await fetchAll('ko_predictions','slot_id,home_team,away_team,pred_home,pred_away'):[]; }catch(e){ KO_ALL=KO_ALL||[]; }
   }
 }
 async function ensureGroupConsensus(manual){
@@ -452,10 +452,10 @@ function predStrip(f, isLive){
   const m=mapFixture(f); if(!m) return '';
   let ph=null,pa=null;
   if(m.phase==='group'){ const p=(MY_PREDS||[]).find(x=>x.match_id===m.id); if(p){ph=p.predicted_home;pa=p.predicted_away;} }
-  else { const k=(MY_KO||[]).find(x=>x.home_team===m.home_team&&x.away_team===m.away_team); if(k){ph=k.pred_home;pa=k.pred_away;} }
+  else { const k=(MY_KO||[]).find(x=>x.slot_id&&x.slot_id.split('_')[0]===m.phase&&x.home_team===m.home_team&&x.away_team===m.away_team); if(k){ph=k.pred_home;pa=k.pred_away;} }
   let pool;
   if(m.phase==='group') pool=(GRP_ALL||[]).filter(x=>x.match_id===m.id).map(x=>[x.predicted_home,x.predicted_away]);
-  else pool=(KO_ALL||[]).filter(x=>x.home_team===m.home_team&&x.away_team===m.away_team).map(x=>[x.pred_home,x.pred_away]);
+  else pool=(KO_ALL||[]).filter(x=>x.slot_id&&x.slot_id.split('_')[0]===m.phase&&x.home_team===m.home_team&&x.away_team===m.away_team).map(x=>[x.pred_home,x.pred_away]);
   const mineHtml = (ph!=null&&pa!=null)
     ? `<div class="pmine">Tu pronóstico: <b>${ph}-${pa}</b></div>`
     : `<div class="pmine none">Sin pronóstico para este cruce</div>`;

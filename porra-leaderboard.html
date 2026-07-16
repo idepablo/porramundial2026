@@ -621,7 +621,7 @@ function renderDailyClasif(dateKey){
       let pts=0, has=false; const played = m.real_home!=null;
       if(played){
         if(m.phase==='group'){ const pd = DLY.predBy[u.id] && DLY.predBy[u.id][m.id]; if(pd){ has=true; pts=matchPoints('group',pd.ph,pd.pa,m.real_home,m.real_away); } }
-        else { const ko=(DLY.koBy[u.id]||[]).find(k=>k.home_team===m.home_team&&k.away_team===m.away_team); if(ko){ has=true; pts=matchPoints(m.phase,ko.pred_home,ko.pred_away,m.real_home,m.real_away); } }
+        else { const ko=(DLY.koBy[u.id]||[]).find(k=>k.slot_id&&k.slot_id.split('_')[0]===m.phase&&k.home_team===m.home_team&&k.away_team===m.away_team); if(ko){ has=true; pts=matchPoints(m.phase,ko.pred_home,ko.pred_away,m.real_home,m.real_away); } }
       }
       return { pts, has, played };
     });
@@ -704,7 +704,7 @@ async function loadClasificación() {
     const todayKey = matchDateKey(new Date().toISOString());
     const [pr, kr, mr] = await Promise.all([
       fetchAll('predictions','user_id,match_id,predicted_home,predicted_away'),
-      fetchAll('ko_predictions','user_id,home_team,away_team,pred_home,pred_away'),
+      fetchAll('ko_predictions','user_id,slot_id,home_team,away_team,pred_home,pred_away'),
       sb.from('matches').select('id,phase,kickoff,real_home,real_away,home_team,away_team'),
     ]);
     const matches = mr.data || [];
@@ -718,7 +718,7 @@ async function loadClasificación() {
           const pd = predBy[p.id] && predBy[p.id][m.id];
           if (pd) pts += matchPoints('group', pd.ph, pd.pa, m.real_home, m.real_away);
         } else {
-          const ko = (koBy[p.id]||[]).find(k => k.home_team===m.home_team && k.away_team===m.away_team);
+          const ko = (koBy[p.id]||[]).find(k => k.slot_id && k.slot_id.split('_')[0]===m.phase && k.home_team===m.home_team && k.away_team===m.away_team);
           if (ko) pts += matchPoints(m.phase, ko.pred_home, ko.pred_away, m.real_home, m.real_away);
         }
       });
